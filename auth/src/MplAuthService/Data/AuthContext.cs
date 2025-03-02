@@ -9,16 +9,17 @@ namespace MplAuthService.Data
         public AuthContext(DbContextOptions<AuthContext> options) : base(options)
         {
         }
-        public DbSet<Organisation> Organisations { get; set; } = null!;
+        public DbSet<Organization> Organizations { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.Entity<Organisation>()
+            builder.Entity<Organization>()
                 .HasMany(o => o.Users)
-                .WithOne(u => u.Organisation)
-                .HasForeignKey(u => u.OrganisationId)
+                .WithOne(u => u.Organization)
+                .HasForeignKey(u => u.OrganizationId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<RefreshToken>()
