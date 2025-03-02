@@ -20,7 +20,7 @@ namespace MplAuthService.Services
             {
                 new (ClaimTypes.Name, user.Email ?? throw new InvalidOperationException("User email is not set")),
                 new(ClaimTypes.NameIdentifier, user.Id),
-                new("OrganizationId",user.Organization.Id.ToString()),
+                new("OrganizationId", user.Organization?.Id.ToString() ?? String.Empty),
                 new("SubscriptionType", user.Organization?.SubscriptionType.ToString() ?? throw new InvalidOperationException("Subscription type is not set")),
                 new("SubscriptionEnd", user.Organization?.SubscriptionEndDate.ToString("O") ?? throw new InvalidOperationException("Subscription end date is not set"))
             };
