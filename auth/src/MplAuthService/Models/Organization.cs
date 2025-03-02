@@ -2,7 +2,7 @@ using MplAuthService.Models.Enums;
 
 namespace MplAuthService.Models
 {
-    public class Organisation
+    public class Organization
     {
         public int Id { get; set; }
         public required string Name { get; set; }
