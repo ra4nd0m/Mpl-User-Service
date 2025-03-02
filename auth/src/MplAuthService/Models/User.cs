@@ -4,8 +4,8 @@ namespace MplAuthService.Models
 {
     public class User : IdentityUser
     {
-        public int OrganisationId { get; set; }
-        public required Organisation Organisation { get; set; }
+        public int OrganizationId { get; set; }
+        public required Organization Organization { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
     }
 }
