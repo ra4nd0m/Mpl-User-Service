@@ -1,12 +1,13 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MplAuthService.Data;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
+using MplAuthService.Routes;
 using MplAuthService.Services;
+using MplAuthService.Utils;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
@@ -64,21 +65,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AuthContext>();
-    try
-    {
-        await db.Database.MigrateAsync();
-        app.Logger.LogInformation("Database migrated");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "An error occurred while migrating the database");
-        throw;
-    }
-}
+await DatabaseInitializer.InitializeDatabase(
+    app.Services,
+    configuration,
+    app.Logger
+);
 
-app.MapGet("/", () => "Hello World!");
+app.MapAuthRoutes();
+app.MapUserManagementRoutes();
 
 app.Run();
