@@ -8,10 +8,11 @@ using MplAuthService.Models;
 
 namespace MplAuthService.Services
 {
-    public class JwtService(IConfiguration configuration, UserManager<User> userManager) : IJwtService
+    public class JwtService(IConfiguration configuration, UserManager<User> userManager, ILogger<JwtService> logger) : IJwtService
     {
         public async Task<string> GenerateJwtToken(User user)
         {
+            logger.LogInformation("Generating JWT token for user {email}", user.Email);
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key is not configured")));
             var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 

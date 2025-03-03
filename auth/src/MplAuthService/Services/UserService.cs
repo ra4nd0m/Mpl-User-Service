@@ -8,10 +8,11 @@ using MplAuthService.Models.Dtos;
 namespace MplAuthService.Services
 {
     public class UserService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
-        AuthContext context) : IUserService
+        AuthContext context, ILogger<UserService> logger) : IUserService
     {
         public async Task<User> CreateUser(string email, string password, OrganizationDto organization)
         {
+            logger.LogInformation("Creating user with email {Email}", email);
             if (await userManager.FindByEmailAsync(email) != null)
             {
                 throw new InvalidOperationException("User already exists");
@@ -58,6 +59,7 @@ namespace MplAuthService.Services
                 await userManager.AddToRoleAsync(user, "User");
 
                 await transaction.CommitAsync();
+                logger.LogInformation("User created with email {Email}", email);
                 return user;
             }
             catch
@@ -68,6 +70,7 @@ namespace MplAuthService.Services
         }
         public async Task<User> CreateAdmin(string email, string password)
         {
+            logger.LogInformation("Creating admin with email {Email}", email);
             if (await userManager.FindByEmailAsync(email) != null)
             {
                 throw new InvalidOperationException("User already exists");
@@ -98,6 +101,7 @@ namespace MplAuthService.Services
 
                 await userManager.AddToRoleAsync(admin, "Admin");
                 await transaction.CommitAsync();
+                logger.LogInformation("Admin created with email {Email}", email);
                 return admin;
             }
             catch
