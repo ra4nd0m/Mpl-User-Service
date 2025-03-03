@@ -12,7 +12,7 @@ namespace MplAuthService.Routes
                 try
                 {
                     var user = await userService.CreateUser(userDto.Email, userDto.Password, userDto.Organization);
-                    return Results.Ok(user);
+                    return Results.Ok(new UserResponseDto(user.Id, user.Email!, user.OrganizationId));
                 }
                 catch (InvalidOperationException e)
                 {
