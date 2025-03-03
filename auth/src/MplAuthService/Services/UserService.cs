@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MplAuthService.Data;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
@@ -19,23 +20,30 @@ namespace MplAuthService.Services
             using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
-                var newOrg = new Organization
+                var existingOrg = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == organization.Inn);
+                Organization org;
+                if (existingOrg == null)
                 {
-                    Name = organization.Name,
-                    Inn = organization.Inn,
-                    SubscriptionType = organization.SubscriptionType,
-                    SubscriptionStartDate = organization.SubscriptionStartDate,
-                    SubscriptionEndDate = organization.SubscriptionEndDate,
-                };
-
-                await context.Organizations.AddAsync(newOrg);
-                await context.SaveChangesAsync();
-
+                    org = new Organization
+                    {
+                        Name = organization.Name,
+                        Inn = organization.Inn,
+                        SubscriptionType = organization.SubscriptionType,
+                        SubscriptionStartDate = organization.SubscriptionStartDate,
+                        SubscriptionEndDate = organization.SubscriptionEndDate,
+                    };
+                    await context.Organizations.AddAsync(org);
+                    await context.SaveChangesAsync();
+                }
+                else
+                {
+                    org = existingOrg;
+                }
                 var user = new User
                 {
                     Email = email,
                     UserName = email,
-                    Organization = newOrg,
+                    Organization = org,
                 };
 
                 var result = await userManager.CreateAsync(user, password);
