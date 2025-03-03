@@ -66,6 +66,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IOrgService, OrgService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -84,5 +85,6 @@ await DatabaseInitializer.InitializeDatabase(
 
 app.MapAuthRoutes();
 app.MapUserManagementRoutes();
+app.MapOrgRoutes();
 
 app.Run();
