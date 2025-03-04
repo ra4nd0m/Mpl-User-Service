@@ -53,7 +53,20 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key is not configured"))
-            )
+            ),
+            ClockSkew = TimeSpan.Zero,
+            RequireExpirationTime = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                {
+                    context.Response.Headers.Append("Token-Expired", "true");
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -76,6 +89,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseAuthentication();
+app.UseAuthorization();
 
 await DatabaseInitializer.InitializeDatabase(
     app.Services,
