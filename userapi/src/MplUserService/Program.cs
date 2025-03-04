@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MplUserService.Data;
+using MplUserService.Interfaces;
+using MplUserService.Routes;
+using MplUserService.Services;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
@@ -55,12 +58,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
+builder.Services.AddScoped<IUserService, UserService>();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => "Hello World!");
+app.MapUserDataRoutes();
 
 app.Run();
