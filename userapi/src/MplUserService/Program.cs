@@ -1,10 +1,13 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MplUserService.Auth;
 using MplUserService.Data;
 using MplUserService.Interfaces;
+using MplUserService.Models.Enums;
 using MplUserService.Routes;
 using MplUserService.Services;
 
@@ -52,6 +55,18 @@ builder.Services.AddAuthentication(options =>
             }
         };
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireFree", policy =>
+        policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Free)));
+    options.AddPolicy("RequireBasic", policy =>
+        policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Basic)));
+    options.AddPolicy("RequirePremium", policy =>
+        policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Premium)));
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
