@@ -2,7 +2,7 @@ using MplDbApi.Models;
 
 namespace MplDbApi.Interfaces;
 
-public interface IMaterialValue
+public interface IMaterialValueService
 {
     Task<MaterialValueResponseDto?> GetMaterialValueById(int id);
 }
