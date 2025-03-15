@@ -1,4 +1,5 @@
-import { authStore } from "$lib/stores/auth"
+import { authStore } from "$lib/stores/auth";
+import config from "$lib/config";
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     let token = '';
@@ -9,7 +10,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
         ...options.headers,
         Authorization: `Bearer ${token}`
     };
-    let response = await fetch(url, options);
+    let response = await fetch(`${config.apiBaseUrl}/${url}`, options);
 
     if (response.status === 401 && response.headers.get('Token-Expired') === 'true') {
         const newToken = await refreshAccessToken();
@@ -19,15 +20,14 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
                 ...options.headers,
                 Authorization: `Bearer ${newToken}`
             };
-            response = await fetch(url, options);
+            response = await fetch(`${config.apiBaseUrl}/${url}`, options);
         };
     }
     return response;
 };
 
 async function refreshAccessToken(): Promise<string | null> {
-    const response = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
-
+    const response = await fetch(`${config.apiAuthUrl}/refresh`, { method: 'POST', credentials: 'include' });
     if (response.ok) {
         const data = await response.json();
         return data.token;
