@@ -2,20 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
 	import { login } from '$lib/api/authClient';
-	import config from '$lib/config';
+	import { ENABLE_MOCKS, users } from '$lib/mock';
 
 	let email = '';
 	let password = '';
 	let rememberMe = false;
 	let error = '';
 	let loading = false;
-
-	const mockUser = {
-		email: 'test@example.com',
-		password: 'password123',
-		token:
-			'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEyMyIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiU3Vic2NyaXB0aW9uVHlwZSI6IlByZW1pdW0iLCJTdWJzY3JpcHRpb25FbmQiOiIyMDI1LTEyLTMxIiwiZXhwIjoxNzE2NDcyNjQ3fQ.d7dJF4JJR7KQkM9jkZiXYx1rX-MDCvNRzAVYDLfFH2I'
-	};
 
 	async function handleLogin(event: SubmitEvent) {
 		event.preventDefault();
@@ -24,16 +17,6 @@
 		authStore.setLoading(true);
 
 		try {
-			if (import.meta.env.DEV) {
-				if (email === mockUser.email && password === mockUser.password) {
-					await new Promise((resolve) => setTimeout(resolve, 800));
-					authStore.setToken(mockUser.token);
-					goto('/dashboard');
-					return;
-				} else if (email !== mockUser.email || password !== mockUser.password) {
-					throw new Error('Invalid email or password');
-				}
-			}
 			const result = await login(email, password, rememberMe);
 			if (result.success) {
 				goto('/dashboard');
@@ -57,10 +40,20 @@
 		<input type="text" placeholder="Email" bind:value={email} required />
 		<input type="password" placeholder="Password" bind:value={password} required />
 		<div class="remember-container">
-			<input type="checkbox" id="remember" name="remember" />
+			<input type="checkbox" id="remember" bind:checked={rememberMe} />
 			<label for="remember">Remember me</label>
 		</div>
+		{#if error}
+			<div class="error-message">{error}</div>
+		{/if}
 		<button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
+
+		{#if ENABLE_MOCKS}
+			<div class="dev-help">
+				<p>Test user: {users.test.email} / {users.test.password}</p>
+				<p>Admin user: {users.admin.email} / {users.admin.password}</p>
+			</div>
+		{/if}
 	</form>
 </div>
 
@@ -89,6 +82,7 @@
 		padding: 5px;
 		width: 200px;
 	}
+
 	.remember-container {
 		display: flex;
 		align-items: center;
@@ -99,20 +93,42 @@
 	.remember-container input[type='checkbox'] {
 		margin-right: 8px;
 	}
-	button {
-		margin: 10px;
-		padding: 5px;
+
+	.error-message {
+		color: #e74c3c;
+		margin: 10px 0;
+		text-align: center;
 		width: 200px;
+		font-size: 14px;
 	}
-	input {
-		margin: 10px;
-		padding: 5px;
-		width: 200px;
+
+	.dev-help {
+		margin-top: 15px;
+		font-size: 12px;
+		color: #777;
+		border-top: 1px dashed #ddd;
+		padding-top: 10px;
+		text-align: center;
 	}
 
 	button {
 		margin: 10px;
 		padding: 5px;
 		width: 200px;
+		background-color: #3498db;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.3s;
+	}
+
+	button:hover:not(:disabled) {
+		background-color: #2980b9;
+	}
+
+	button:disabled {
+		background-color: #95a5a6;
+		cursor: not-allowed;
 	}
 </style>

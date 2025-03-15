@@ -11,6 +11,7 @@ declare global {
 	interface ImportMetaEnv {
 		PUBLIC_API_BASE_URL: string;
 		PUBLIC_API_AUTH_URL: string;
+		VITE_USE_MOCKS: string;
 	}
 
 	interface ImportMeta {

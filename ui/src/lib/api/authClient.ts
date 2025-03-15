@@ -1,16 +1,24 @@
 import { authStore } from "$lib/stores/auth";
 import config from "$lib/config";
+import { ENABLE_MOCKS } from "$lib/mock";
+import { mockLogin, mockRefreshToken, mockLogout } from "$lib/mock/authServiceMock";
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     let token = '';
     authStore.subscribe(state => {
         token = state.token || '';
     })();
-    options.headers = {
-        ...options.headers,
-        Authorization: `Bearer ${token}`
-    };
-    let response = await fetch(`${config.apiBaseUrl}/${url}`, options);
+
+    if (token) {
+        options.headers = {
+            ...options.headers,
+            Authorization: `Bearer ${token}`
+        };
+    }
+
+    const normalizedUrl = url.startsWith('/') ? url.substring(1) : url;
+
+    let response = await fetch(`${config.apiBaseUrl}/${normalizedUrl}`, options);
 
     if (response.status === 401 && response.headers.get('Token-Expired') === 'true') {
         const newToken = await refreshAccessToken();
@@ -20,7 +28,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
                 ...options.headers,
                 Authorization: `Bearer ${newToken}`
             };
-            response = await fetch(`${config.apiBaseUrl}/${url}`, options);
+            response = await fetch(`${config.apiBaseUrl}/${normalizedUrl}`, options);
         };
     }
     return response;
@@ -28,6 +36,9 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
 async function refreshAccessToken(): Promise<string | null> {
     try {
+        if (ENABLE_MOCKS) {
+            return await mockRefreshToken();
+        }
         const response = await fetch(`${config.apiAuthUrl}/refresh`, {
             method: 'POST',
             credentials: 'include'
@@ -49,6 +60,13 @@ export async function login(email: string, password: string, rememberMe: boolean
     error?: string;
 }> {
     try {
+        if (ENABLE_MOCKS) {
+            const mockResponse = await mockLogin({ email, password, rememberMe });
+            if (mockResponse.success && mockResponse.token) {
+                authStore.setToken(mockResponse.token);
+            }
+            return mockResponse;
+        }
         const response = await fetch(`${config.apiAuthUrl}/login`, {
             method: 'POST',
             headers: {
@@ -78,6 +96,9 @@ export async function login(email: string, password: string, rememberMe: boolean
 
 export async function logout(): Promise<boolean> {
     try {
+        if (ENABLE_MOCKS) {
+            return await mockLogout();
+        }
         const response = await fetch(`${config.apiAuthUrl}/logout`, { method: 'POST', credentials: 'include' });
         return response.ok;
     } catch (error) {
