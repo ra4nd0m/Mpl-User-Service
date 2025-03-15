@@ -11,7 +11,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     };
     let response = await fetch(url, options);
 
-    if (response.status === 401 || response.headers.get('Token-Expired') === 'true') {
+    if (response.status === 401 && response.headers.get('Token-Expired') === 'true') {
         const newToken = await refreshAccessToken();
         if (newToken) {
             authStore.setToken(newToken);
