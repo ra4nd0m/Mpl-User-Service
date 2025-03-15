@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import config from '$lib/config';
 
 	let email = '';
 	let password = '';
@@ -32,7 +33,7 @@
 					throw new Error('Invalid email or password');
 				}
 			}
-			const response = await fetch('http://localhost:3000/api/login', {
+			const response = await fetch(`${config.apiAuthUrl}/login`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
