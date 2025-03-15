@@ -12,6 +12,7 @@ interface AuthState {
     user: User | null;
     loading: boolean;
     token: string | null;
+    roles: string[];
 }
 
 function parseJwt(token: string) {
@@ -36,7 +37,8 @@ const createAuthStore = () => {
         isAuthenticated: false,
         user: null,
         loading: false,
-        token: null
+        token: null,
+        roles: []
     };
 
     const { subscribe, update } = writable<AuthState>(initialState);
@@ -53,11 +55,23 @@ const createAuthStore = () => {
                 subscriptionEnd: claims['SubscriptionEnd']
             };
 
+            let roles: string[] = [];
+            const roleClaim = claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
+            if (roleClaim) {
+                if (Array.isArray(roleClaim)) {
+                    roles = roleClaim;
+                } else {
+                    roles = [roleClaim];
+                }
+            }
+
             update(state => ({
                 ...state,
                 isAuthenticated: true,
                 user,
-                token
+                token,
+                roles
             }));
         },
         clearAuth: () => {
@@ -65,7 +79,8 @@ const createAuthStore = () => {
                 ...state,
                 isAuthenticated: false,
                 user: null,
-                token: null
+                token: null,
+                roles: []
             }));
         },
         setLoading: (loading: boolean) => {

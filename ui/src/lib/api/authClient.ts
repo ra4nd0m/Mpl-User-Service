@@ -1,4 +1,4 @@
-import { authStore } from "$lib/stores/auth";
+import { authStore } from "$lib/stores/authStore";
 import config from "$lib/config";
 import { ENABLE_MOCKS } from "$lib/mock";
 import { mockLogin, mockRefreshToken, mockLogout } from "$lib/mock/authServiceMock";

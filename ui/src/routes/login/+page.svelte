@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { authStore } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/authStore';
 	import { login } from '$lib/api/authClient';
 	import { ENABLE_MOCKS, users } from '$lib/mock';
 
