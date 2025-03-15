@@ -2,11 +2,12 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
+	import { logout } from '$lib/api/authClient';
 
 	let { children } = $props();
 
-	function handleLogout() {
-		authStore.clearAuth();
+	async function handleLogout() {
+		await logout();
 		goto('/login');
 	}
 

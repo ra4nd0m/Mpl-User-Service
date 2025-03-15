@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import { login } from '$lib/api/authClient';
 	import config from '$lib/config';
 
 	let email = '';
@@ -33,25 +34,12 @@
 					throw new Error('Invalid email or password');
 				}
 			}
-			const response = await fetch(`${config.apiAuthUrl}/login`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ email, password, rememberMe }),
-				credentials: 'include'
-			});
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.message || 'Login failed');
-			}
-			const data = await response.json();
-
-			if (data.token) {
-				authStore.setToken(data.token);
+			const result = await login(email, password, rememberMe);
+			if (result.success) {
 				goto('/dashboard');
-			} else {
-				throw new Error('No token from server');
+			}
+			if (result.error) {
+				throw new Error(result.error);
 			}
 		} catch (error) {
 			console.error(error);
