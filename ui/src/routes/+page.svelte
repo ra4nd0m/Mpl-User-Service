@@ -1,2 +1,21 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { authStore } from '$lib/stores/auth';
+	import { goto } from '$app/navigation';
+
+	onMount(() => {
+		const unsubscribe = authStore.subscribe((state) => {
+			if (!state.isAuthenticated) {
+				goto('/login');
+			} else {
+				goto('/dashboard');
+			}
+		});
+
+		return () => {
+			unsubscribe();
+		};
+	});
+</script>
+
+<div>Redirecting...</div>
