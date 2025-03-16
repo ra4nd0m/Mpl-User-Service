@@ -4,6 +4,8 @@ export const ENABLE_MOCKS = browser && (import.meta.env.DEV || import.meta.env.V
 
 export const MOCK_DELAY = 800;
 
+
+
 export async function delay(ms: number = MOCK_DELAY): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -25,3 +27,111 @@ export const users = {
         subscriptionType: 'Admin'
     }
 };
+
+export const favoriteMaterials = {
+    '123': [1, 3, 5, 8], // Test user's favorite materials
+    '456': [2, 4, 7, 10]  // Admin user's favorite materials
+};
+
+export const materials = [
+    {
+        Id: 1,
+        MaterialName: "Steel Plate A36",
+        Source: "Domestic",
+        DeliveryType: "Truck",
+        Group: "Metal",
+        Market: "Construction",
+        Unit: "kg",
+        LastCreatedDate: "2025-01-15"
+    },
+    {
+        Id: 2,
+        MaterialName: "Aluminum Sheet 6061",
+        Source: "Import",
+        DeliveryType: "Ship",
+        Group: "Metal",
+        Market: "Aerospace",
+        Unit: "kg",
+        LastCreatedDate: "2025-02-03"
+    },
+    {
+        Id: 3,
+        MaterialName: "Polypropylene Pellets",
+        Source: "Domestic",
+        DeliveryType: "Rail",
+        Group: "Plastic",
+        Market: "Consumer",
+        Unit: "ton",
+        LastCreatedDate: "2025-01-22"
+    },
+    {
+        Id: 4,
+        MaterialName: "Glass Fiber",
+        Source: "Import",
+        DeliveryType: "Truck",
+        Group: "Composite",
+        Market: "Automotive",
+        Unit: "kg",
+        LastCreatedDate: "2025-02-17"
+    },
+    {
+        Id: 5,
+        MaterialName: "Copper Wire",
+        Source: "Domestic",
+        DeliveryType: "Truck",
+        Group: "Metal",
+        Market: "Electronics",
+        Unit: "m",
+        LastCreatedDate: "2025-01-30"
+    },
+    {
+        Id: 6,
+        MaterialName: "Pine Lumber",
+        Source: "Local",
+        DeliveryType: "Truck",
+        Group: "Wood",
+        Market: "Construction",
+        Unit: "board-ft",
+        LastCreatedDate: "2025-02-22"
+    },
+    {
+        Id: 7,
+        MaterialName: "Silicon Wafer",
+        Source: "Import",
+        DeliveryType: "Air",
+        Group: "Semiconductor",
+        Market: "Electronics",
+        Unit: "piece",
+        LastCreatedDate: null
+    },
+    {
+        Id: 8,
+        MaterialName: "Cotton Fabric",
+        Source: "Import",
+        DeliveryType: "Ship",
+        Group: "Textile",
+        Market: "Apparel",
+        Unit: "yard",
+        LastCreatedDate: "2025-03-05"
+    },
+    {
+        Id: 9,
+        MaterialName: "Concrete Mix",
+        Source: "Local",
+        DeliveryType: "Truck",
+        Group: "Building",
+        Market: "Construction",
+        Unit: "m³",
+        LastCreatedDate: "2025-02-28"
+    },
+    {
+        Id: 10,
+        MaterialName: "Titanium Alloy",
+        Source: "Import",
+        DeliveryType: "Air",
+        Group: "Metal",
+        Market: "Medical",
+        Unit: "kg",
+        LastCreatedDate: "2025-03-01"
+    }
+];
