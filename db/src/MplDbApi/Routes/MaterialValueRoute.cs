@@ -38,7 +38,7 @@ namespace MplDbApi.Routes
                     return Results.Problem("An error occurred while retrieving overview data");
                 }
             });
-            app.MapPost("/materialvalues/valuerange", async (IMaterialValueService service, MaterialDateMetricReq req) =>
+            app.MapPost("/materialvalues/daterange", async (IMaterialValueService service, MaterialDateMetricReq req) =>
             {
                 try
                 {
