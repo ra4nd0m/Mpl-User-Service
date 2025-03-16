@@ -54,6 +54,28 @@ namespace MplAuthService.Routes
                     return result;
                 }));
             }).RequireAuthorization("AdminOnly");
+
+            app.MapGet("/users/{email}", async (IUserService userService, string email) =>
+            {
+                var user = await userService.GetUserByEmail(email);
+                if (user == null)
+                {
+                    return Results.NotFound();
+                }
+                UserResponseDto result;
+                if (user.Organization != null)
+                {
+                    var organizationDto = new OrganizationDto(user.Organization.Name, user.Organization.Inn,
+                        user.Organization.SubscriptionType, user.Organization.SubscriptionStartDate,
+                        user.Organization.SubscriptionEndDate);
+                    result = new UserResponseDto(user.Id, user.Email!, organizationDto);
+                }
+                else
+                {
+                    result = new UserResponseDto(user.Id, user.Email!, null);
+                }
+                return Results.Ok(result);
+            }).RequireAuthorization("AdminOnly");
         }
     }
 }
