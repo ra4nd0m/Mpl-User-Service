@@ -22,12 +22,12 @@ namespace MplUserService.Routes
                 }
             }).RequireAuthorization();
 
-            app.MapPost("/favorites", async (string itemId, IUserService userService, HttpContext context,
+            app.MapPost("/favorites", async (int itemId, IUserService userService, HttpContext context,
                 UserContext dbContext, ILogger<Program> logger) =>
             {
                 try
                 {
-                    if (string.IsNullOrEmpty(itemId))
+                    if (itemId <= 0)
                     {
                         return Results.BadRequest("Item ID is required");
                     }
@@ -48,12 +48,12 @@ namespace MplUserService.Routes
 
             }).RequireAuthorization();
 
-            app.MapDelete("/favorites/{itemId}", async (string itemId, IUserService userService, HttpContext context,
+            app.MapDelete("/favorites/{itemId}", async (int itemId, IUserService userService, HttpContext context,
                 UserContext dbContext, ILogger<Program> logger) =>
             {
                 try
                 {
-                    if (string.IsNullOrEmpty(itemId))
+                    if (itemId <= 0)
                     {
                         return Results.BadRequest("Item ID is required");
                     }
