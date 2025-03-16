@@ -114,6 +114,21 @@ namespace MplAuthService.Services
         {
             throw new NotImplementedException();
         }
+        public async Task<List<User>> GetUsers()
+        {
+            try
+            {
+                logger.LogInformation("Getting all users");
+                var users = await context.Users
+                    .Include(u => u.Organization)
+                    .ToListAsync();
+                return users;
+            }catch(Exception ex)
+            {
+                logger.LogError(ex, "Failed to get users");
+                throw;
+            }
+        }
 
         public async Task DeleteUser(User user)
         {
