@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/authStore';
+	import { favoritesStore } from '$lib/stores/favouritesStore';
 	import { goto } from '$app/navigation';
 	import { logout } from '$lib/api/authClient';
 	import { browser } from '$app/environment';
@@ -28,6 +29,8 @@
 	const isAdmin = $derived($authStore.roles?.includes('Admin'));
 
 	onMount(() => {
+
+		favoritesStore.loadFavourites();
 		const unsubscribe = authStore.subscribe((state) => {
 			if (!state.isAuthenticated && browser) {
 				goto('/login');

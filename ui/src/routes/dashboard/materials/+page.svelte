@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { ENABLE_MOCKS, materials, delay } from '$lib/mock';
 	import { fetchWithAuth } from '$lib/api/authClient';
+	import { favoritesStore } from '$lib/stores/favouritesStore';
 
 	interface Material {
 		Id: number;
@@ -14,9 +15,19 @@
 		LastCreatedDate: string | null;
 	}
 
-	let materialList: Material[] = [];
-	let loading = true;
-	let error = '';
+	let materialList: Material[] = $state([]);
+	let loading = $state(true);
+	let error = $state('');
+
+	const favoriteIds = $derived($favoritesStore.ids);
+
+	function isFavorite(materialId: number): boolean {
+		return favoriteIds.includes(materialId);
+	}
+
+	async function toggleFavorite(materialId: number) {
+		await favoritesStore.toggleFavorite(materialId);
+	}
 
 	async function loadMaterials() {
 		try {
@@ -56,6 +67,7 @@
 		<table class="materials-table">
 			<thead>
 				<tr>
+					<td class="favorite-cell"> </td>
 					<th>ID</th>
 					<th>Material Name</th>
 					<th>Source</th>
@@ -66,24 +78,48 @@
 					<th>Last Update</th>
 				</tr>
 			</thead>
-            <tbody>
-                {#each materialList as material}
-                    <tr>
-                        <td>{material.Id}</td>
-                        <td>{material.MaterialName}</td>
-                        <td>{material.Source}</td>
-                        <td>{material.DeliveryType}</td>
-                        <td>{material.Group}</td>
-                        <td>{material.Market}</td>
-                        <td>{material.Unit}</td>
-                        <td>{material.LastCreatedDate}</td>
-                    </tr>
-                {:else}
-                    <tr>
-                        <td colspan="8" class="no-data">No materials found</td>
-                    </tr>
-                {/each}
-            </tbody>
+			<tbody>
+				{#each materialList as material}
+					<tr>
+						<td class="favorite-cell">
+							<button
+								class="favorite-button {isFavorite(material.Id) ? 'is-favorite' : ''}"
+								onclick={() => toggleFavorite(material.Id)}
+								title={isFavorite(material.Id) ? 'Remove from favorites' : 'Add to favorites'}
+								aria-label={isFavorite(material.Id) ? 'Remove from favorites' : 'Add to favorites'}
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill={isFavorite(material.Id) ? 'currentColor' : 'none'}
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<polygon
+										points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+									></polygon>
+								</svg>
+							</button>
+						</td>
+						<td>{material.Id}</td>
+						<td>{material.MaterialName}</td>
+						<td>{material.Source}</td>
+						<td>{material.DeliveryType}</td>
+						<td>{material.Group}</td>
+						<td>{material.Market}</td>
+						<td>{material.Unit}</td>
+						<td>{material.LastCreatedDate}</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="8" class="no-data">No materials found</td>
+					</tr>
+				{/each}
+			</tbody>
 		</table>
 	{/if}
 </section>

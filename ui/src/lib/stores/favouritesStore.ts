@@ -45,7 +45,12 @@ function createFavoritesStore() {
             try {
                 update(state => {
                     const ids = [...state.ids];
-                    ids.push(materialId);
+                    const index = ids.indexOf(materialId);
+                    if (index >= 0) {
+                        ids.splice(index, 1);
+                    } else {
+                        ids.push(materialId);
+                    }
                     return { ...state, ids };
                 });
                 if (!ENABLE_MOCKS) {
