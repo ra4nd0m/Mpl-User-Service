@@ -1,9 +1,4 @@
 using MplDbApi.Interfaces;
-using MplDbApi.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Security.Cryptography.X509Certificates;
 using MplDbApi.Models.Dtos;
 
 namespace MplDbApi.Routes
