@@ -2,7 +2,7 @@ import { fetchWithAuth } from "./authClient";
 
 export async function getOrgs(): Promise<OrgResponse[] | null> {
     try {
-        const response = await fetchWithAuth('organizations');
+        const response = await fetchWithAuth('organizations', {}, true);
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             console.error('Failed to get orgs:', errorData || response.statusText);
@@ -17,7 +17,7 @@ export async function getOrgs(): Promise<OrgResponse[] | null> {
 
 export async function getOrg(id: number): Promise<OrgResponse | null> {
     try {
-        const response = await fetchWithAuth(`organizations/${id}`);
+        const response = await fetchWithAuth(`organizations/${id}`, {}, true);
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             console.error('Failed to get org:', errorData || response.statusText);
@@ -39,7 +39,7 @@ export async function registerUser(user: NewUser): Promise<UserResponse | null> 
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(user)
-        });
+        }, true);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
@@ -56,7 +56,7 @@ export async function registerUser(user: NewUser): Promise<UserResponse | null> 
 
 export async function getUserByEmail(email: string): Promise<UserResponse | null> {
     try {
-        const response = await fetchWithAuth(`users/${email}`);
+        const response = await fetchWithAuth(`users/${email}`, {}, true);
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             console.error('Failed to get user:', errorData || response.statusText);
@@ -71,7 +71,7 @@ export async function getUserByEmail(email: string): Promise<UserResponse | null
 
 export async function getUsers(): Promise<UserResponse[] | null> {
     try {
-        const response = await fetchWithAuth('users');
+        const response = await fetchWithAuth('users', {}, true);
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             console.error('Failed to get users:', errorData || response.statusText);

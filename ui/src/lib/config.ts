@@ -18,7 +18,7 @@ if (!config.apiBaseUrl) {
 
 if (!config.apiAuthUrl) {
     if (import.meta.env.DEV) {
-        config.apiAuthUrl = 'http://localhost:5000/authapi';
+        config.apiAuthUrl = 'http://localhost:5203';
     } else {
         throw new Error('Missing PUBLIC_API_AUTH_URL');
     }
