@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { favoritesStore } from '$lib/stores/favouritesStore';
-    import { materials } from '$lib/mock';
+    import { materials, sampleData } from '$lib/mock';
 
     // Type definitions for the data structure
     interface MaterialInfo {
@@ -43,100 +43,13 @@
         LastCreatedDate: string | null;
     }
 
-    const favoriteIds = [1,2,3,4];
+    const favoriteIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     let favoriteMaterials = $state<Material[]>([]); 
     let materialData = $state<DateEntry[]>([]);
     let isLoading = $state(true);
 
     // Sample data (in a real app, this would come from an API)
-    const sampleData: DateEntry[] = [
-        {
-            date: "2025-03-16T00:00:00",
-            materialValues: [
-                {
-                    id: 1,
-                    date: "2025-03-16T00:00:00",
-                    propsUsed: [1, 2, 3],
-                    valueAvg: "10.5",
-                    valueMin: "5.2",
-                    valueMax: "15.8",
-                    predWeekly: "11.2",
-                    predMonthly: "45.6",
-                    supply: "100",
-                    monthlyAvg: "",
-                    materialInfo: {
-                        id: 1,
-                        name: "Steel",
-                        deliveryTypeName: "Standard",
-                        targetMarket: "Construction",
-                        unitName: "tons"
-                    }
-                },
-                {
-                    id: 2,
-                    date: "2025-03-16T00:00:00",
-                    propsUsed: [1, 4, 5],
-                    valueAvg: "22.7",
-                    valueMin: "8.9",
-                    valueMax: "35.6",
-                    predWeekly: "",
-                    predMonthly: "90.1",
-                    supply: "50",
-                    monthlyAvg: "",
-                    materialInfo: {
-                        id: 2,
-                        name: "Aluminum",
-                        deliveryTypeName: "Express",
-                        targetMarket: "Manufacturing",
-                        unitName: "kg"
-                    }
-                }
-            ]
-        },
-        {
-            date: "2025-03-17T00:00:00",
-            materialValues: [
-                {
-                    id: 3,
-                    date: "2025-03-17T00:00:00",
-                    propsUsed: [1, 2, 3],
-                    valueAvg: "11.0",
-                    valueMin: "5.5",
-                    valueMax: "16.2",
-                    predWeekly: "11.8",
-                    predMonthly: "47.2",
-                    supply: "95",
-                    monthlyAvg: "",
-                    materialInfo: {
-                        id: 3,
-                        name: "Steel",
-                        deliveryTypeName: "Standard",
-                        targetMarket: "Construction",
-                        unitName: "tons"
-                    }
-                },
-                {
-                    id: 4,
-                    date: "2025-03-17T00:00:00",
-                    propsUsed: [1, 4, 5],
-                    valueAvg: "23.1",
-                    valueMin: "9.2",
-                    valueMax: "36.0",
-                    predWeekly: "",
-                    predMonthly: "92.4",
-                    supply: "48",
-                    monthlyAvg: "",
-                    materialInfo: {
-                        id: 4,
-                        name: "Aluminum",
-                        deliveryTypeName: "Express",
-                        targetMarket: "Manufacturing",
-                        unitName: "kg"
-                    }
-                }
-            ]
-        }
-    ];
+    const sampleTestData: DateEntry[] = sampleData;
 
     // Format date for display
     function formatDate(dateString: string): string {
@@ -156,8 +69,7 @@
         // materialData = await response.json();
         
         // For now, use sample data
-        materialData = sampleData;
-		console.log(favoriteMaterials);
+        materialData = sampleTestData;
         isLoading = false;
     });
 </script>
