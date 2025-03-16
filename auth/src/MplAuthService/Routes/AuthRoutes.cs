@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MplAuthService.Data;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
 using MplAuthService.Models.Dtos;
@@ -10,7 +12,7 @@ namespace MplAuthService.Routes
         public static void MapAuthRoutes(this WebApplication app)
         {
             app.MapPost("/login", async (IJwtService jwtService, IRefreshTokenService refreshTokenService,
-            UserManager<User> userManager, LoginDto loginDto, HttpContext context, ILogger<Program> logger) =>
+            UserManager<User> userManager, LoginDto loginDto, HttpContext context, ILogger<Program> logger, AuthContext dbContext) =>
             {
                 try
                 {
@@ -21,9 +23,14 @@ namespace MplAuthService.Routes
                         logger.LogWarning("Failed to login user with email {Email}", loginDto.Email);
                         return Results.BadRequest("Invalid email or password");
                     }
+
+                    user = await dbContext.Users
+                        .Include(u=>u.Organization)
+                        .FirstOrDefaultAsync(u => u.Id == user.Id);
+
                     logger.LogInformation("User {Email} logged in", loginDto.Email);
-                    string token = await jwtService.GenerateJwtToken(user);
-                    RefreshToken refreshToken = await refreshTokenService.GenerateRefreshToken(user);
+                    string token = await jwtService.GenerateJwtToken(user!);
+                    RefreshToken refreshToken = await refreshTokenService.GenerateRefreshToken(user!);
                     context.Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions
                     {
                         HttpOnly = true,

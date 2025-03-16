@@ -48,12 +48,6 @@ const createAuthStore = () => {
         setToken: (token: string) => {
             const claims = parseJwt(token);
             if (!claims) return;
-            const user: User = {
-                id: claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
-                email: claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
-                subscriptionType: claims['SubscriptionType'],
-                subscriptionEnd: claims['SubscriptionEnd']
-            };
 
             let roles: string[] = [];
             const roleClaim = claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
@@ -65,6 +59,19 @@ const createAuthStore = () => {
                     roles = [roleClaim];
                 }
             }
+
+            let subscriptionType = claims['SubscriptionType'];
+
+            const isAdmin = roles.includes('Admin');
+            if(!subscriptionType && isAdmin){
+                subscriptionType = 'Admin';
+            }
+            const user: User = {
+                id: claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
+                email: claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
+                subscriptionType: subscriptionType,
+                subscriptionEnd: claims['SubscriptionEnd']
+            };
 
             update(state => ({
                 ...state,

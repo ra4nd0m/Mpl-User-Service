@@ -44,7 +44,6 @@
 
 <section>
 	<h1>Admin Dashboard</h1>
-	<h2>User Management</h2>
 	<div class="actions-header">
 		<h2>User Management</h2>
 		<!-- Add this button -->
