@@ -30,8 +30,8 @@ namespace MplAuthService.Services
                         Name = organization.Name,
                         Inn = organization.Inn,
                         SubscriptionType = organization.SubscriptionType,
-                        SubscriptionStartDate = organization.SubscriptionStartDate,
-                        SubscriptionEndDate = organization.SubscriptionEndDate,
+                        SubscriptionStartDate = DateTime.SpecifyKind(organization.SubscriptionStartDate, DateTimeKind.Utc),
+                        SubscriptionEndDate = DateTime.SpecifyKind(organization.SubscriptionEndDate, DateTimeKind.Utc)
                     };
                     await context.Organizations.AddAsync(org);
                     await context.SaveChangesAsync();
