@@ -21,11 +21,13 @@ builder.Services.AddDbContext<BMplbaseContext>(options =>
 builder.Services.AddScoped<IDeliveryTypeService, DeliveryTypeService>();
 builder.Services.AddScoped<IMaterialSourceService, MaterialSourceService>();
 builder.Services.AddScoped<IMaterialValueService, MaterialValueService>();
+builder.Services.AddScoped<IMaterialPropService, MaterialPropService>();
 
 var app = builder.Build();
 
 app.MapDeliveryTypeRoutes();
 app.MapMaterialSourceRoutes();
 app.MapMaterialValueRoutes();
+app.MapMaterialPropertyRoutes();
 
 app.Run();
