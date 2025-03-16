@@ -30,8 +30,8 @@ namespace MplAuthService.Services
                         Name = organization.Name,
                         Inn = organization.Inn,
                         SubscriptionType = organization.SubscriptionType,
-                        SubscriptionStartDate = organization.SubscriptionStartDate,
-                        SubscriptionEndDate = organization.SubscriptionEndDate,
+                        SubscriptionStartDate = DateTime.SpecifyKind(organization.SubscriptionStartDate, DateTimeKind.Utc),
+                        SubscriptionEndDate = DateTime.SpecifyKind(organization.SubscriptionEndDate, DateTimeKind.Utc)
                     };
                     await context.Organizations.AddAsync(org);
                     await context.SaveChangesAsync();
@@ -113,6 +113,21 @@ namespace MplAuthService.Services
         public async Task<User> GetUserByEmail(string email)
         {
             throw new NotImplementedException();
+        }
+        public async Task<List<User>> GetUsers()
+        {
+            try
+            {
+                logger.LogInformation("Getting all users");
+                var users = await context.Users
+                    .Include(u => u.Organization)
+                    .ToListAsync();
+                return users;
+            }catch(Exception ex)
+            {
+                logger.LogError(ex, "Failed to get users");
+                throw;
+            }
         }
 
         public async Task DeleteUser(User user)

@@ -1,6 +1,6 @@
 import { browser } from "$app/environment";
 
-export const ENABLE_MOCKS = browser && (import.meta.env.DEV || import.meta.env.VITE_USE_MOCKS === 'true');
+export const ENABLE_MOCKS = browser && (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS === 'true');
 
 export const MOCK_DELAY = 800;
 

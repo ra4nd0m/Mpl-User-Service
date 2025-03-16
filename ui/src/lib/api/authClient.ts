@@ -3,7 +3,7 @@ import config from "$lib/config";
 import { ENABLE_MOCKS } from "$lib/mock";
 import { mockLogin, mockRefreshToken, mockLogout } from "$lib/mock/authServiceMock";
 
-export async function fetchWithAuth(url: string, options: RequestInit = {}) {
+export async function fetchWithAuth(url: string, options: RequestInit = {}, useAuthService: boolean = false) {
     let token = '';
     authStore.subscribe(state => {
         token = state.token || '';
@@ -17,8 +17,13 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     }
 
     const normalizedUrl = url.startsWith('/') ? url.substring(1) : url;
-
-    let response = await fetch(`${config.apiBaseUrl}/${normalizedUrl}`, options);
+    let finalUrl: string;
+    if (useAuthService) {
+        finalUrl = `${config.apiAuthUrl}/${normalizedUrl}`;
+    } else {
+        finalUrl = `${config.apiBaseUrl}/${normalizedUrl}`;
+    }
+    let response = await fetch(finalUrl, options);
 
     if (response.status === 401 && response.headers.get('Token-Expired') === 'true') {
         const newToken = await refreshAccessToken();
@@ -28,7 +33,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
                 ...options.headers,
                 Authorization: `Bearer ${newToken}`
             };
-            response = await fetch(`${config.apiBaseUrl}/${normalizedUrl}`, options);
+            response = await fetch(finalUrl, options);
         };
     }
     return response;
@@ -72,7 +77,7 @@ export async function login(email: string, password: string, rememberMe: boolean
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email, password, rememberMe }),
+            body: JSON.stringify({ email, password }),
             credentials: 'include'
         });
 
