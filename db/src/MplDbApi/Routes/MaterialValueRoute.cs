@@ -1,8 +1,5 @@
 using MplDbApi.Interfaces;
-using MplDbApi.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using MplDbApi.Models.Dtos;
 
 namespace MplDbApi.Routes
 {
@@ -13,7 +10,7 @@ namespace MplDbApi.Routes
             var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("MaterialValueRoutes");
 
-            app.MapGet("/materialvalues/{id:int}", async ([FromServices] IMaterialValueService materialValue, int id) =>
+            app.MapGet("/materialvalues/{id:int}", async (IMaterialValueService materialValue, int id) =>
             {
                 try
                 {
@@ -26,6 +23,32 @@ namespace MplDbApi.Routes
                 {
                     logger.LogError(ex, "Error while fetching material value with ID {Id}", id);
                     return Results.Problem($"An error occurred while retrieving material value with ID {id}.");
+                }
+            });
+            app.MapPost("/materialvalues/overview", async (IMaterialValueService service, List<MaterialDateMetricReq> req) =>
+            {
+                try
+                {
+                    var overviewData = await service.GetOverviewTableData(req);
+                    return Results.Ok(overviewData);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error while fetching overview data");
+                    return Results.Problem("An error occurred while retrieving overview data");
+                }
+            });
+            app.MapPost("/materialvalues/daterange", async (IMaterialValueService service, MaterialDateMetricReq req) =>
+            {
+                try
+                {
+                    var valueRange = await service.GetMaterialMetricsByDateRange(req);
+                    return Results.Ok(valueRange);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error while fetching value range data");
+                    return Results.Problem("An error occurred while retrieving value range data");
                 }
             });
         }
