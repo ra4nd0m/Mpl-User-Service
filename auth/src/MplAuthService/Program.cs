@@ -86,9 +86,19 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
+builder.Services.AddCors(options =>{
+    options.AddDefaultPolicy(builder => {
+        builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
