@@ -261,28 +261,4 @@
 			font-size: 12px;
 		}
 	}
-	.loading-container {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		height: 100vh;
-		color: #2c3e50;
-	}
-
-	.loading-spinner {
-		width: 40px;
-		height: 40px;
-		border: 3px solid rgba(0, 0, 0, 0.1);
-		border-radius: 50%;
-		border-top-color: #3498db;
-		animation: spin 1s ease-in-out infinite;
-		margin-bottom: 10px;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
 </style>
