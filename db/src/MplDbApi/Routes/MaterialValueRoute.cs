@@ -13,7 +13,7 @@ namespace MplDbApi.Routes
             var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("MaterialValueRoutes");
 
-            app.MapGet("/materialvalues/{id:int}", async ([FromServices] IMaterialValueService materialValue, int id) =>
+            app.MapGet("/materialvalues/{id:int}", async (IMaterialValueService materialValue, int id) =>
             {
                 try
                 {
