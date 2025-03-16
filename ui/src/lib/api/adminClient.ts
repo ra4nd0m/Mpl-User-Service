@@ -31,15 +31,7 @@ export async function getOrg(id: number): Promise<OrgResponse | null> {
 
 }
 
-export interface OrgResponse {
-    name: string;
-    inn: string;
-    subscriptionType: SubscriptionType;
-    subscriptionStartDate: string;
-    subscriptionEndDate: string;
-}
-
-export async function registerUser(user: NewUser): Promise<RegisterUserResponse | null> {
+export async function registerUser(user: NewUser): Promise<UserResponse | null> {
     try {
         const response = await fetchWithAuth('register', {
             method: 'POST',
@@ -62,26 +54,58 @@ export async function registerUser(user: NewUser): Promise<RegisterUserResponse 
     }
 }
 
-export enum SubscriptionType {
-    Free = "Free",
-    Basic = "Basic",
-    Premium = "Premium"
+export async function getUserByEmail(email: string): Promise<UserResponse | null> {
+    try {
+        const response = await fetchWithAuth(`users/${email}`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Failed to get user:', errorData || response.statusText);
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error during getUserByEmail:', error);
+        return null;
+    }
 }
 
-export interface RegisterUserResponse {
+export async function getUsers(): Promise<UserResponse[] | null> {
+    try {
+        const response = await fetchWithAuth('users');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Failed to get users:', errorData || response.statusText);
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error during getUsers:', error);
+        return null;
+    }
+}
+
+export enum SubscriptionType {
+    Free = 0,
+    Basic = 1,
+    Premium = 2
+}
+
+export interface UserResponse {
     id: string;
     email: string;
-    organizationId: number;
+    org: OrgResponse | null;
+}
+
+export interface OrgResponse {
+    name: string;
+    inn: string;
+    subscriptionType: SubscriptionType;
+    subscriptionStartDate: string; // ISO date string format
+    subscriptionEndDate: string;   // ISO date string format
 }
 
 export interface NewUser {
     email: string;
     password: string;
-    organization: {
-        name: string;
-        inn: string;
-        subscriptionType: SubscriptionType;
-        subscriptionStartDate: string;
-        subscriptionEndDate: string;
-    }
+    organization: OrgResponse | null;
 }
