@@ -10,7 +10,7 @@ const config: Config = {
 
 if (!config.apiBaseUrl) {
     if (import.meta.env.DEV) {
-        config.apiBaseUrl = 'http://localhost:5000/userapi';
+        config.apiBaseUrl = 'http://localhost:5204';
     } else {
         throw new Error('Missing PUBLIC_API_BASE_URL');
     }
