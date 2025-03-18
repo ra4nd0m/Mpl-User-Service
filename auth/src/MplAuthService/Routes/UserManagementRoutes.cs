@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using MplAuthService.Interfaces;
+using MplAuthService.Models;
 using MplAuthService.Models.Dtos;
 
 namespace MplAuthService.Routes
@@ -75,6 +77,29 @@ namespace MplAuthService.Routes
                     result = new UserResponseDto(user.Id, user.Email!, null);
                 }
                 return Results.Ok(result);
+            }).RequireAuthorization("AdminOnly");
+
+            app.MapDelete("/users/{email}", async (IUserService service, UserManager<User> manager,
+                string email, ILogger<Program> logger) =>
+            {
+                try
+                {
+                    logger.LogInformation("Deleting user with email {Email}", email);
+                    var user = await manager.FindByEmailAsync(email);
+                    if (user == null)
+                    {
+                        logger.LogWarning("User with email {Email} not found", email);
+                        return Results.NotFound("User not found");
+                    }
+                    await service.DeleteUser(user);
+                    logger.LogInformation("User with email {Email} deleted", email);
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to delete user with email {Email}", email);
+                    return Results.BadRequest();
+                }
             }).RequireAuthorization("AdminOnly");
         }
     }
