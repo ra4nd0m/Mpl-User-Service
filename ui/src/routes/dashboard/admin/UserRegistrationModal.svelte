@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { registerUser, SubscriptionType, type NewUser } from '$lib/api/adminClient';
 
-	let { showModal = $bindable() } = $props();
+	let { showModal = $bindable(), onUserAdded = $bindable() } = $props();
 
 	let newUser: NewUser = $state({
 		email: '',
@@ -78,6 +78,7 @@
 			if (result) {
 				formSuccess = `User ${result.email} registered successfully`;
 				closeModal();
+				if (onUserAdded) onUserAdded();
 			} else {
 				formError = 'Failed to register user';
 			}

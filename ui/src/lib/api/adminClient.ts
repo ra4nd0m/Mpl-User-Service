@@ -84,6 +84,23 @@ export async function getUsers(): Promise<UserResponse[] | null> {
     }
 }
 
+export async function deleteUser(email: string): Promise<boolean> {
+    try {
+        const response = await fetchWithAuth(`users/${email}`, { method: 'DELETE' }, true);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Failed to delete user:', errorData || response.statusText);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('Error during deleteUser:', err);
+        return false;
+    }
+}
+
 export enum SubscriptionType {
     Free = 0,
     Basic = 1,

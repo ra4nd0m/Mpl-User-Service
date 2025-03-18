@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getUsers, SubscriptionType, type UserResponse } from '$lib/api/adminClient';
+	import { deleteUser, getUsers, SubscriptionType, type UserResponse } from '$lib/api/adminClient';
 	import UserRegistrationModal from './UserRegistrationModal.svelte';
 
 	let userList: UserResponse[] = $state([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let showUserModal = $state(false);
+	let successMessage = $state<string | null>(null);
 
 	function getSubscriptionTypeName(type: SubscriptionType | undefined): string {
 		if (type === undefined) return 'N/A';
@@ -28,7 +29,12 @@
 		return new Date(dateString).toLocaleDateString();
 	}
 
-	onMount(async () => {
+	function handleUserAdded() {
+		successMessage = 'Пользователь успешно добавлен';
+		loadUsers();
+	}
+
+	async function loadUsers() {
 		try {
 			loading = true;
 			const users = await getUsers();
@@ -39,6 +45,34 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function handleDeleteUser(email: string) {
+		if (!confirm(`Вы уверены, что хотите удалить пользователя ${email}?`)) return;
+
+		try {
+			loading = true;
+			error = null;
+			successMessage = null;
+
+			const result = await deleteUser(email);
+
+			if (result) {
+				successMessage = `Пользователь ${email} успешно удален`;
+				await loadUsers();
+			} else {
+				error = `Не удалось удалить пользователя ${email}`;
+			}
+		} catch (err) {
+			console.error('Failed to delete user', err);
+			error = 'Failed to delete user';
+		} finally {
+			loading = false;
+		}
+	}
+
+	onMount(async () => {
+		await loadUsers();
 	});
 </script>
 
@@ -70,7 +104,9 @@
 	{#if error}
 		<div class="error-message">{error}</div>
 	{/if}
-
+	{#if successMessage}
+		<div class="success-message">{successMessage}</div>
+	{/if}
 	{#if loading}
 		<div class="loading-spinner-container">
 			<div class="loading-spinner"></div>
@@ -138,6 +174,7 @@
 									class="action-button delete-button"
 									title="Delete User"
 									aria-label="Delete User"
+									onclick={() => handleDeleteUser(user.email)}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -163,7 +200,7 @@
 			</table>
 		</div>
 	{/if}
-	<UserRegistrationModal bind:showModal={showUserModal} />
+	<UserRegistrationModal bind:showModal={showUserModal} onUserAdded={handleUserAdded} />
 </section>
 
 <style>
@@ -315,5 +352,13 @@
 
 	.add-user-button:hover {
 		background-color: #27ae60;
+	}
+
+	.success-message {
+		padding: 0.75rem;
+		background-color: rgba(40, 167, 69, 0.1);
+		color: #28a745;
+		border-radius: 4px;
+		margin-bottom: 1rem;
 	}
 </style>
