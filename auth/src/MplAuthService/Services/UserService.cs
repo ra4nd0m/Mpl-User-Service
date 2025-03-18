@@ -123,7 +123,8 @@ namespace MplAuthService.Services
                     .Include(u => u.Organization)
                     .ToListAsync();
                 return users;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get users");
                 throw;
@@ -132,7 +133,32 @@ namespace MplAuthService.Services
 
         public async Task DeleteUser(User user)
         {
-            throw new NotImplementedException();
+            logger.LogInformation("Deleting user with email {Email}", user.Email);
+            using var transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                var refreshTokens = await context.RefreshTokens
+                    .Where(rt => rt.UserId == user.Id)
+                    .ToListAsync();
+                if (refreshTokens.Count == 0)
+                {
+                    context.RefreshTokens.RemoveRange(refreshTokens);
+                    await context.SaveChangesAsync();
+                }
+                var result = await userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    throw new InvalidOperationException($"Failed to delete user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
+                await transaction.CommitAsync();
+                logger.LogInformation("User deleted with email {Email}", user.Email);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                logger.LogError(ex, "Failed to delete user with email {Email}", user.Email);
+                throw;
+            }
         }
     }
 }
