@@ -28,7 +28,7 @@ export const users = {
     }
 };
 
-export const favoriteMaterials = {
+export const mockFavoriteMaterials = {
     '123': [1, 3, 5, 8], // Test user's favorite materials
     '456': [2, 4, 7, 10]  // Admin user's favorite materials
 };
