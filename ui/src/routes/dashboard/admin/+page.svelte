@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getUsers, SubscriptionType, type UserResponse } from '$lib/api/adminClient';
+	import { deleteUser, getUsers, SubscriptionType, type UserResponse } from '$lib/api/adminClient';
 	import UserRegistrationModal from './UserRegistrationModal.svelte';
 
 	let userList: UserResponse[] = $state([]);
@@ -28,7 +28,7 @@
 		return new Date(dateString).toLocaleDateString();
 	}
 
-	onMount(async () => {
+	async function loadUsers() {
 		try {
 			loading = true;
 			const users = await getUsers();
@@ -39,6 +39,33 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function handleDeleteUser(email: string) {
+		if (!confirm(`Вы уверены, что хотите удалить пользователя ${email}?`)) return;
+
+		try {
+			loading = true;
+			error = null;
+
+			const result = await deleteUser(email);
+
+			if (result) {
+				alert(`Пользователь ${email} успешно удален`);
+				await loadUsers();
+			} else {
+				error = `Не удалось удалить пользователя ${email}`;
+			}
+		} catch (err) {
+			console.error('Failed to delete user', err);
+			error = 'Failed to delete user';
+		} finally {
+			loading = false;
+		}
+	}
+
+	onMount(async () => {
+		await loadUsers();
 	});
 </script>
 
@@ -138,6 +165,7 @@
 									class="action-button delete-button"
 									title="Delete User"
 									aria-label="Delete User"
+									onclick={() => handleDeleteUser(user.email)}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
