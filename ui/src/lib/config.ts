@@ -4,8 +4,8 @@ interface Config {
 }
 
 const config: Config = {
-    apiBaseUrl: import.meta.env.PUBLIC_API_BASE_URL,
-    apiAuthUrl: import.meta.env.PUBLIC_API_AUTH_URL
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+    apiAuthUrl: import.meta.env.VITE_API_AUTH_URL
 };
 
 if (!config.apiBaseUrl) {

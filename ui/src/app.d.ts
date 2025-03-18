@@ -9,8 +9,8 @@ declare global {
 		// interface Platform {}
 	}
 	interface ImportMetaEnv {
-		PUBLIC_API_BASE_URL: string;
-		PUBLIC_API_AUTH_URL: string;
+		VITE_API_BASE_URL: string;
+		VITE_API_AUTH_URL: string;
 		VITE_USE_MOCKS: string;
 	}
 
