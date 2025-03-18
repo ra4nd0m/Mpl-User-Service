@@ -97,4 +97,19 @@ app.UseAuthorization();
 
 app.MapUserDataRoutes();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<UserContext>();
+        await context.Database.MigrateAsync();
+        app.Logger.LogInformation("Database migrated");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred while migrating the database");
+    }
+}
+
 app.Run();
