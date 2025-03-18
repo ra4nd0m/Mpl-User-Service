@@ -24,8 +24,8 @@
 			if (result.error) {
 				throw new Error(result.error);
 			}
-		} catch (error) {
-			console.error(error);
+		} catch (err) {
+			console.error(err);
 			error = 'An error occurred';
 		} finally {
 			loading = false;
