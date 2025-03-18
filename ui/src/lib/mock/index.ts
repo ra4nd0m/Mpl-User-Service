@@ -33,7 +33,7 @@ export const favoriteMaterials = {
     '456': [2, 4, 7, 10]  // Admin user's favorite materials
 };
 
-export const materials = [
+export const mockMaterials = [
     {
         Id: 1,
         MaterialName: "Steel Plate A36",

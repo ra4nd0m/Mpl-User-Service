@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ENABLE_MOCKS, materials, delay } from '$lib/mock';
+	import { ENABLE_MOCKS, mockMaterials, delay } from '$lib/mock';
 	import { fetchWithAuth } from '$lib/api/authClient';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 
@@ -33,7 +33,7 @@
 		try {
 			if (ENABLE_MOCKS) {
 				await delay();
-				materialList = materials;
+				materialList = mockMaterials;
 				loading = false;
 				return;
 			}
