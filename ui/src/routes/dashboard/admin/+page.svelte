@@ -7,6 +7,7 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let showUserModal = $state(false);
+	let successMessage = $state<string | null>(null);
 
 	function getSubscriptionTypeName(type: SubscriptionType | undefined): string {
 		if (type === undefined) return 'N/A';
@@ -28,6 +29,11 @@
 		return new Date(dateString).toLocaleDateString();
 	}
 
+	function handleUserAdded() {
+		successMessage = 'Пользователь успешно добавлен';
+		loadUsers();
+	}
+
 	async function loadUsers() {
 		try {
 			loading = true;
@@ -47,11 +53,12 @@
 		try {
 			loading = true;
 			error = null;
+			successMessage = null;
 
 			const result = await deleteUser(email);
 
 			if (result) {
-				alert(`Пользователь ${email} успешно удален`);
+				successMessage = `Пользователь ${email} успешно удален`;
 				await loadUsers();
 			} else {
 				error = `Не удалось удалить пользователя ${email}`;
@@ -97,7 +104,9 @@
 	{#if error}
 		<div class="error-message">{error}</div>
 	{/if}
-
+	{#if successMessage}
+		<div class="success-message">{successMessage}</div>
+	{/if}
 	{#if loading}
 		<div class="loading-spinner-container">
 			<div class="loading-spinner"></div>
@@ -191,7 +200,7 @@
 			</table>
 		</div>
 	{/if}
-	<UserRegistrationModal bind:showModal={showUserModal} />
+	<UserRegistrationModal bind:showModal={showUserModal} onUserAdded={handleUserAdded} />
 </section>
 
 <style>
@@ -343,5 +352,13 @@
 
 	.add-user-button:hover {
 		background-color: #27ae60;
+	}
+
+	.success-message {
+		padding: 0.75rem;
+		background-color: rgba(40, 167, 69, 0.1);
+		color: #28a745;
+		border-radius: 4px;
+		margin-bottom: 1rem;
 	}
 </style>
