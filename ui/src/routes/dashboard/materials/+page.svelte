@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ENABLE_MOCKS, materials, delay } from '$lib/mock';
+	import { ENABLE_MOCKS, mockMaterials, delay } from '$lib/mock';
 	import { fetchWithAuth } from '$lib/api/authClient';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 
@@ -19,6 +19,7 @@
 	let loading = $state(true);
 	let error = $state('');
 
+
 	const favoriteIds = $derived($favoritesStore.ids);
 
 	function isFavorite(materialId: number): boolean {
@@ -26,14 +27,18 @@
 	}
 
 	async function toggleFavorite(materialId: number) {
-		await favoritesStore.toggleFavorite(materialId);
+		if(isFavorite(materialId)) {
+			await favoritesStore.removeFromFavorites(materialId);
+		} else {
+			await favoritesStore.addToFavorites(materialId);
+		}
 	}
 
 	async function loadMaterials() {
 		try {
 			if (ENABLE_MOCKS) {
 				await delay();
-				materialList = materials;
+				materialList = mockMaterials;
 				loading = false;
 				return;
 			}
@@ -50,11 +55,25 @@
 		}
 	}
 
-	onMount(() => loadMaterials());
+	onMount(async()=>{
+		await loadMaterials();
+	});
 </script>
 
 <section>
 	<h1>Materials</h1>
+	<div class="debug-favorites">
+		<p class="debug-title">Favorite Material IDs:</p>
+		<div class="debug-ids">
+			{#if favoriteIds.length === 0}
+				<span class="no-favorites">No favorites selected</span>
+			{:else}
+				{#each favoriteIds as id}
+					<span class="favorite-id">{id}</span>
+				{/each}
+			{/if}
+		</div>
+	</div>
 	{#if error}
 		<div class="error-message">{error}</div>
 	{/if}

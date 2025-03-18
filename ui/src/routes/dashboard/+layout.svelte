@@ -29,8 +29,8 @@
 	const isAdmin = $derived($authStore.roles?.includes('Admin'));
 
 	onMount(() => {
-
 		favoritesStore.loadFavourites();
+		
 		const unsubscribe = authStore.subscribe((state) => {
 			if (!state.isAuthenticated && browser) {
 				goto('/login');
