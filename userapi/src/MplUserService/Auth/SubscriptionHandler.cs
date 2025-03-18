@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using MplUserService.Models.Enums;
 
@@ -16,6 +17,12 @@ namespace MplUserService.Auth
     {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SubscriptionRequirement requirement)
         {
+            if (context.User.IsInRole("Admin") || context.User.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin"))
+            {
+                context.Succeed(requirement);
+                return Task.CompletedTask;
+            }
+            
             var subscriptionClaim = context.User.FindFirst("SubscriptionType");
             var subscriptionEndClaim = context.User.FindFirst("SubscriptionEnd");
 
