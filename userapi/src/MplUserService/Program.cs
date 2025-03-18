@@ -1,4 +1,5 @@
 using System.Text;
+using Npgsql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -21,7 +22,14 @@ var configuration = new ConfigurationBuilder()
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<UserContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+var connectionString = configuration.GetConnectionString("DefaultConnection") ??
+    throw new InvalidOperationException("DefaultConnection is missing");
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+dataSourceBuilder.EnableDynamicJson();
+var dataSource = dataSourceBuilder.Build();
+
+builder.Services.AddDbContext<UserContext>(options =>
+    options.UseNpgsql(dataSource));
 
 builder.Services.AddAuthentication(options =>
 {
