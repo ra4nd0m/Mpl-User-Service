@@ -18,12 +18,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<BMplbaseContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+//This service is internal so no need for restrictive cors 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddScoped<IDeliveryTypeService, DeliveryTypeService>();
 builder.Services.AddScoped<IMaterialSourceService, MaterialSourceService>();
 builder.Services.AddScoped<IMaterialValueService, MaterialValueService>();
 builder.Services.AddScoped<IMaterialPropService, MaterialPropService>();
 
 var app = builder.Build();
+
+app.UseCors();
 
 app.MapDeliveryTypeRoutes();
 app.MapMaterialSourceRoutes();
