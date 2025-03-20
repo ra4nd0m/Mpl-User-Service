@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 	import { mockMaterials, sampleData } from '$lib/mock';
+	import type { Material } from '$lib/api/userClient';
 
 	// Type definitions for the data structure
 	interface MaterialInfo {
@@ -31,18 +32,6 @@
 		materialValues: MaterialValue[];
 	}
 
-	// Define interface for material structure
-	interface Material {
-		Id: number;
-		MaterialName: string;
-		Source: string;
-		DeliveryType: string;
-		Group: string;
-		Market: string;
-		Unit: string;
-		LastCreatedDate: string | null;
-	}
-
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
 	let materialData = $state<DateEntry[]>([]);
@@ -63,7 +52,7 @@
 	onMount(async () => {
 		// Get favorite materials info
 		favoriteMaterials = mockMaterials.filter((material: Material) =>
-			favoriteIds.includes(material.Id)
+			favoriteIds.includes(material.id)
 		);
 
 		// In a real app, fetch data from API
@@ -107,7 +96,7 @@
 					<tr>
 						<th rowspan="2">Date</th>
 						{#each favoriteMaterials as material}
-							<th colspan="3">{material.MaterialName}</th>
+							<th colspan="3">{material.materialName}</th>
 						{/each}
 					</tr>
 					<tr>
@@ -126,7 +115,7 @@
 							{#each favoriteMaterials as favMaterial}
 								<!-- Find if we have data for this material on this date -->
 								{@const matchedData = entry.materialValues.find(
-									(mv) => mv.materialInfo.id === favMaterial.Id
+									(mv) => mv.materialInfo.id === favMaterial.id
 								)}
 
 								{#if matchedData}

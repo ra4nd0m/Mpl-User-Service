@@ -1,4 +1,4 @@
-import { delay, ENABLE_MOCKS, mockFavoriteMaterials } from "$lib/mock";
+import { delay, ENABLE_MOCKS, mockFavoriteMaterials, mockMaterials } from "$lib/mock";
 import { fetchWithAuth } from "./authClient";
 
 export async function getFavorites(): Promise<number[] | null> {
@@ -68,4 +68,64 @@ export async function removeFavorite(id: number): Promise<number[] | null> {
         console.error('Error during removeFavorite:', err);
         return null;
     }
+}
+
+export async function getMaterials(): Promise<Material[] | null> {
+    try {
+        if (ENABLE_MOCKS) {
+            await delay();
+            return mockMaterials;
+        }
+        const resp = await fetchWithAuth('data/materials');
+        if (!resp.ok) {
+            console.error('Failed to get materials:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getMaterials:', err);
+        return null;
+    }
+}
+
+export async function getOverview()
+
+
+
+
+export interface Material {
+    id: number;
+    materialName: string;
+    source: string;
+    deliveryType: string;
+    group: string;
+    market: string;
+    unit: string;
+    lastCreatedDate: string | null;
+}
+
+export interface MaterialDateMetricReq {
+    materialId: number;
+    propertyIds: number[];
+    startDate: string;
+    endDate: string;
+}
+
+export interface MaterialDateMetricsResp {
+    id: number;
+    date: string;
+    propsUsed: number[];
+    valueAvg: string | null;
+    valueMin: string | null;
+    valueMax: string | null;
+    predWeekly: string | null;
+    predMonthly: string | null;
+    supply: string | null;
+    monthlyAvg: string | null;
+}
+
+export interface DateGroupedMaterialValues {
+    date: string;
+    materialValues: MaterialDateMetricsResp[]
 }

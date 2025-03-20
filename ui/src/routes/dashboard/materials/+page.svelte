@@ -1,24 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ENABLE_MOCKS, mockMaterials, delay } from '$lib/mock';
-	import { fetchWithAuth } from '$lib/api/authClient';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
-
-	interface Material {
-		Id: number;
-		MaterialName: string;
-		Source: string;
-		DeliveryType: string;
-		Group: string;
-		Market: string;
-		Unit: string;
-		LastCreatedDate: string | null;
-	}
+	import { getMaterials, type Material } from '$lib/api/userClient';
 
 	let materialList: Material[] = $state([]);
 	let loading = $state(true);
 	let error = $state('');
-
 
 	const favoriteIds = $derived($favoritesStore.ids);
 
@@ -27,7 +14,7 @@
 	}
 
 	async function toggleFavorite(materialId: number) {
-		if(isFavorite(materialId)) {
+		if (isFavorite(materialId)) {
 			await favoritesStore.removeFromFavorites(materialId);
 		} else {
 			await favoritesStore.addToFavorites(materialId);
@@ -36,17 +23,16 @@
 
 	async function loadMaterials() {
 		try {
-			if (ENABLE_MOCKS) {
-				await delay();
-				materialList = mockMaterials;
-				loading = false;
-				return;
-			}
-			const response = await fetchWithAuth('/userapi/data/materialList');
-			if (!response.ok) {
+			loading = true;
+			error = '';
+
+			const materials = await getMaterials();
+
+			if (materials) {
+				materialList = materials;
+			} else {
 				throw new Error('Failed to load materials');
 			}
-			materialList = await response.json();
 		} catch (err) {
 			console.error(err);
 			error = 'Failed to load materials';
@@ -55,7 +41,7 @@
 		}
 	}
 
-	onMount(async()=>{
+	onMount(async () => {
 		await loadMaterials();
 	});
 </script>
