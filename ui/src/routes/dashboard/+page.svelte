@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
-	import { mockMaterials, sampleData } from '$lib/mock';
-	import type { Material, DateGroupedMaterialValues } from '$lib/api/userClient';
+	import {
+		type Material,
+		type DateGroupedMaterialValues,
+		getMaterials,
+		getOverview
+	} from '$lib/api/userClient';
 
 	// Type definitions for the data structure
 
@@ -10,9 +14,17 @@
 	let favoriteMaterials = $state<Material[]>([]);
 	let materialData = $state<DateGroupedMaterialValues[]>([]);
 	let isLoading = $state(true);
+	let error = $state<string | null>(null);
 
-	// Sample data (in a real app, this would come from an API)
-	const sampleTestData: DateGroupedMaterialValues[] = sampleData;
+	//Date range for fetching,
+	const today = new Date();
+	let startDate = $state(
+		new Date(today.getFullYear(), today.getMonth() - 1).toISOString().split('T')[0]
+	);
+	let endDate = $state(today.toISOString().split('T')[0]);
+
+	// Property IDs to fetch, hardocoded for now
+	const propertyIds = [1, 2, 3, 6];
 
 	// Format date for display
 	function formatDate(dateString: string): string {
@@ -24,18 +36,35 @@
 	}
 
 	onMount(async () => {
+		error = null;
+		isLoading = true;
 		// Get favorite materials info
-		favoriteMaterials = mockMaterials.filter((material: Material) =>
+		const materialList = await getMaterials();
+		if (!materialList) {
+			error = 'Failed to fetch materials';
+			return;
+		}
+		favoriteMaterials = materialList.filter((material: Material) =>
 			favoriteIds.includes(material.id)
 		);
 
-		// In a real app, fetch data from API
-		// const response = await fetch('/api/material-values');
-		// materialData = await response.json();
-
-		// For now, use sample data
-		materialData = sampleTestData;
-		isLoading = false;
+		try {
+			if (favoriteIds.length > 0) {
+				const data = await getOverview(favoriteIds, propertyIds, startDate, endDate);
+				if (data) {
+					materialData = data;
+				} else {
+					error = 'Failed to fetch data';
+				}
+			} else {
+				materialData = [];
+			}
+		} catch (err) {
+			console.error('Error fetching data', err);
+			error = 'Failed to fetch data';
+		} finally {
+			isLoading = false;
+		}
 	});
 </script>
 

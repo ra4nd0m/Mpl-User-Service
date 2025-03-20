@@ -88,17 +88,17 @@
 					<tr>
 						<td class="favorite-cell">
 							<button
-								class="favorite-button {isFavorite(material.Id) ? 'is-favorite' : ''}"
-								onclick={() => toggleFavorite(material.Id)}
-								title={isFavorite(material.Id) ? 'Remove from favorites' : 'Add to favorites'}
-								aria-label={isFavorite(material.Id) ? 'Remove from favorites' : 'Add to favorites'}
+								class="favorite-button {isFavorite(material.id) ? 'is-favorite' : ''}"
+								onclick={() => toggleFavorite(material.id)}
+								title={isFavorite(material.id) ? 'Remove from favorites' : 'Add to favorites'}
+								aria-label={isFavorite(material.id) ? 'Remove from favorites' : 'Add to favorites'}
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									width="16"
 									height="16"
 									viewBox="0 0 24 24"
-									fill={isFavorite(material.Id) ? 'currentColor' : 'none'}
+									fill={isFavorite(material.id) ? 'currentColor' : 'none'}
 									stroke="currentColor"
 									stroke-width="2"
 									stroke-linecap="round"
@@ -110,14 +110,14 @@
 								</svg>
 							</button>
 						</td>
-						<td>{material.Id}</td>
-						<td>{material.MaterialName}</td>
-						<td>{material.Source}</td>
-						<td>{material.DeliveryType}</td>
-						<td>{material.Group}</td>
-						<td>{material.Market}</td>
-						<td>{material.Unit}</td>
-						<td>{material.LastCreatedDate}</td>
+						<td>{material.id}</td>
+						<td>{material.materialName}</td>
+						<td>{material.source}</td>
+						<td>{material.deliveryType}</td>
+						<td>{material.group}</td>
+						<td>{material.market}</td>
+						<td>{material.unit}</td>
+						<td>{material.lastCreatedDate}</td>
 					</tr>
 				{:else}
 					<tr>
