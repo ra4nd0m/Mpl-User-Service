@@ -89,7 +89,34 @@ export async function getMaterials(): Promise<Material[] | null> {
     }
 }
 
-export async function getOverview()
+export async function getOverview(materialId: number, propertyIds: number[], startDate: string, endDate: string): Promise<DateGroupedMaterialValues[] | null> {
+    try {
+        if (ENABLE_MOCKS) {
+            await delay();
+
+        }
+        const req: MaterialDateMetricReq = {
+            materialId,
+            propertyIds,
+            startDate,
+            endDate
+        }
+        const resp = await fetchWithAuth('materialvalues/overview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req)
+        });
+        if (!resp.ok) {
+            console.error('Failed to get overview:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getOverview:', err);
+        return null;
+    }
+}
 
 
 
@@ -112,6 +139,14 @@ export interface MaterialDateMetricReq {
     endDate: string;
 }
 
+export interface CompactMaterialInfo {
+    id: number;
+    materialName: string;
+    deliveryType: string;
+    market: string;
+    unit: string;
+}
+
 export interface MaterialDateMetricsResp {
     id: number;
     date: string;
@@ -123,6 +158,7 @@ export interface MaterialDateMetricsResp {
     predMonthly: string | null;
     supply: string | null;
     monthlyAvg: string | null;
+    materialInfo: CompactMaterialInfo;
 }
 
 export interface DateGroupedMaterialValues {

@@ -2,43 +2,17 @@
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 	import { mockMaterials, sampleData } from '$lib/mock';
-	import type { Material } from '$lib/api/userClient';
+	import type { Material, DateGroupedMaterialValues } from '$lib/api/userClient';
 
 	// Type definitions for the data structure
-	interface MaterialInfo {
-		id: number;
-		name: string;
-		deliveryTypeName: string;
-		targetMarket: string;
-		unitName: string;
-	}
-
-	interface MaterialValue {
-		id: number;
-		date: string;
-		propsUsed: number[];
-		valueAvg: string;
-		valueMin: string;
-		valueMax: string;
-		predWeekly: string;
-		predMonthly: string;
-		supply: string;
-		monthlyAvg: string;
-		materialInfo: MaterialInfo;
-	}
-
-	interface DateEntry {
-		date: string;
-		materialValues: MaterialValue[];
-	}
 
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
-	let materialData = $state<DateEntry[]>([]);
+	let materialData = $state<DateGroupedMaterialValues[]>([]);
 	let isLoading = $state(true);
 
 	// Sample data (in a real app, this would come from an API)
-	const sampleTestData: DateEntry[] = sampleData;
+	const sampleTestData: DateGroupedMaterialValues[] = sampleData;
 
 	// Format date for display
 	function formatDate(dateString: string): string {
