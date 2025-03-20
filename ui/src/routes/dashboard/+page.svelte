@@ -1,55 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
-	import { mockMaterials, sampleData } from '$lib/mock';
+	import {
+		type Material,
+		type DateGroupedMaterialValues,
+		getMaterials,
+		getOverview
+	} from '$lib/api/userClient';
 
 	// Type definitions for the data structure
-	interface MaterialInfo {
-		id: number;
-		name: string;
-		deliveryTypeName: string;
-		targetMarket: string;
-		unitName: string;
-	}
-
-	interface MaterialValue {
-		id: number;
-		date: string;
-		propsUsed: number[];
-		valueAvg: string;
-		valueMin: string;
-		valueMax: string;
-		predWeekly: string;
-		predMonthly: string;
-		supply: string;
-		monthlyAvg: string;
-		materialInfo: MaterialInfo;
-	}
-
-	interface DateEntry {
-		date: string;
-		materialValues: MaterialValue[];
-	}
-
-	// Define interface for material structure
-	interface Material {
-		Id: number;
-		MaterialName: string;
-		Source: string;
-		DeliveryType: string;
-		Group: string;
-		Market: string;
-		Unit: string;
-		LastCreatedDate: string | null;
-	}
 
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
-	let materialData = $state<DateEntry[]>([]);
+	let materialData = $state<DateGroupedMaterialValues[]>([]);
 	let isLoading = $state(true);
+	let error = $state<string | null>(null);
 
-	// Sample data (in a real app, this would come from an API)
-	const sampleTestData: DateEntry[] = sampleData;
+	//Date range for fetching,
+	const today = new Date();
+	let startDate = $state(
+		new Date(today.getFullYear(), today.getMonth() - 1).toISOString().split('T')[0]
+	);
+	let endDate = $state(today.toISOString().split('T')[0]);
+
+	// Property IDs to fetch, hardocoded for now
+	const propertyIds = [1, 2, 3, 6];
 
 	// Format date for display
 	function formatDate(dateString: string): string {
@@ -61,18 +36,35 @@
 	}
 
 	onMount(async () => {
+		error = null;
+		isLoading = true;
 		// Get favorite materials info
-		favoriteMaterials = mockMaterials.filter((material: Material) =>
-			favoriteIds.includes(material.Id)
+		const materialList = await getMaterials();
+		if (!materialList) {
+			error = 'Failed to fetch materials';
+			return;
+		}
+		favoriteMaterials = materialList.filter((material: Material) =>
+			favoriteIds.includes(material.id)
 		);
 
-		// In a real app, fetch data from API
-		// const response = await fetch('/api/material-values');
-		// materialData = await response.json();
-
-		// For now, use sample data
-		materialData = sampleTestData;
-		isLoading = false;
+		try {
+			if (favoriteIds.length > 0) {
+				const data = await getOverview(favoriteIds, propertyIds, startDate, endDate);
+				if (data) {
+					materialData = data;
+				} else {
+					error = 'Failed to fetch data';
+				}
+			} else {
+				materialData = [];
+			}
+		} catch (err) {
+			console.error('Error fetching data', err);
+			error = 'Failed to fetch data';
+		} finally {
+			isLoading = false;
+		}
 	});
 </script>
 
@@ -107,7 +99,7 @@
 					<tr>
 						<th rowspan="2">Date</th>
 						{#each favoriteMaterials as material}
-							<th colspan="3">{material.MaterialName}</th>
+							<th colspan="3">{material.materialName}</th>
 						{/each}
 					</tr>
 					<tr>
@@ -126,7 +118,7 @@
 							{#each favoriteMaterials as favMaterial}
 								<!-- Find if we have data for this material on this date -->
 								{@const matchedData = entry.materialValues.find(
-									(mv) => mv.materialInfo.id === favMaterial.Id
+									(mv) => mv.materialInfo.id === favMaterial.id
 								)}
 
 								{#if matchedData}
