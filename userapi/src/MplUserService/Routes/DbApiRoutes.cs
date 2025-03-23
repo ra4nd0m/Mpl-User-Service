@@ -10,7 +10,7 @@ namespace MplUserService.Routes
             var dbApiBaseUrl = app.Configuration["DBApi:BaseUrl"];
 
 
-            app.MapGet("/userapi/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
+            app.MapGet("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
                 var client = httpClientFactory.CreateClient();
                 var requestUrl = $"{dbApiBaseUrl}/{catchAll}{context.Request.QueryString}";
@@ -28,7 +28,7 @@ namespace MplUserService.Routes
             });
 
 
-            app.MapPost("/userapi/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
+            app.MapPost("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
 
             {
                 var client = httpClientFactory.CreateClient();
