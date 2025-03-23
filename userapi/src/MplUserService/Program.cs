@@ -28,6 +28,13 @@ var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.EnableDynamicJson();
 var dataSource = dataSourceBuilder.Build();
 
+var urls = builder.Configuration["Hosting:Urls"];
+if (!string.IsNullOrEmpty(urls))
+{
+    builder.WebHost.UseUrls(urls);
+}
+
+builder.Services.AddHttpClient();
 builder.Services.AddDbContext<UserContext>(options =>
     options.UseNpgsql(dataSource));
 
@@ -104,6 +111,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUserDataRoutes();
+app.MapMaterialRoutes();
 
 using (var scope = app.Services.CreateScope())
 {
