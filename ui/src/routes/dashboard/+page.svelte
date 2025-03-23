@@ -8,8 +8,6 @@
 		getOverview
 	} from '$lib/api/userClient';
 
-	// Type definitions for the data structure
-
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
 	let materialData = $state<DateGroupedMaterialValues[]>([]);
@@ -35,18 +33,9 @@
 		});
 	}
 
-	onMount(async () => {
+	async function fetchData() {
 		error = null;
 		isLoading = true;
-		// Get favorite materials info
-		const materialList = await getMaterials();
-		if (!materialList) {
-			error = 'Failed to fetch materials';
-			return;
-		}
-		favoriteMaterials = materialList.filter((material: Material) =>
-			favoriteIds.includes(material.id)
-		);
 
 		try {
 			if (favoriteIds.length > 0) {
@@ -65,6 +54,26 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	async function handleDateChange() {
+		await fetchData();
+	}
+
+	onMount(async () => {
+		error = null;
+		isLoading = true;
+		// Get favorite materials info
+		const materialList = await getMaterials();
+		if (!materialList) {
+			error = 'Failed to fetch materials';
+			return;
+		}
+		favoriteMaterials = materialList.filter((material: Material) =>
+			favoriteIds.includes(material.id)
+		);
+		//Initial data fetch
+		await fetchData();
 	});
 </script>
 
@@ -72,18 +81,19 @@
 	<h1>Dashboard</h1>
 	<p>Showing market values for your {favoriteMaterials.length} favorite materials</p>
 
-	<!-- Debug display for favorite IDs -->
-	<div class="debug-favorites">
-		<p class="debug-title">Favorite Material IDs:</p>
-		<div class="debug-ids">
-			{#if favoriteIds.length === 0}
-				<span class="no-favorites">No favorites selected</span>
-			{:else}
-				{#each favoriteIds as id}
-					<span class="favorite-id">{id}</span>
-				{/each}
-			{/if}
+	<!-- Date range selector -->
+	<div class="date-controls">
+		<div class="date-inputs">
+			<div class="date-field">
+				<label for="start-date">Start Date</label>
+				<input type="date" id="start-date" bind:value={startDate} max={endDate} />
+			</div>
+			<div class="date-field">
+				<label for="end-date">End Date</label>
+				<input type="date" id="end-date" bind:value={endDate} min={startDate} />
+			</div>
 		</div>
+		<button class="update-btn" onclick={handleDateChange}>Update</button>
 	</div>
 </section>
 
@@ -92,6 +102,8 @@
 		<div class="loading">Loading data...</div>
 	{:else if materialData.length === 0}
 		<div class="no-data">No data available</div>
+	{:else if error}
+		<div class="error">{error}</div>
 	{:else}
 		<div class="table-container">
 			<table>
@@ -206,5 +218,60 @@
 		color: #666;
 		background-color: #f9f9f9;
 		border-radius: 4px;
+	}
+
+	.date-controls {
+		display: flex;
+		align-items: flex-end;
+		gap: 1rem;
+		margin-top: 1rem;
+		background-color: #f9f9f9;
+		padding: 1rem;
+		border-radius: 4px;
+	}
+
+	.date-inputs {
+		display: flex;
+		gap: 1rem;
+		flex: 1;
+	}
+
+	.date-field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.date-field label {
+		font-size: 0.8rem;
+		color: #666;
+	}
+
+	.date-field input {
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+	}
+
+	.update-btn {
+		background-color: #4caf50;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		font-weight: 500;
+	}
+
+	.update-btn:hover {
+		background-color: #45a049;
+	}
+
+	.error {
+		padding: 1rem;
+		background-color: #ffebee;
+		color: #c62828;
+		border-radius: 4px;
+		margin-bottom: 1rem;
 	}
 </style>
