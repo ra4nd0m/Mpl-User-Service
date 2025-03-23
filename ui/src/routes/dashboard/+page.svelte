@@ -71,20 +71,6 @@
 <section class="dashboard-heading">
 	<h1>Dashboard</h1>
 	<p>Showing market values for your {favoriteMaterials.length} favorite materials</p>
-
-	<!-- Debug display for favorite IDs -->
-	<div class="debug-favorites">
-		<p class="debug-title">Favorite Material IDs:</p>
-		<div class="debug-ids">
-			{#if favoriteIds.length === 0}
-				<span class="no-favorites">No favorites selected</span>
-			{:else}
-				{#each favoriteIds as id}
-					<span class="favorite-id">{id}</span>
-				{/each}
-			{/if}
-		</div>
-	</div>
 </section>
 
 <section>
