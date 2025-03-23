@@ -11,7 +11,7 @@ namespace MplDbApi.Routes
         {
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-            app.MapGet("/materials", async (IMaterialSourceService materialService) =>
+            app.MapGet("/materialList", async (IMaterialSourceService materialService) =>
             {
                 try
                 {
@@ -25,7 +25,7 @@ namespace MplDbApi.Routes
                 }
             });
 
-            app.MapGet("/materials/{id:int}", async (int id, IMaterialSourceService materialService) =>
+            app.MapGet("/materialList/{id:int}", async (int id, IMaterialSourceService materialService) =>
             {
                 try
                 {
