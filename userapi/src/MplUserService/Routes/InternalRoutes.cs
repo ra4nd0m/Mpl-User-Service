@@ -17,7 +17,7 @@ namespace MplUserService.Routes
                 {
                     return Results.BadRequest(ex.Message);
                 }
-            });
+            }).RequireAuthorization("internal");
         }
     }
 }
