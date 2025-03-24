@@ -28,6 +28,17 @@ var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.EnableDynamicJson();
 var dataSource = dataSourceBuilder.Build();
 
+var urls = builder.Configuration["Hosting:Urls"];
+if (!string.IsNullOrEmpty(urls))
+{
+    builder.WebHost.UseUrls(urls);
+}
+
+builder.Services.AddHttpClient("DbClient", client =>
+{
+    client.BaseAddress = new Uri(configuration["DBApi:BaseUrl"] ?? throw new InvalidOperationException("DBApi:BaseUrl is missing"));
+});
+
 builder.Services.AddDbContext<UserContext>(options =>
     options.UseNpgsql(dataSource));
 
@@ -106,7 +117,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUserDataRoutes();
+app.MapMaterialRoutes();
 app.MapInternalRoutes();
+
 
 using (var scope = app.Services.CreateScope())
 {
