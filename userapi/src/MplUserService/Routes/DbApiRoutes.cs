@@ -7,13 +7,11 @@ namespace MplUserService.Routes
     {
         public static void MapMaterialRoutes(this WebApplication app)
         {
-            var dbApiBaseUrl = app.Configuration["DBApi:BaseUrl"];
-
 
             app.MapGet("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
-                var client = httpClientFactory.CreateClient();
-                var requestUrl = $"{dbApiBaseUrl}/{catchAll}{context.Request.QueryString}";
+                var client = httpClientFactory.CreateClient("DbClient");
+                var requestUrl = $"{catchAll}{context.Request.QueryString}";
 
                 var response = await client.GetAsync(requestUrl);
 
@@ -31,8 +29,8 @@ namespace MplUserService.Routes
             app.MapPost("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
 
             {
-                var client = httpClientFactory.CreateClient();
-                var requestUrl = $"{dbApiBaseUrl}/{catchAll}{context.Request.QueryString}";
+                var client = httpClientFactory.CreateClient("DbClient");
+                var requestUrl = $"{catchAll}{context.Request.QueryString}";
 
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
                 {
@@ -41,7 +39,7 @@ namespace MplUserService.Routes
 
                 foreach (var header in context.Request.Headers)
                 {
-                    requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+                    requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
                 }
 
                 var response = await client.SendAsync(requestMessage);

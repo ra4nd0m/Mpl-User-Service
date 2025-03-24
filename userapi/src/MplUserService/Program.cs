@@ -34,7 +34,11 @@ if (!string.IsNullOrEmpty(urls))
     builder.WebHost.UseUrls(urls);
 }
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("DbClient", client =>
+{
+    client.BaseAddress = new Uri(configuration["DBApi:BaseUrl"] ?? throw new InvalidOperationException("DBApi:BaseUrl is missing"));
+});
+
 builder.Services.AddDbContext<UserContext>(options =>
     options.UseNpgsql(dataSource));
 
