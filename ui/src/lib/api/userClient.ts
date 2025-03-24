@@ -114,7 +114,7 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
             endDate
         }));
         
-        const resp = await fetchWithAuth('materialvalues/overview', {
+        const resp = await fetchWithAuth('data/materialvalues/overview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(reqsts)
