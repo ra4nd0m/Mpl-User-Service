@@ -29,8 +29,8 @@ export async function addFavorite(id: number): Promise<number[] | null> {
             }
             return currentFavorites;
         }
-        const resp = await fetchWithAuth('/favorites', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: id })
+        const resp = await fetchWithAuth(`/favorites/${id}`, {
+            method: 'PUT'
         });
         if (!resp.ok) {
             console.error('Failed to add favorite:', resp.statusText);
@@ -114,7 +114,7 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
             endDate
         }));
         
-        const resp = await fetchWithAuth('materialvalues/overview', {
+        const resp = await fetchWithAuth('data/materialvalues/overview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(reqsts)

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MplUserService.Data;
 using MplUserService.Interfaces;
 
@@ -22,7 +23,7 @@ namespace MplUserService.Routes
                 }
             }).RequireAuthorization();
 
-            app.MapPost("/favorites", async (int itemId, IUserService userService, HttpContext context,
+            app.MapPut("/favorites/{itemId}", async (int itemId, IUserService userService, HttpContext context,
                 UserContext dbContext, ILogger<Program> logger) =>
             {
                 try
@@ -35,6 +36,8 @@ namespace MplUserService.Routes
                     if (!user.FavouriteIds.Contains(itemId))
                     {
                         user.FavouriteIds.Add(itemId);
+                        // Explicitly tell EF Core that the entity has been modified
+                        dbContext.Entry(user).State = EntityState.Modified;
                         await dbContext.SaveChangesAsync();
                         logger.LogInformation("Added item to favorites");
                     }
@@ -61,6 +64,7 @@ namespace MplUserService.Routes
                     if (user.FavouriteIds.Contains(itemId))
                     {
                         user.FavouriteIds.Remove(itemId);
+                        dbContext.Entry(user).State = EntityState.Modified;
                         await dbContext.SaveChangesAsync();
                     }
                     return Results.Ok(user.FavouriteIds);
