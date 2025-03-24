@@ -76,6 +76,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 
+builder.Services.AddHttpClient("ExternalUserApi", client =>
+{
+    client.BaseAddress = new Uri(configuration["ExternalUserApi:BaseUrl"] ?? throw new InvalidOperationException("ExternalUserApi:BaseUrl is not configured"));
+});
+
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
