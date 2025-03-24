@@ -50,5 +50,29 @@ namespace MplAuthService.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        public string GenerateInternalToken()
+        {
+            logger.LogInformation("Generating internal token");
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key is not configured")));
+            var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.Name, "internal"),
+                new(ClaimTypes.NameIdentifier, "internal"),
+                new(ClaimTypes.Role, "internal")
+            };
+
+            int tokenTokenExpiryMinutes = int.Parse(configuration["Jwt:TokenExpiryMinutes"] ?? throw new InvalidOperationException("Token expiration is not configured"));
+            var token = new JwtSecurityToken(
+                issuer: configuration["Jwt:Issuer"],
+                audience: configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(tokenTokenExpiryMinutes),
+                signingCredentials: signingCredentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }

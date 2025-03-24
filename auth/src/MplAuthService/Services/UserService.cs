@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MplAuthService.Data;
@@ -8,7 +9,7 @@ using MplAuthService.Models.Dtos;
 namespace MplAuthService.Services
 {
     public class UserService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
-        AuthContext context, ILogger<UserService> logger) : IUserService
+        AuthContext context, ILogger<UserService> logger, IJwtService jwtService, IHttpClientFactory httpClientFactory) : IUserService
     {
         public async Task<User> CreateUser(string email, string password, OrganizationDto organization)
         {
@@ -144,6 +145,23 @@ namespace MplAuthService.Services
                 {
                     context.RefreshTokens.RemoveRange(refreshTokens);
                     await context.SaveChangesAsync();
+                }
+
+                try
+                {
+                    var client = httpClientFactory.CreateClient("ExternalUserApi");
+                    string internalToken = jwtService.GenerateInternalToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", internalToken);
+
+                    var response = await client.DeleteAsync($"user/{user.Id}");
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        logger.LogWarning("Failed to delete user from userapi. Status: {Status}", response.StatusCode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,"Error calling external api");
                 }
                 var result = await userManager.DeleteAsync(user);
                 if (!result.Succeeded)

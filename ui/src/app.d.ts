@@ -12,6 +12,8 @@ declare global {
 		VITE_API_BASE_URL: string;
 		VITE_API_AUTH_URL: string;
 		VITE_USE_MOCKS: string;
+		PUBLIC_DEV_API_BASE_URL: string;
+		PUBLIC_DEV_API_AUTH_URL: string;
 	}
 
 	interface ImportMeta {

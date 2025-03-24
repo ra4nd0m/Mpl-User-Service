@@ -76,6 +76,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 
+builder.Services.AddHttpClient("ExternalUserApi", client =>
+{
+    client.BaseAddress = new Uri(configuration["ExternalUserApi:BaseUrl"] ?? throw new InvalidOperationException("ExternalUserApi:BaseUrl is not configured"));
+});
+
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -88,11 +93,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
+    options.AddDefaultPolicy(policy =>
     {
-        builder
+        policy
             .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://127.0.0.1:5173", "http://localhost:5173"])
-                .WithMethods("GET", "POST", "DELETE")
+                .WithMethods("GET", "POST", "OPTIONS", "DELETE")
                 .AllowAnyHeader()
                 .AllowCredentials();
     });
