@@ -29,8 +29,8 @@ export async function addFavorite(id: number): Promise<number[] | null> {
             }
             return currentFavorites;
         }
-        const resp = await fetchWithAuth('/favorites', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: id })
+        const resp = await fetchWithAuth(`/favorites/${id}`, {
+            method: 'PUT'
         });
         if (!resp.ok) {
             console.error('Failed to add favorite:', resp.statusText);
