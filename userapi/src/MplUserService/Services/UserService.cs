@@ -11,11 +11,7 @@ namespace MplUserService.Services
     {
         public async Task<User> GetOrCreateUserAsync(ClaimsPrincipal claims)
         {
-            var userId = claims.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                throw new UnauthorizedAccessException("User ID not found in claims");
-            }
+            var userId = claims.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID not found in claims");
             var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
@@ -24,6 +20,17 @@ namespace MplUserService.Services
                 await context.SaveChangesAsync();
             }
             return user;
+        }
+        public async Task<bool> DeleteUserAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentNullException(userId);
+            }
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new InvalidOperationException("User not found");
+            context.Users.Remove(user);
+            await context.SaveChangesAsync();
+            return true;
         }
     }
 }
