@@ -72,6 +72,8 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Basic)));
     options.AddPolicy("RequirePremium", policy =>
         policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Premium)));
+    options.AddPolicy("internal", policy =>
+        policy.Requirements.Add(new InternalRequirement("internal")));
 });
 
 builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
@@ -104,6 +106,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUserDataRoutes();
+app.MapInternalRoutes();
 
 using (var scope = app.Services.CreateScope())
 {
