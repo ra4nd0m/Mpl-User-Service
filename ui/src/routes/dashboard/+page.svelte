@@ -41,7 +41,9 @@
 			if (favoriteIds.length > 0) {
 				const data = await getOverview(favoriteIds, propertyIds, startDate, endDate);
 				if (data) {
-					materialData = data;
+					materialData = data.sort((a, b) => 
+						new Date(b.date).getTime() - new Date(a.date).getTime()
+					);
 				} else {
 					error = 'Failed to fetch data';
 				}
