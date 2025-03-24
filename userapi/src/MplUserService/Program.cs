@@ -106,6 +106,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUserDataRoutes();
+app.MapInternalRoutes();
 
 using (var scope = app.Services.CreateScope())
 {
