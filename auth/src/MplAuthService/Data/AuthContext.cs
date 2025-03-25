@@ -1,16 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using MplAuthService.Models;
 
 namespace MplAuthService.Data
 {
-    public class AuthContext : IdentityDbContext<User>
+    public class AuthContext : IdentityDbContext<User>, IDataProtectionKeyContext
     {
         public AuthContext(DbContextOptions<AuthContext> options) : base(options)
         {
         }
         public DbSet<Organization> Organizations { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
