@@ -13,7 +13,7 @@ SyslogIdentifier=mpl-user-service
 
 # Environment variables for private configurations
 Environment=ASPNETCORE_ENVIRONMENT=Production
-Environment=ConnectionStrings__DefaultConnection=Server=localhost;Database=MplAuth;User Id=dbuser;Password=SecurePassword123!;
+Environment="ConnectionStrings__DefaultConnection=Server=localhost;Database=MplAuth;User Id=dbuser;Password=SecurePassword123!;"
 Environment=Jwt__Key=YourVeryLongAndSecureJwtSecretKeyHere1234567890!@#$%^&*()
 
 [Install]
