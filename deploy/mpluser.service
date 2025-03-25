@@ -1,0 +1,20 @@
+[Unit]
+Description=mpl user data api
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mpluserservice
+ExecStart=/usr/bin/dotnet /opt/mpluserservice/MplUserService.dll
+User=
+Group=
+Restart=always
+RestartSec=10
+SyslogIdentifier=mpl-user-service
+
+# Environment variables for private configurations
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ConnectionStrings__DefaultConnection=Server=localhost;Database=MplAuth;User Id=dbuser;Password=SecurePassword123!;
+Environment=Jwt__Key=YourVeryLongAndSecureJwtSecretKeyHere1234567890!@#$%^&*()
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+[Unit]
+Description=mpl authorization api
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mplauthservice
+ExecStart=/usr/bin/dotnet /opt/mplauthservice/MplAuthService.dll
+User=
+Group=
+Restart=always
+RestartSec=10
+SyslogIdentifier=mpl-auth-service
+
+# Environment variables for private configurations
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ConnectionStrings__DefaultConnection=Server=localhost;Database=MplAuth;User Id=dbuser;Password=SecurePassword123!;
+Environment=Jwt__Key=YourVeryLongAndSecureJwtSecretKeyHere1234567890!@#$%^&*()
+Environment=AdminInitialization__Enabled=false
+Environment=AdminInitialization__Password=StrongProductionAdminPassword123!
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+[Unit]
+Description=mpl database api
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mpldbapi
+ExecStart=/usr/bin/dotnet /opt/mpldbapi/MplDbApi.dll
+User=
+Group=
+Restart=always
+RestartSec=10
+SyslogIdentifier=mpl-db-api-service
+
+# Environment variables for private configurations
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ConnectionStrings__DefaultConnection=Server=localhost;Database=MplAuth;User Id=dbuser;Password=SecurePassword123!;
+
+[Install]
+WantedBy=multi-user.target
