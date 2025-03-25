@@ -1,5 +1,7 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,20 @@ var configuration = new ConfigurationBuilder()
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AuthContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+var certPath = configuration["Cert:Path"]
+    ?? throw new InvalidOperationException("Cert:Path is not configured");
+var certPassword = configuration["Cert:Password"]
+    ?? throw new InvalidOperationException("Cert:Password is not configured");
+
+var certCollection = X509CertificateLoader.LoadPkcs12CollectionFromFile(certPath, certPassword);
+
+var cert = certCollection.FirstOrDefault(c => c.HasPrivateKey)
+    ?? throw new InvalidOperationException("No valid certificate with a private key found in the collection");
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AuthContext>()
+    .ProtectKeysWithCertificate(cert);
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
