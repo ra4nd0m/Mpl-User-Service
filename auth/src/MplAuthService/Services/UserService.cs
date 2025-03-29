@@ -5,6 +5,7 @@ using MplAuthService.Data;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
 using MplAuthService.Models.Dtos;
+using MplAuthService.Utils;
 
 namespace MplAuthService.Services
 {
@@ -13,7 +14,7 @@ namespace MplAuthService.Services
     {
         public async Task<User> CreateUser(string email, string password, OrganizationDto organization)
         {
-            logger.LogInformation("Creating user with email {Email}", email);
+            logger.LogInformation("Creating user with email {Email}", EmailObfuscator.ObfuscateEmail(email));
             if (await userManager.FindByEmailAsync(email) != null)
             {
                 throw new InvalidOperationException("User already exists");
@@ -60,7 +61,7 @@ namespace MplAuthService.Services
                 await userManager.AddToRoleAsync(user, "User");
 
                 await transaction.CommitAsync();
-                logger.LogInformation("User created with email {Email}", email);
+                logger.LogInformation("User created with email {Email}", EmailObfuscator.ObfuscateEmail(email));
                 return user;
             }
             catch
@@ -71,7 +72,7 @@ namespace MplAuthService.Services
         }
         public async Task<User> CreateAdmin(string email, string password)
         {
-            logger.LogInformation("Creating admin with email {Email}", email);
+            logger.LogInformation("Creating admin with email {Email}", EmailObfuscator.ObfuscateEmail(email));
             if (await userManager.FindByEmailAsync(email) != null)
             {
                 throw new InvalidOperationException("User already exists");
@@ -102,7 +103,7 @@ namespace MplAuthService.Services
 
                 await userManager.AddToRoleAsync(admin, "Admin");
                 await transaction.CommitAsync();
-                logger.LogInformation("Admin created with email {Email}", email);
+                logger.LogInformation("Admin created with email {Email}", EmailObfuscator.ObfuscateEmail(email));
                 return admin;
             }
             catch
@@ -134,7 +135,7 @@ namespace MplAuthService.Services
 
         public async Task DeleteUser(User user)
         {
-            logger.LogInformation("Deleting user with email {Email}", user.Email);
+            logger.LogInformation("Deleting user with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
             using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
@@ -169,12 +170,12 @@ namespace MplAuthService.Services
                     throw new InvalidOperationException($"Failed to delete user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
                 }
                 await transaction.CommitAsync();
-                logger.LogInformation("User deleted with email {Email}", user.Email);
+                logger.LogInformation("User deleted with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                logger.LogError(ex, "Failed to delete user with email {Email}", user.Email);
+                logger.LogError(ex, "Failed to delete user with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
                 throw;
             }
         }
