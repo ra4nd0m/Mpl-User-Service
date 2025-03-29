@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
+using MplAuthService.Utils;
 
 namespace MplAuthService.Services
 {
@@ -12,7 +13,7 @@ namespace MplAuthService.Services
     {
         public async Task<string> GenerateJwtToken(User user)
         {
-            logger.LogInformation("Generating JWT token for user {email}", user.Email);
+            logger.LogInformation("Generating JWT token for user {email}", EmailObfuscator.ObfuscateEmail(user.Email));
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key is not configured")));
             var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
