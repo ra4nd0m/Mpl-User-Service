@@ -5,7 +5,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/../.." &>/dev/null && pwd)"
 USERAPI_DIR="${PROJECT_DIR}/userapi"
-RELEASES_DIR="${PROJECT_DIR}/releases"
+RELEASES_DIR="${PROJECT_DIR}/releases/userapi"
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 RELEASE_NAME="mpl-user-api-${TIMESTAMP}"
 BUILD_DIR="${RELEASES_DIR}/temp/${RELEASE_NAME}"
