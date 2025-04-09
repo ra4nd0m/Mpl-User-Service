@@ -65,6 +65,8 @@
 	onMount(async () => {
 		error = null;
 		isLoading = true;
+		//Explicitly load favorites
+		await favoritesStore.loadFavourites();
 		// Get favorite materials info
 		const materialList = await getMaterials();
 		if (!materialList) {
