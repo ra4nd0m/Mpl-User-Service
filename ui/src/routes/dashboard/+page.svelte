@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
+	import { dateRangeStore } from '$lib/stores/dateRangeStore';
 	import {
 		type Material,
 		type DateGroupedMaterialValues,
@@ -15,11 +16,8 @@
 	let error = $state<string | null>(null);
 
 	//Date range for fetching,
-	const today = new Date();
-	let startDate = $state(
-		new Date(today.getFullYear(), today.getMonth() - 1).toISOString().split('T')[0]
-	);
-	let endDate = $state(today.toISOString().split('T')[0]);
+	let startDate = $state($dateRangeStore.startDate);
+	let endDate = $state($dateRangeStore.endDate);
 
 	// Property IDs to fetch, hardocoded for now
 	const propertyIds = [1, 2, 3, 6];
@@ -41,8 +39,8 @@
 			if (favoriteIds.length > 0) {
 				const data = await getOverview(favoriteIds, propertyIds, startDate, endDate);
 				if (data) {
-					materialData = data.sort((a, b) => 
-						new Date(b.date).getTime() - new Date(a.date).getTime()
+					materialData = data.sort(
+						(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 					);
 				} else {
 					error = 'Failed to fetch data';
@@ -59,12 +57,15 @@
 	}
 
 	async function handleDateChange() {
+		dateRangeStore.setDateRange(startDate, endDate);
 		await fetchData();
 	}
 
 	onMount(async () => {
 		error = null;
 		isLoading = true;
+		//Explicitly load favorites
+		await favoritesStore.loadFavourites();
 		// Get favorite materials info
 		const materialList = await getMaterials();
 		if (!materialList) {
