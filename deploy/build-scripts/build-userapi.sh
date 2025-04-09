@@ -25,7 +25,8 @@ dotnet publish src/MplUserService/MplUserService.csproj \
     --configuration Release \
     --runtime linux-x64 \
     --output "${BUILD_DIR}" \
-    /p:PublishSingleFile=true 
+    /p:PublishSingleFile=true \
+    /p:SelfContained=false
 # Create zip file
 cd "${BUILD_DIR}/.."
 zip -r "${RELEASES_DIR}/${RELEASE_NAME}.zip" "${RELEASE_NAME}"
