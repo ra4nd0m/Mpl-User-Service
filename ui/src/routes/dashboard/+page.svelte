@@ -22,6 +22,53 @@
 	// Property IDs to fetch, hardocoded for now
 	const propertyIds = [1, 2, 3, 6];
 
+	// Property IDs to fetch & map to display info
+	const propertyMap: { [key: number]: { name: string; valueKey: string } } = $state({
+		2: { name: 'Min', valueKey: 'valueMin' },
+		3: { name: 'Max', valueKey: 'valueMax' },
+		1: { name: 'Avg', valueKey: 'valueAvg' },
+		6: {name: 'Supply', valueKey: 'supply'} 
+	});
+
+	const materialUsedPropsMap = $derived(() => {
+		const map = new Map<number, Set<number>>();
+		// Initialize with empty sets for all favorite materials
+		for (const material of favoriteMaterials) {
+			map.set(material.id, new Set<number>());
+		}
+		// Populate sets based on data
+		for (const entry of materialData) {
+			for (const mv of entry.materialValues) {
+				const propsSet = map.get(mv.materialInfo.id);
+				if (propsSet) {
+					for (const propId of mv.propsUsed) {
+						// Only track properties defined in our propertyMap
+						if (propertyMap[propId]) {
+							propsSet.add(propId);
+						}
+					}
+				}
+			}
+		}
+		return map;
+	});
+
+	// Helper derived state to get an ordered list of properties to display for each material
+    const materialDisplayProps = $derived(() => {
+        const map = new Map<number, Array<{ id: number; name: string; valueKey: string }>>();
+        const usedPropsMap = materialUsedPropsMap(); // Call the derived signal to get the Map
+
+        for (const material of favoriteMaterials) {
+            const usedPropsSet = usedPropsMap.get(material.id) ?? new Set<number>(); // Now .get() is called on the Map
+            const displayPropsForMaterial = Object.entries(propertyMap)
+                .map(([idStr, info]) => ({ id: parseInt(idStr), ...info })) // Convert to object with numeric id
+                .filter((prop) => usedPropsSet.has(prop.id)) // Keep only used properties
+                .sort((a, b) => a.id - b.id); // Sort by ID (e.g., Avg, Min, Max -> 1, 2, 3)
+            map.set(material.id, displayPropsForMaterial);
+        }
+        return map;
+    });
+
 	// Format date for display
 	function formatDate(dateString: string): string {
 		return new Date(dateString).toLocaleDateString('en-US', {
@@ -101,57 +148,62 @@
 </section>
 
 <section>
-	{#if isLoading}
-		<div class="loading">Loading data...</div>
-	{:else if materialData.length === 0}
-		<div class="no-data">No data available</div>
-	{:else if error}
-		<div class="error">{error}</div>
-	{:else}
-		<div class="table-container">
-			<table>
-				<thead>
-					<tr>
-						<th rowspan="2">Date</th>
-						{#each favoriteMaterials as material}
-							<th colspan="3">{material.materialName}</th>
-						{/each}
-					</tr>
-					<tr>
-						{#each favoriteMaterials as material}
-							<th>Min</th>
-							<th>Max</th>
-							<th>Avg</th>
-						{/each}
-					</tr>
-				</thead>
-				<tbody>
-					{#each materialData as entry}
-						<tr>
-							<td class="date-cell">{formatDate(entry.date)}</td>
+    {#if isLoading}
+        <div class="loading">Loading data...</div>
+    {:else if materialData.length === 0}
+        <div class="no-data">No data available</div>
+    {:else if error}
+        <div class="error">{error}</div>
+    {:else}
+        {@const displayPropsMap = materialDisplayProps()} 
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2">Date</th>
+                        {#each favoriteMaterials as material}
+                            {@const displayProps = displayPropsMap.get(material.id) ?? []} 
+                            {#if displayProps.length > 0}
+                                <th colspan={displayProps.length}>{material.materialName}</th>
+                            {/if}
+                        {/each}
+                    </tr>
+                    <tr>
+                        {#each favoriteMaterials as material}
+                            {@const displayProps = displayPropsMap.get(material.id) ?? []} 
+                            {#each displayProps as prop}
+                                <th>{prop.name}</th>
+                            {/each}
+                        {/each}
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each materialData as entry}
+                        <tr>
+                            <td class="date-cell">{formatDate(entry.date)}</td>
+                            {#each favoriteMaterials as favMaterial}
+                                {@const displayProps = displayPropsMap.get(favMaterial.id) ?? []} 
+                                {@const matchedData = entry.materialValues.find(
+                                    (mv) => mv.materialInfo.id === favMaterial.id
+                                )}
 
-							{#each favoriteMaterials as favMaterial}
-								<!-- Find if we have data for this material on this date -->
-								{@const matchedData = entry.materialValues.find(
-									(mv) => mv.materialInfo.id === favMaterial.id
-								)}
-
-								{#if matchedData}
-									<td class="value-cell">{matchedData.valueMin || 'N/A'}</td>
-									<td class="value-cell">{matchedData.valueMax || 'N/A'}</td>
-									<td class="value-cell">{matchedData.valueAvg || 'N/A'}</td>
-								{:else}
-									<td class="value-cell no-data-cell">-</td>
-									<td class="value-cell no-data-cell">-</td>
-									<td class="value-cell no-data-cell">-</td>
-								{/if}
-							{/each}
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	{/if}
+                                {#each displayProps as prop}
+                                    {#if matchedData && matchedData.propsUsed.includes(prop.id)}
+                                        <td class="value-cell">
+                                            {(matchedData as any)[prop.valueKey] || 'N/A'}
+                                        </td>
+                                    {:else}
+                                        <!-- Show placeholder if no data for this date OR this specific prop wasn't included for this date -->
+                                        <td class="value-cell no-data-cell">-</td>
+                                    {/if}
+                                {/each}
+                            {/each}
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {/if}
 </section>
 
 <style>
