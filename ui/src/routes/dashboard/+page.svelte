@@ -5,13 +5,19 @@
 	import {
 		type Material,
 		type DateGroupedMaterialValues,
+		type MaterialDateMetricsResp,
 		getMaterials,
 		getOverview
 	} from '$lib/api/userClient';
 
+	type ProcessedMaterialDataEntry = {
+        date: string;
+        valuesMap: Map<number, MaterialDateMetricsResp>; // Map material ID to its data for the date
+    };
+
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
-	let materialData = $state<DateGroupedMaterialValues[]>([]);
+	let materialData = $state<ProcessedMaterialDataEntry[]>([]);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 
@@ -30,41 +36,21 @@
 		6: {name: 'Supply', valueKey: 'supply'} 
 	});
 
-	const materialUsedPropsMap = $derived(() => {
-		const map = new Map<number, Set<number>>();
-		// Initialize with empty sets for all favorite materials
-		for (const material of favoriteMaterials) {
-			map.set(material.id, new Set<number>());
-		}
-		// Populate sets based on data
-		for (const entry of materialData) {
-			for (const mv of entry.materialValues) {
-				const propsSet = map.get(mv.materialInfo.id);
-				if (propsSet) {
-					for (const propId of mv.propsUsed) {
-						// Only track properties defined in our propertyMap
-						if (propertyMap[propId]) {
-							propsSet.add(propId);
-						}
-					}
-				}
-			}
-		}
-		return map;
-	});
-
 	// Helper derived state to get an ordered list of properties to display for each material
     const materialDisplayProps = $derived(() => {
         const map = new Map<number, Array<{ id: number; name: string; valueKey: string }>>();
-        const usedPropsMap = materialUsedPropsMap(); // Call the derived signal to get the Map
 
         for (const material of favoriteMaterials) {
-            const usedPropsSet = usedPropsMap.get(material.id) ?? new Set<number>(); // Now .get() is called on the Map
+			const availableIds = new Set(material.avalibleProps || []);
+
             const displayPropsForMaterial = Object.entries(propertyMap)
-                .map(([idStr, info]) => ({ id: parseInt(idStr), ...info })) // Convert to object with numeric id
-                .filter((prop) => usedPropsSet.has(prop.id)) // Keep only used properties
-                .sort((a, b) => a.id - b.id); // Sort by ID (e.g., Avg, Min, Max -> 1, 2, 3)
-            map.set(material.id, displayPropsForMaterial);
+				.map(([idStr, info])=>({id: parseInt(idStr), ...info}))
+				.filter(({ id }) => availableIds.has(id))
+				.sort((a, b) => a.id - b.id);
+
+			if (displayPropsForMaterial.length > 0) {
+				map.set(material.id, displayPropsForMaterial);
+			}
         }
         return map;
     });
@@ -84,13 +70,22 @@
 
 		try {
 			if (favoriteIds.length > 0) {
-				const data = await getOverview(favoriteIds, propertyIds, startDate, endDate);
-				if (data) {
-					materialData = data.sort(
+				const rawData: DateGroupedMaterialValues[] | null = await getOverview(favoriteIds, propertyIds, startDate, endDate);
+				if (rawData) {
+					const sortedData = rawData.sort(
 						(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 					);
+				
+					materialData = sortedData.map((entry)=>{
+						const valuesMap = new Map<number, MaterialDateMetricsResp>();
+						for (const mv of entry.materialValues){
+							valuesMap.set(mv.materialInfo.id, mv);
+						}
+						return {date: entry.date, valuesMap};
+					});
 				} else {
 					error = 'Failed to fetch data';
+					materialData = [];
 				}
 			} else {
 				materialData = [];
@@ -98,6 +93,7 @@
 		} catch (err) {
 			console.error('Error fetching data', err);
 			error = 'Failed to fetch data';
+			materialData = [];
 		} finally {
 			isLoading = false;
 		}
@@ -117,6 +113,7 @@
 		const materialList = await getMaterials();
 		if (!materialList) {
 			error = 'Failed to fetch materials';
+			isLoading = false;
 			return;
 		}
 		favoriteMaterials = materialList.filter((material: Material) =>
@@ -183,9 +180,7 @@
                             <td class="date-cell">{formatDate(entry.date)}</td>
                             {#each favoriteMaterials as favMaterial}
                                 {@const displayProps = displayPropsMap.get(favMaterial.id) ?? []} 
-                                {@const matchedData = entry.materialValues.find(
-                                    (mv) => mv.materialInfo.id === favMaterial.id
-                                )}
+                                {@const matchedData = entry.valuesMap.get(favMaterial.id)}
 
                                 {#each displayProps as prop}
                                     {#if matchedData && matchedData.propsUsed.includes(prop.id)}

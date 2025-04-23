@@ -8,5 +8,6 @@ public record MaterialSourceResponseDto(
     string Group,
     string Market,
     string Unit,
-    DateOnly? LastCreatedDate
+    DateOnly? LastCreatedDate,
+    List<int> AvalibleProps
 );

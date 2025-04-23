@@ -26,7 +26,11 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
                     .Where(mv => mv.Uid == m.Id && propertyIds.Contains(mv.PropertyId))
                     .OrderByDescending(mv => mv.CreatedOn)
                     .Select(mv => mv.CreatedOn)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                _context.MaterialProperties
+                    .Where(mp => mp.Uid == m.Id && new List<int> { 1, 2, 3, 4, 5, 6 }.Contains(mp.PropertyId))
+                    .Select(mp => mp.PropertyId)
+                    .ToList()
             )).AsNoTracking().ToListAsync();
 
         return materialsList;
@@ -49,7 +53,11 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
                 m.MaterialGroup.Name,
                 m.TargetMarket,
                 m.Unit.Name,
-                null
+                null,
+                _context.MaterialProperties
+                    .Where(mp => mp.Uid == m.Id && new List<int> { 1, 2, 3, 4, 5, 6 }.Contains(mp.PropertyId))
+                    .Select(mp => mp.PropertyId)
+                    .ToList()
             )).AsNoTracking().FirstOrDefaultAsync();
 
         return material ?? throw new KeyNotFoundException($"Material with id {id} not found.");
