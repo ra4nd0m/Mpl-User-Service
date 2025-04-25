@@ -30,6 +30,7 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
+            .Where(m => m.Unit.Id != 5) // Exclude mats with supply
             .Select(m => new // Project to find the latest date first
             {
                 MaterialSource = m,
@@ -93,7 +94,7 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
-            .Where(m => m.MaterialGroupId == groupId)
+            .Where(m => m.MaterialGroupId == groupId && m.Unit.Id != 5)
             .Select(m => new // Project to find the latest date first
             {
                 MaterialSource = m,
@@ -157,7 +158,7 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
            .Include(m => m.DeliveryType)
            .Include(m => m.MaterialGroup)
            .Include(m => m.Unit)
-           .Where(m => m.Id == id)
+           .Where(m => m.Id == id && m.Unit.Id != 5)
            .Select(m => new // Project to find the latest date first
            {
                MaterialSource = m,
