@@ -72,15 +72,16 @@
 		<table class="materials-table">
 			<thead>
 				<tr>
-					<td class="favorite-cell"> </td>
-					<th>ID</th>
-					<th>Material Name</th>
-					<th>Source</th>
-					<th>Delivery Type</th>
-					<th>Group</th>
-					<th>Market</th>
-					<th>Unit</th>
-					<th>Last Update</th>
+					<th rowspan="2" class="favorite-cell"> </th>
+					<th rowspan="2">ID</th>
+					<th rowspan="2" class="table-material-name">Material Name</th>
+					<th colspan="3">Price Today</th>
+					<th rowspan="2">Last Update</th>
+				</tr>
+				<tr>
+					<th>Average</th>
+					<th>Minimum</th>
+					<th>Maximum</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -111,17 +112,31 @@
 							</button>
 						</td>
 						<td>{material.id}</td>
-						<td>{material.materialName}</td>
-						<td>{material.source}</td>
-						<td>{material.deliveryType}</td>
-						<td>{material.group}</td>
-						<td>{material.market}</td>
-						<td>{material.unit}</td>
+						<td class="table-material-name"
+							>{material.materialName +
+								' ' +
+								material.unit +
+								' ' +
+								material.deliveryType +
+								' ' +
+								material.market}</td
+						>
+						<td>{material.latestAvgValue}</td>
+						{#if material.latestMinValue === null}
+							<td>-</td>
+						{:else}
+							<td>{material.latestMinValue}</td>
+						{/if}
+						{#if material.latestMaxValue === null}
+							<td>-</td>
+						{:else}
+							<td>{material.latestMaxValue}</td>
+						{/if}
 						<td>{material.lastCreatedDate}</td>
 					</tr>
 				{:else}
 					<tr>
-						<td colspan="8" class="no-data">No materials found</td>
+						<td colspan="7" class="no-data">No materials found</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -141,11 +156,21 @@
 		padding: 0.75rem;
 		text-align: left;
 		border-bottom: 1px solid #ddd;
+		vertical-align: middle;
 	}
 
 	.materials-table th {
 		background-color: #f8f9fa;
 		font-weight: bold;
+		text-align: center;
+	}
+
+	.materials-table .table-material-name {
+		text-align: left;
+	}
+
+	.materials-table td {
+		text-align: center;
 	}
 
 	.materials-table tbody tr:hover {
