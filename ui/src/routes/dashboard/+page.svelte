@@ -5,13 +5,19 @@
 	import {
 		type Material,
 		type DateGroupedMaterialValues,
+		type MaterialDateMetricsResp,
 		getMaterials,
 		getOverview
 	} from '$lib/api/userClient';
 
+	type ProcessedMaterialDataEntry = {
+        date: string;
+        valuesMap: Map<number, MaterialDateMetricsResp>; // Map material ID to its data for the date
+    };
+
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
-	let materialData = $state<DateGroupedMaterialValues[]>([]);
+	let materialData = $state<ProcessedMaterialDataEntry[]>([]);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 
@@ -21,6 +27,33 @@
 
 	// Property IDs to fetch, hardocoded for now
 	const propertyIds = [1, 2, 3, 6];
+
+	// Property IDs to fetch & map to display info
+	const propertyMap: { [key: number]: { name: string; valueKey: string } } = $state({
+		2: { name: 'Min', valueKey: 'valueMin' },
+		3: { name: 'Max', valueKey: 'valueMax' },
+		1: { name: 'Avg', valueKey: 'valueAvg' },
+		6: {name: 'Supply', valueKey: 'supply'} 
+	});
+
+	// Helper derived state to get an ordered list of properties to display for each material
+    const materialDisplayProps = $derived(() => {
+        const map = new Map<number, Array<{ id: number; name: string; valueKey: string }>>();
+
+        for (const material of favoriteMaterials) {
+			const availableIds = new Set(material.avalibleProps || []);
+
+            const displayPropsForMaterial = Object.entries(propertyMap)
+				.map(([idStr, info])=>({id: parseInt(idStr), ...info}))
+				.filter(({ id }) => availableIds.has(id))
+				.sort((a, b) => a.id - b.id);
+
+			if (displayPropsForMaterial.length > 0) {
+				map.set(material.id, displayPropsForMaterial);
+			}
+        }
+        return map;
+    });
 
 	// Format date for display
 	function formatDate(dateString: string): string {
@@ -37,13 +70,22 @@
 
 		try {
 			if (favoriteIds.length > 0) {
-				const data = await getOverview(favoriteIds, propertyIds, startDate, endDate);
-				if (data) {
-					materialData = data.sort(
+				const rawData: DateGroupedMaterialValues[] | null = await getOverview(favoriteIds, propertyIds, startDate, endDate);
+				if (rawData) {
+					const sortedData = rawData.sort(
 						(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 					);
+				
+					materialData = sortedData.map((entry)=>{
+						const valuesMap = new Map<number, MaterialDateMetricsResp>();
+						for (const mv of entry.materialValues){
+							valuesMap.set(mv.materialInfo.id, mv);
+						}
+						return {date: entry.date, valuesMap};
+					});
 				} else {
 					error = 'Failed to fetch data';
+					materialData = [];
 				}
 			} else {
 				materialData = [];
@@ -51,6 +93,7 @@
 		} catch (err) {
 			console.error('Error fetching data', err);
 			error = 'Failed to fetch data';
+			materialData = [];
 		} finally {
 			isLoading = false;
 		}
@@ -70,6 +113,7 @@
 		const materialList = await getMaterials();
 		if (!materialList) {
 			error = 'Failed to fetch materials';
+			isLoading = false;
 			return;
 		}
 		favoriteMaterials = materialList.filter((material: Material) =>
@@ -101,57 +145,60 @@
 </section>
 
 <section>
-	{#if isLoading}
-		<div class="loading">Loading data...</div>
-	{:else if materialData.length === 0}
-		<div class="no-data">No data available</div>
-	{:else if error}
-		<div class="error">{error}</div>
-	{:else}
-		<div class="table-container">
-			<table>
-				<thead>
-					<tr>
-						<th rowspan="2">Date</th>
-						{#each favoriteMaterials as material}
-							<th colspan="3">{material.materialName}</th>
-						{/each}
-					</tr>
-					<tr>
-						{#each favoriteMaterials as material}
-							<th>Min</th>
-							<th>Max</th>
-							<th>Avg</th>
-						{/each}
-					</tr>
-				</thead>
-				<tbody>
-					{#each materialData as entry}
-						<tr>
-							<td class="date-cell">{formatDate(entry.date)}</td>
+    {#if isLoading}
+        <div class="loading">Loading data...</div>
+    {:else if materialData.length === 0}
+        <div class="no-data">No data available</div>
+    {:else if error}
+        <div class="error">{error}</div>
+    {:else}
+        {@const displayPropsMap = materialDisplayProps()} 
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2">Date</th>
+                        {#each favoriteMaterials as material}
+                            {@const displayProps = displayPropsMap.get(material.id) ?? []} 
+                            {#if displayProps.length > 0}
+                                <th colspan={displayProps.length}>{material.materialName}</th>
+                            {/if}
+                        {/each}
+                    </tr>
+                    <tr>
+                        {#each favoriteMaterials as material}
+                            {@const displayProps = displayPropsMap.get(material.id) ?? []} 
+                            {#each displayProps as prop}
+                                <th>{prop.name}</th>
+                            {/each}
+                        {/each}
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each materialData as entry}
+                        <tr>
+                            <td class="date-cell">{formatDate(entry.date)}</td>
+                            {#each favoriteMaterials as favMaterial}
+                                {@const displayProps = displayPropsMap.get(favMaterial.id) ?? []} 
+                                {@const matchedData = entry.valuesMap.get(favMaterial.id)}
 
-							{#each favoriteMaterials as favMaterial}
-								<!-- Find if we have data for this material on this date -->
-								{@const matchedData = entry.materialValues.find(
-									(mv) => mv.materialInfo.id === favMaterial.id
-								)}
-
-								{#if matchedData}
-									<td class="value-cell">{matchedData.valueMin || 'N/A'}</td>
-									<td class="value-cell">{matchedData.valueMax || 'N/A'}</td>
-									<td class="value-cell">{matchedData.valueAvg || 'N/A'}</td>
-								{:else}
-									<td class="value-cell no-data-cell">-</td>
-									<td class="value-cell no-data-cell">-</td>
-									<td class="value-cell no-data-cell">-</td>
-								{/if}
-							{/each}
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	{/if}
+                                {#each displayProps as prop}
+                                    {#if matchedData && matchedData.propsUsed.includes(prop.id)}
+                                        <td class="value-cell">
+                                            {(matchedData as any)[prop.valueKey] || 'N/A'}
+                                        </td>
+                                    {:else}
+                                        <!-- Show placeholder if no data for this date OR this specific prop wasn't included for this date -->
+                                        <td class="value-cell no-data-cell">-</td>
+                                    {/if}
+                                {/each}
+                            {/each}
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {/if}
 </section>
 
 <style>

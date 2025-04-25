@@ -1,4 +1,4 @@
-import { delay, ENABLE_MOCKS, mockFavoriteMaterials, mockMaterials, sampleData } from "$lib/mock";
+import { delay, ENABLE_MOCKS, mockFavoriteMaterials } from "$lib/mock";
 import { fetchWithAuth } from "./authClient";
 
 export async function getFavorites(): Promise<number[] | null> {
@@ -72,10 +72,6 @@ export async function removeFavorite(id: number): Promise<number[] | null> {
 
 export async function getMaterials(): Promise<Material[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            return mockMaterials;
-        }
         const resp = await fetchWithAuth('data/materials');
         if (!resp.ok) {
             console.error('Failed to get materials:', resp.statusText);
@@ -91,22 +87,6 @@ export async function getMaterials(): Promise<Material[] | null> {
 
 export async function getOverview(materialIds: number[], propertyIds: number[], startDate: string, endDate: string): Promise<DateGroupedMaterialValues[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-
-            return sampleData.filter(entry => {
-                const entryDate = new Date(entry.date);
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-
-                return entryDate >= start && entryDate <= end &&
-                    entry.materialValues.some(mv =>
-                        materialIds.includes(mv.materialInfo.id) &&
-                        propertyIds.some(pid => mv.propsUsed.includes(pid))
-                    );
-            });
-
-        }
         const reqsts: MaterialDateMetricReq[] = materialIds.map(id => ({
             materialId: id,
             propertyIds,
@@ -144,6 +124,8 @@ export interface Material {
     market: string;
     unit: string;
     lastCreatedDate: string | null;
+    avalibleProps: number[];
+
 }
 
 export interface MaterialDateMetricReq {
