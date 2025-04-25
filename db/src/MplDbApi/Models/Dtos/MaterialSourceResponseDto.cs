@@ -9,5 +9,9 @@ public record MaterialSourceResponseDto(
     string Market,
     string Unit,
     DateOnly? LastCreatedDate,
+    decimal? LatestAvgValue,
+    decimal? LatestMinValue,
+    decimal? LatestMaxValue,
+    decimal? LatestSupplyValue,
     List<int> AvalibleProps
 );
