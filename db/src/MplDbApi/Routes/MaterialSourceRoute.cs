@@ -43,6 +43,25 @@ namespace MplDbApi.Routes
                     return Results.Problem("Error while receiving the material.");
                 }
             });
+
+            app.MapGet("/materials/bygroup/{id:int}", async (int groupId, IMaterialSourceService service) =>
+            {
+                try
+                {
+                    var materials = await service.GetMaterialsByGroup(groupId);
+                    return Results.Ok(materials);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    logger.LogWarning(ex, "Meterial with group ID {Id} was not found.", groupId);
+                    return Results.NotFound($"Material with group ID {groupId} was not found.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error with receiving materials with group ID {Id}.", groupId);
+                    return Results.Problem("Error while receiving the material.");
+                }
+            });
         }
     }
 }
