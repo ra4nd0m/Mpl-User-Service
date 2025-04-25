@@ -3,12 +3,13 @@
 	import { authStore } from '$lib/stores/authStore';
 	import { goto } from '$app/navigation';
 	import { refreshAccessToken } from '$lib/api/authClient';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	onMount(async () => {
-		const newToken = await refreshAccessToken();
-
-		if (newToken) {
-			authStore.setToken(newToken);
+		if (data.token) {
+			authStore.setToken(data.token);
 			goto('/dashboard');
 		} else {
 			goto('/login');
