@@ -2,19 +2,17 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import { goto } from '$app/navigation';
+	import { refreshAccessToken } from '$lib/api/authClient';
 
-	onMount(() => {
-		const unsubscribe = authStore.subscribe((state) => {
-			if (!state.isAuthenticated) {
-				goto('/login');
-			} else {
-				goto('/dashboard');
-			}
-		});
+	onMount(async () => {
+		const newToken = await refreshAccessToken();
 
-		return () => {
-			unsubscribe();
-		};
+		if (newToken) {
+			authStore.setToken(newToken);
+			goto('/dashboard');
+		} else {
+			goto('/login');
+		}
 	});
 </script>
 

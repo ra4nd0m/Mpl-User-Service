@@ -39,7 +39,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}, useA
     return response;
 };
 
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
     try {
         if (ENABLE_MOCKS) {
             return await mockRefreshToken();
