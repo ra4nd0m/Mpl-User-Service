@@ -33,6 +33,7 @@ builder.Services.AddScoped<IDeliveryTypeService, DeliveryTypeService>();
 builder.Services.AddScoped<IMaterialSourceService, MaterialSourceService>();
 builder.Services.AddScoped<IMaterialValueService, MaterialValueService>();
 builder.Services.AddScoped<IMaterialPropService, MaterialPropService>();
+builder.Services.AddScoped<IMaterialGroupService, MaterialGroupService>();
 
 var app = builder.Build();
 
@@ -42,5 +43,6 @@ app.MapDeliveryTypeRoutes();
 app.MapMaterialSourceRoutes();
 app.MapMaterialValueRoutes();
 app.MapMaterialPropertyRoutes();
+app.MapMaterialGroupRoutes();
 
 app.Run();
