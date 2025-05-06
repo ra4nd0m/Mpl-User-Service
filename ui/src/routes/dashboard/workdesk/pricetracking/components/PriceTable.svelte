@@ -108,7 +108,10 @@
 	<div class="table-header">
 		<h3>
 			{#if materialInfo}
-				Price History: {materialInfo.materialName} ({materialInfo.unit})
+				Price History: {materialInfo.materialName}
+				{materialInfo.unit}
+				{materialInfo.deliveryType}
+				{materialInfo.market}
 			{:else}
 				Price History
 			{/if}
