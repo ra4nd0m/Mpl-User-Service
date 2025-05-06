@@ -2,6 +2,7 @@
 	import { getMaterialDateMetrics, getMaterialInfo } from '$lib/api/userClient';
 	import type { MaterialDateMetricsResp, Material } from '$lib/api/userClient';
 	import { onMount } from 'svelte';
+	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 
 	const materialId = $props<number>();
 	let isLoading = $state(true);
@@ -11,11 +12,21 @@
 
 	const propertyIds = [1, 2, 3];
 
-	// Make dates mutable state variables
-	let endDate = $state(new Date().toISOString().split('T')[0]);
-	let startDate = $state(
-		new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-	);
+	// Get materialId as number for lookup
+	const normalizedMaterialId = typeof materialId === 'object' ? materialId.materialId : materialId;
+
+	// Load date settings from store or use defaults
+	const savedDateRange = widgetSettingsStore.getPriceTableDateRange(normalizedMaterialId);
+	let endDate = $state(savedDateRange.endDate);
+	let startDate = $state(savedDateRange.startDate);
+
+	// Save current date settings to store
+	function saveDateSettings() {
+		widgetSettingsStore.setPriceTableDateRange(normalizedMaterialId, {
+			startDate,
+			endDate
+		});
+	}
 
 	async function fetchData() {
 		if (!materialId) return;
@@ -59,22 +70,34 @@
 	function setLastWeek() {
 		endDate = new Date().toISOString().split('T')[0];
 		startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+		saveDateSettings();
 		fetchData();
 	}
 
 	function setLastMonth() {
 		endDate = new Date().toISOString().split('T')[0];
 		startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+		saveDateSettings();
 		fetchData();
 	}
 
 	function setLast3Months() {
 		endDate = new Date().toISOString().split('T')[0];
 		startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+		saveDateSettings();
 		fetchData();
 	}
 
 	function applyDateRange() {
+		saveDateSettings();
+		fetchData();
+	}
+
+	function resetDateSettings() {
+		widgetSettingsStore.resetPriceTableSettings(normalizedMaterialId);
+		const defaultRange = widgetSettingsStore.getPriceTableDateRange(normalizedMaterialId);
+		startDate = defaultRange.startDate;
+		endDate = defaultRange.endDate;
 		fetchData();
 	}
 
