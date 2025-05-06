@@ -115,7 +115,8 @@ builder.Services.AddCors(options =>
             .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://127.0.0.1:5173", "http://localhost:5173"])
                 .WithMethods("GET", "POST", "OPTIONS", "DELETE")
                 .AllowAnyHeader()
-                .AllowCredentials();
+                .AllowCredentials()
+                .WithExposedHeaders("Token-Expired");
     });
 });
 
