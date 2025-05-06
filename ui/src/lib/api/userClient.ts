@@ -142,6 +142,33 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
     }
 }
 
+export async function getMaterialDateMetrics(materialId: number | { materialId: number }, propertyIds: number[], startDate: string, endDate: string): Promise<MaterialDateMetricsResp[] | null> {
+    try{
+        const actualMaterialId = typeof materialId === 'object' && materialId !== null ? 
+        (materialId as { materialId: number }).materialId : materialId;
+        const req: MaterialDateMetricReq = {
+            materialId: actualMaterialId,
+            propertyIds,
+            startDate,
+            endDate
+        }
+        const resp = await fetchWithAuth('data/materialvalues/daterange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req)
+        });
+        if (!resp.ok) {
+            console.error('Failed to get material date metrics:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    }catch(err) {
+        console.error('Error during getMaterialDateMetrics:', err);
+        return null;
+    }
+}
+
 
 
 
