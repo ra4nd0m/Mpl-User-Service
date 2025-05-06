@@ -45,7 +45,10 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
 
             var values = valueGroups.Select(i =>
             {
-                var propsUsed = i.Select(x => x.PropertyId).ToList();
+                var propsUsed = i.Where(p => p.ValueDecimal.HasValue || !string.IsNullOrEmpty(p.ValueStr))
+                    .Select(x => x.PropertyId)
+                    .ToList();
+
                 return new MaterialDateMetrics(
                     Id: i.FirstOrDefault()?.Id ?? 0,
                     Date: i.Key.CreatedOn,
