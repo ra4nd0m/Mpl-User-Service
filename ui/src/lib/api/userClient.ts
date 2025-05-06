@@ -142,6 +142,23 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
     }
 }
 
+export async function getMaterialInfo(materialId: number | { materialId: number }): Promise<Material | null> {
+    try{
+        const actualMaterialId = typeof materialId === 'object' && materialId !== null ? 
+        (materialId as { materialId: number }).materialId : materialId;
+        const resp = await fetchWithAuth(`data/materials/${actualMaterialId}`);
+        if (!resp.ok) {
+            console.error('Failed to get material info:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    }catch(err) {
+        console.error('Error during getMaterialInfo:', err);
+        return null;
+    }
+}
+
 export async function getMaterialDateMetrics(materialId: number | { materialId: number }, propertyIds: number[], startDate: string, endDate: string): Promise<MaterialDateMetricsResp[] | null> {
     try{
         const actualMaterialId = typeof materialId === 'object' && materialId !== null ? 
