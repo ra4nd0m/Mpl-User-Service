@@ -9,7 +9,6 @@
 	let error = $state<string | null>(null);
 	let priceData = $state<MaterialDateMetricsResp[] | null>(null);
 	let materialInfo = $state<Material | null>(null);
-    let isExpanded = $state(true);
 
 	const propertyIds = [1, 2, 3];
 
@@ -21,6 +20,8 @@
 	let endDate = $state(savedDateRange.endDate);
 	let startDate = $state(savedDateRange.startDate);
 
+    let isExpanded = $state(widgetSettingsStore.getPriceTableExpanded(normalizedMaterialId));
+
 	// Save current date settings to store
 	function saveDateSettings() {
 		widgetSettingsStore.setPriceTableDateRange(normalizedMaterialId, {
@@ -31,6 +32,8 @@
 
     function toggleExpand(){
         isExpanded = !isExpanded;
+
+        widgetSettingsStore.setPriceTableExpanded(normalizedMaterialId, isExpanded);
     }
 
 	async function fetchData() {

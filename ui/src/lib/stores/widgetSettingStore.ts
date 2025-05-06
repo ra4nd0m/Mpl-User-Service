@@ -1,4 +1,4 @@
-import { writable, get } from "svelte/store";
+import { writable, get } from 'svelte/store';
 
 export interface DateRangeSetting {
     startDate: string;
@@ -7,7 +7,10 @@ export interface DateRangeSetting {
 
 export interface WidgetSettings {
     priceTable: {
-        [materialId: string]: DateRangeSetting;
+        [materialId: string]: {
+            dateRange?: DateRangeSetting;
+            isExpanded?: boolean;
+        };
     };
     // Can expand with other widget types in the future
     // otherWidget: { [id: string]: OtherWidgetSettings };
@@ -61,7 +64,10 @@ const createWidgetSettingsStore = () => {
                 if (!settings.priceTable) {
                     settings.priceTable = {};
                 }
-                settings.priceTable[id] = dateRange;
+                if (!settings.priceTable[id]) {
+                    settings.priceTable[id] = {};
+                }
+                settings.priceTable[id].dateRange = dateRange;
                 persistSettings(settings);
                 return settings;
             });
@@ -72,11 +78,39 @@ const createWidgetSettingsStore = () => {
             const id = materialId.toString();
             const settings = get({ subscribe });
             
-            if (settings.priceTable && settings.priceTable[id]) {
-                return settings.priceTable[id];
+            if (settings.priceTable && settings.priceTable[id] && settings.priceTable[id].dateRange) {
+                return settings.priceTable[id].dateRange as DateRangeSetting;
             }
             
             return getDefaultDateRange();
+        },
+        
+        // Set expanded state for a specific price table
+        setPriceTableExpanded: (materialId: number | string, isExpanded: boolean) => {
+            update(settings => {
+                const id = materialId.toString();
+                if (!settings.priceTable) {
+                    settings.priceTable = {};
+                }
+                if (!settings.priceTable[id]) {
+                    settings.priceTable[id] = {};
+                }
+                settings.priceTable[id].isExpanded = isExpanded;
+                persistSettings(settings);
+                return settings;
+            });
+        },
+        
+        // Get expanded state for a specific price table (defaults to true)
+        getPriceTableExpanded: (materialId: number | string): boolean => {
+            const id = materialId.toString();
+            const settings = get({ subscribe });
+            
+            if (settings.priceTable && settings.priceTable[id] && settings.priceTable[id].isExpanded !== undefined) {
+                return settings.priceTable[id].isExpanded as boolean;
+            }
+            
+            return true; // Default to expanded
         },
         
         // Reset settings for a specific price table
