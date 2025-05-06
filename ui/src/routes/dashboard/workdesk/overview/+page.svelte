@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
-	import { dateRangeStore } from '$lib/stores/dateRangeStore';
+	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import {
 		type Material,
 		type DateGroupedMaterialValues,
@@ -11,9 +11,9 @@
 	} from '$lib/api/userClient';
 
 	type ProcessedMaterialDataEntry = {
-        date: string;
-        valuesMap: Map<number, MaterialDateMetricsResp>; // Map material ID to its data for the date
-    };
+		date: string;
+		valuesMap: Map<number, MaterialDateMetricsResp>; // Map material ID to its data for the date
+	};
 
 	const favoriteIds = $derived($favoritesStore.ids);
 	let favoriteMaterials = $state<Material[]>([]);
@@ -21,9 +21,12 @@
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 
+	const OVERVIEW_ID = 'overview';
+
 	//Date range for fetching,
-	let startDate = $state($dateRangeStore.startDate);
-	let endDate = $state($dateRangeStore.endDate);
+	const savedDateRange = widgetSettingsStore.getPriceTableDateRange(OVERVIEW_ID);
+	let startDate = $state(savedDateRange.startDate);
+	let endDate = $state(savedDateRange.endDate);
 
 	// Property IDs to fetch, hardocoded for now
 	const propertyIds = [1, 2, 3, 6];
@@ -33,27 +36,27 @@
 		2: { name: 'Min', valueKey: 'valueMin' },
 		3: { name: 'Max', valueKey: 'valueMax' },
 		1: { name: 'Avg', valueKey: 'valueAvg' },
-		6: {name: 'Supply', valueKey: 'supply'} 
+		6: { name: 'Supply', valueKey: 'supply' }
 	});
 
 	// Helper derived state to get an ordered list of properties to display for each material
-    const materialDisplayProps = $derived(() => {
-        const map = new Map<number, Array<{ id: number; name: string; valueKey: string }>>();
+	const materialDisplayProps = $derived(() => {
+		const map = new Map<number, Array<{ id: number; name: string; valueKey: string }>>();
 
-        for (const material of favoriteMaterials) {
+		for (const material of favoriteMaterials) {
 			const availableIds = new Set(material.avalibleProps || []);
 
-            const displayPropsForMaterial = Object.entries(propertyMap)
-				.map(([idStr, info])=>({id: parseInt(idStr), ...info}))
+			const displayPropsForMaterial = Object.entries(propertyMap)
+				.map(([idStr, info]) => ({ id: parseInt(idStr), ...info }))
 				.filter(({ id }) => availableIds.has(id))
 				.sort((a, b) => a.id - b.id);
 
 			if (displayPropsForMaterial.length > 0) {
 				map.set(material.id, displayPropsForMaterial);
 			}
-        }
-        return map;
-    });
+		}
+		return map;
+	});
 
 	// Format date for display
 	function formatDate(dateString: string): string {
@@ -70,18 +73,23 @@
 
 		try {
 			if (favoriteIds.length > 0) {
-				const rawData: DateGroupedMaterialValues[] | null = await getOverview(favoriteIds, propertyIds, startDate, endDate);
+				const rawData: DateGroupedMaterialValues[] | null = await getOverview(
+					favoriteIds,
+					propertyIds,
+					startDate,
+					endDate
+				);
 				if (rawData) {
 					const sortedData = rawData.sort(
 						(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 					);
-				
-					materialData = sortedData.map((entry)=>{
+
+					materialData = sortedData.map((entry) => {
 						const valuesMap = new Map<number, MaterialDateMetricsResp>();
-						for (const mv of entry.materialValues){
+						for (const mv of entry.materialValues) {
 							valuesMap.set(mv.materialInfo.id, mv);
 						}
-						return {date: entry.date, valuesMap};
+						return { date: entry.date, valuesMap };
 					});
 				} else {
 					error = 'Failed to fetch data';
@@ -100,8 +108,11 @@
 	}
 
 	async function handleDateChange() {
-		dateRangeStore.setDateRange(startDate, endDate);
-		await fetchData();
+		widgetSettingsStore.setPriceTableDateRange(OVERVIEW_ID, {
+			startDate,
+			endDate
+		});
+		fetchData();
 	}
 
 	onMount(async () => {
@@ -145,60 +156,60 @@
 </section>
 
 <section>
-    {#if isLoading}
-        <div class="loading">Loading data...</div>
-    {:else if materialData.length === 0}
-        <div class="no-data">No data available</div>
-    {:else if error}
-        <div class="error">{error}</div>
-    {:else}
-        {@const displayPropsMap = materialDisplayProps()} 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th rowspan="2">Date</th>
-                        {#each favoriteMaterials as material}
-                            {@const displayProps = displayPropsMap.get(material.id) ?? []} 
-                            {#if displayProps.length > 0}
-                                <th colspan={displayProps.length}>{material.materialName}</th>
-                            {/if}
-                        {/each}
-                    </tr>
-                    <tr>
-                        {#each favoriteMaterials as material}
-                            {@const displayProps = displayPropsMap.get(material.id) ?? []} 
-                            {#each displayProps as prop}
-                                <th>{prop.name}</th>
-                            {/each}
-                        {/each}
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each materialData as entry}
-                        <tr>
-                            <td class="date-cell">{formatDate(entry.date)}</td>
-                            {#each favoriteMaterials as favMaterial}
-                                {@const displayProps = displayPropsMap.get(favMaterial.id) ?? []} 
-                                {@const matchedData = entry.valuesMap.get(favMaterial.id)}
+	{#if isLoading}
+		<div class="loading">Loading data...</div>
+	{:else if materialData.length === 0}
+		<div class="no-data">No data available</div>
+	{:else if error}
+		<div class="error">{error}</div>
+	{:else}
+		{@const displayPropsMap = materialDisplayProps()}
+		<div class="table-container">
+			<table>
+				<thead>
+					<tr>
+						<th rowspan="2">Date</th>
+						{#each favoriteMaterials as material}
+							{@const displayProps = displayPropsMap.get(material.id) ?? []}
+							{#if displayProps.length > 0}
+								<th colspan={displayProps.length}>{material.materialName}</th>
+							{/if}
+						{/each}
+					</tr>
+					<tr>
+						{#each favoriteMaterials as material}
+							{@const displayProps = displayPropsMap.get(material.id) ?? []}
+							{#each displayProps as prop}
+								<th>{prop.name}</th>
+							{/each}
+						{/each}
+					</tr>
+				</thead>
+				<tbody>
+					{#each materialData as entry}
+						<tr>
+							<td class="date-cell">{formatDate(entry.date)}</td>
+							{#each favoriteMaterials as favMaterial}
+								{@const displayProps = displayPropsMap.get(favMaterial.id) ?? []}
+								{@const matchedData = entry.valuesMap.get(favMaterial.id)}
 
-                                {#each displayProps as prop}
-                                    {#if matchedData && matchedData.propsUsed.includes(prop.id)}
-                                        <td class="value-cell">
-                                            {(matchedData as any)[prop.valueKey] || 'N/A'}
-                                        </td>
-                                    {:else}
-                                        <!-- Show placeholder if no data for this date OR this specific prop wasn't included for this date -->
-                                        <td class="value-cell no-data-cell">-</td>
-                                    {/if}
-                                {/each}
-                            {/each}
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
-        </div>
-    {/if}
+								{#each displayProps as prop}
+									{#if matchedData && matchedData.propsUsed.includes(prop.id)}
+										<td class="value-cell">
+											{(matchedData as any)[prop.valueKey] || 'N/A'}
+										</td>
+									{:else}
+										<!-- Show placeholder if no data for this date OR this specific prop wasn't included for this date -->
+										<td class="value-cell no-data-cell">-</td>
+									{/if}
+								{/each}
+							{/each}
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{/if}
 </section>
 
 <style>
