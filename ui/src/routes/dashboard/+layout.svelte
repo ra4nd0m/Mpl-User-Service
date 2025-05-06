@@ -3,10 +3,11 @@
 	import { authStore } from '$lib/stores/authStore';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 	import { goto } from '$app/navigation';
-	import { logout } from '$lib/api/authClient';
+	import { logout, refreshAccessToken } from '$lib/api/authClient';
 	import { browser } from '$app/environment';
 
 	let { children } = $props();
+	let checkingAuth = $state(true);
 
 	async function handleLogout() {
 		await logout();
@@ -28,15 +29,39 @@
 	const user = $derived($authStore.user);
 	const isAdmin = $derived($authStore.roles?.includes('Admin'));
 
-	onMount(() => {
-		favoritesStore.loadFavourites();
-		
-		const unsubscribe = authStore.subscribe((state) => {
-			if (!state.isAuthenticated && browser) {
-				goto('/login');
-			}
-		});
-		return unsubscribe;
+	onMount(async () => {
+		let isAuthenticated = false;
+        let token: string | null = null;
+
+        // Check initial state from store
+        const unsubscribeInitial = authStore.subscribe(state => {
+            isAuthenticated = state.isAuthenticated;
+            token = state.token;
+        });
+        unsubscribeInitial(); // Unsubscribe immediately
+
+        if (isAuthenticated && token) {
+            // Already authenticated, load data if not already loaded/loading
+            if (!$favoritesStore.loading && $favoritesStore.ids.length === 0) {
+                await favoritesStore.loadFavourites();
+            }
+            checkingAuth = false;
+        } else {
+            // Not authenticated or no token, try refreshing
+            const newToken = await refreshAccessToken();
+            if (newToken) {
+                authStore.setToken(newToken);
+                // Now authenticated, load data
+                await favoritesStore.loadFavourites();
+                checkingAuth = false;
+            } else {
+                // Refresh failed, redirect to login
+                if (browser) {
+                    goto('/login');
+                }
+                // Keep checkingAuth true as we are navigating away
+            }
+        }
 	});
 </script>
 

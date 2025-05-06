@@ -1,8 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
-	import { getMaterials, type Material } from '$lib/api/userClient';
+	import {
+		getMaterialGroups,
+		getMaterials,
+		getMaterialsByGroup,
+		type Material
+	} from '$lib/api/userClient';
 
+	let materialGroups: { id: number; name: string }[] = $state([]);
+	let selectedGroupId: number | null = $state(null);
 	let materialList: Material[] = $state([]);
 	let loading = $state(true);
 	let error = $state('');
@@ -21,12 +28,18 @@
 		}
 	}
 
-	async function loadMaterials() {
+	async function loadMaterials(groupId: number | null = selectedGroupId) {
 		try {
 			loading = true;
 			error = '';
 
-			const materials = await getMaterials();
+			let materials: Material[] | null = null;
+
+			if (groupId === null) {
+				materials = await getMaterials();
+			} else {
+				materials = await getMaterialsByGroup(groupId);
+			}
 
 			if (materials) {
 				materialList = materials;
@@ -36,18 +49,57 @@
 		} catch (err) {
 			console.error(err);
 			error = 'Failed to load materials';
+			materialList = [];
 		} finally {
 			loading = false;
 		}
 	}
 
+	async function loadGroups() {
+		try {
+			const groups = await getMaterialGroups();
+			if (groups) {
+				materialGroups = groups;
+			} else {
+				error = 'Failed to load material groups';
+			}
+		} catch (err) {
+			console.error(err);
+			error = 'Failed to load material groups';
+		}
+	}
+
+    async function selectGroup(groupId: number | null) {
+        selectedGroupId = groupId;
+        await loadMaterials(selectedGroupId);
+    }
+
 	onMount(async () => {
+		await loadGroups();
 		await loadMaterials();
 	});
 </script>
 
 <section>
 	<h1>Materials</h1>
+    <!-- Material Group Buttons -->
+    <div class="group-buttons">
+        <span class="group-label">Filter by Group:</span>
+        <button
+            class:active={selectedGroupId === null}
+            onclick={() => selectGroup(null)}
+        >
+            All Groups
+        </button>
+        {#each materialGroups as group}
+            <button
+                class:active={selectedGroupId === group.id}
+                onclick={() => selectGroup(group.id)}
+            >
+                {group.name}
+            </button>
+        {/each}
+    </div>
 	<div class="debug-favorites">
 		<p class="debug-title">Favorite Material IDs:</p>
 		<div class="debug-ids">
@@ -72,15 +124,17 @@
 		<table class="materials-table">
 			<thead>
 				<tr>
-					<td class="favorite-cell"> </td>
-					<th>ID</th>
-					<th>Material Name</th>
-					<th>Source</th>
-					<th>Delivery Type</th>
-					<th>Group</th>
-					<th>Market</th>
-					<th>Unit</th>
-					<th>Last Update</th>
+					<th rowspan="2" class="favorite-cell"> </th>
+					<th rowspan="2">ID</th>
+					<th rowspan="2" class="table-material-name">Material Name</th>
+					<th rowspan="2">Change</th>
+					<th colspan="3">Price Today</th>
+					<th rowspan="2">Last Update</th>
+				</tr>
+				<tr>
+					<th>Average</th>
+					<th>Minimum</th>
+					<th>Maximum</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -111,17 +165,32 @@
 							</button>
 						</td>
 						<td>{material.id}</td>
-						<td>{material.materialName}</td>
-						<td>{material.source}</td>
-						<td>{material.deliveryType}</td>
-						<td>{material.group}</td>
-						<td>{material.market}</td>
-						<td>{material.unit}</td>
+						<td class="table-material-name"
+							>{material.materialName +
+								' ' +
+								material.unit +
+								' ' +
+								material.deliveryType +
+								' ' +
+								material.market}</td
+						>
+						<td>{"Change Placeholder"}</td>
+						<td>{material.latestAvgValue}</td>
+						{#if material.latestMinValue === null}
+							<td>-</td>
+						{:else}
+							<td>{material.latestMinValue}</td>
+						{/if}
+						{#if material.latestMaxValue === null}
+							<td>-</td>
+						{:else}
+							<td>{material.latestMaxValue}</td>
+						{/if}
 						<td>{material.lastCreatedDate}</td>
 					</tr>
 				{:else}
 					<tr>
-						<td colspan="8" class="no-data">No materials found</td>
+						<td colspan="7" class="no-data">No materials found</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -130,6 +199,44 @@
 </section>
 
 <style>
+    .group-buttons {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .group-label {
+        font-weight: bold;
+        margin-right: 0.5rem; /* Add some space between label and buttons */
+    }
+
+    .group-buttons button {
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    }
+
+    .group-buttons button:hover {
+        background-color: #e2e6ea;
+        border-color: #adb5bd;
+    }
+
+    .group-buttons button.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+        font-weight: bold;
+    }
+
+    .group-buttons button.active:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
 	.materials-table {
 		width: 100%;
 		border-collapse: collapse;
@@ -141,11 +248,21 @@
 		padding: 0.75rem;
 		text-align: left;
 		border-bottom: 1px solid #ddd;
+		vertical-align: middle;
 	}
 
 	.materials-table th {
 		background-color: #f8f9fa;
 		font-weight: bold;
+		text-align: center;
+	}
+
+	.materials-table .table-material-name {
+		text-align: left;
+	}
+
+	.materials-table td {
+		text-align: center;
 	}
 
 	.materials-table tbody tr:hover {

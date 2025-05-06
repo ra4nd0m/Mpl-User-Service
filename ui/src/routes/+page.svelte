@@ -2,19 +2,18 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import { goto } from '$app/navigation';
+	import { refreshAccessToken } from '$lib/api/authClient';
+	import type { PageProps } from './$types';
 
-	onMount(() => {
-		const unsubscribe = authStore.subscribe((state) => {
-			if (!state.isAuthenticated) {
-				goto('/login');
-			} else {
-				goto('/dashboard');
-			}
-		});
+	let { data }: PageProps = $props();
 
-		return () => {
-			unsubscribe();
-		};
+	onMount(async () => {
+		if (data.token) {
+			authStore.setToken(data.token);
+			goto('/dashboard');
+		} else {
+			goto('/login');
+		}
 	});
 </script>
 

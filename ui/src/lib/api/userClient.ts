@@ -85,6 +85,36 @@ export async function getMaterials(): Promise<Material[] | null> {
     }
 }
 
+export async function getMaterialsByGroup(id: number): Promise<Material[] | null> {
+    try {
+        const resp = await fetchWithAuth(`data/materials/group/${id}`);
+        if (!resp.ok) {
+            console.error('Failed to get materials by group:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getMaterialsByGroup:', err);
+        return null;
+    }
+}
+
+export async function getMaterialGroups():Promise<{id: number, name: string}[] | null> {
+    try {
+        const resp = await fetchWithAuth('data/materialgroups');
+        if (!resp.ok) {
+            console.error('Failed to get material groups:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getMaterialGroups:', err);
+        return null;
+    }
+}
+
 export async function getOverview(materialIds: number[], propertyIds: number[], startDate: string, endDate: string): Promise<DateGroupedMaterialValues[] | null> {
     try {
         const reqsts: MaterialDateMetricReq[] = materialIds.map(id => ({
@@ -124,6 +154,9 @@ export interface Material {
     market: string;
     unit: string;
     lastCreatedDate: string | null;
+    latestAvgValue?:number | null;
+    latestMinValue?:number | null;
+    latestMaxValue?:number | null;
     avalibleProps: number[];
 
 }
