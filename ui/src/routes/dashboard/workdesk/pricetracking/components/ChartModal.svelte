@@ -162,6 +162,13 @@
 		});
 	}
 
+	function handleEscKey(event: KeyboardEvent) {
+		console.log(event.key);
+		if (event.key === 'Escape' && showModal) {
+			close();
+		}
+	}
+
 	onMount(() => {
 		if (showModal) {
 			createChart();
@@ -182,7 +189,7 @@
 </script>
 
 <!-- Modal container -->
-<div>
+<div onkeydown={handleEscKey} role="presentation">
 	<button class="chart-btn" onclick={open}>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
