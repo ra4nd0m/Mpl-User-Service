@@ -3,6 +3,7 @@
 	import type { MaterialDateMetricsResp, Material } from '$lib/api/userClient';
 	import { onMount } from 'svelte';
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
+    import ChartModal from './ChartModal.svelte';
 
 	const materialId = $props<number>();
 	let isLoading = $state(true);
@@ -145,6 +146,12 @@
             </h3>
         </div>
 
+        <div class="header-right">
+            {#if priceData && priceData.length > 0}
+                <ChartModal {priceData}{materialInfo}/>
+            {/if}
+        </div>
+
         {#if isExpanded}
             <div class="date-controls">
                 <div class="date-presets">
@@ -279,6 +286,10 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+
+    .header-right{
+        margin-left: auto;
     }
     
     .toggle-button {
