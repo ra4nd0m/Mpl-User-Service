@@ -1,12 +1,10 @@
 <script lang="ts">
 	import type { Material, MaterialDateMetricsResp } from '$lib/api/userClient';
 	import Chart from 'chart.js/auto';
+	import zoomPlugin from 'chartjs-plugin-zoom';
 	import { onDestroy, onMount } from 'svelte';
 
-	interface ChartModalProps {
-		priceData: MaterialDateMetricsResp[];
-		materialInfo: Material | null;
-	}
+	Chart.register(zoomPlugin);
 
 	const { priceData, materialInfo } = $props();
 
@@ -115,6 +113,26 @@
 					tooltip: {
 						mode: 'index',
 						intersect: false
+					},
+					zoom: {
+						pan: {
+							enabled: true,
+							mode: 'xy',
+							threshold: 5
+						},
+						zoom: {
+							wheel: {
+								enabled: true,
+								speed: 0.1
+							},
+							pinch: {
+								enabled: true
+							},
+							mode: 'xy'
+						},
+						limits: {
+							y: { min: 'original', max: 'original', minRange: 1 }
+						}
 					}
 				},
 				scales: {
@@ -187,11 +205,11 @@
 	{#if showModal}
 		<div
 			class="modal-backdrop"
-            role="presentation"
+			role="presentation"
 			onclick={(e) => {
-				if(e.target === e.currentTarget) {
-                    close();
-                }
+				if (e.target === e.currentTarget) {
+					close();
+				}
 			}}
 		>
 			<div class="modal-content">

@@ -40,6 +40,7 @@
 		"vitest": "^3.0.0"
 	},
 	"dependencies": {
-		"chart.js": "^4.4.9"
+		"chart.js": "^4.4.9",
+		"chartjs-plugin-zoom": "^2.2.0"
 	}
 }
