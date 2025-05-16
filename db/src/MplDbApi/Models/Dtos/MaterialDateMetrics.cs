@@ -1,6 +1,6 @@
 namespace MplDbApi.Models.Dtos
 {
-    public record MaterialDateMetrics (
+    public record MaterialDateMetrics(
         int Id,
         DateOnly Date,
         List<int> PropsUsed,
@@ -10,7 +10,15 @@ namespace MplDbApi.Models.Dtos
         string? PredWeekly,
         string? PredMonthly,
         string? Supply,
-        string? MonthlyAvg,
+        string? WeeklyAvg = null,
+        string? MonthlyAvg = null,
+        string? QuarterlyAvg = null,
+        string? YearlyAvg = null,
         CompactMaterialInfo? MaterialInfo = null
+    );
+
+    public record DateGroupedMaterialValues(
+        DateOnly Date,
+        List<MaterialDateMetrics> MaterialValues
     );
 }
