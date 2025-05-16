@@ -6,6 +6,13 @@ using MplDbApi.Models.Dtos;
 
 public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValueService> logger) : IMaterialValueService
 {
+    private class AveragesCalculated
+    {
+        public List<(DateOnly Date, decimal Value)> WeeklyAvgs { get; set; } = new();
+        public List<(DateOnly Date, decimal Value)> MonthlyAvgs { get; set; } = new();
+        public List<(DateOnly Date, decimal Value)> QuarterlyAvgs { get; set; } = new();
+        public List<(DateOnly Date, decimal Value)> YearlyAvgs { get; set; } = new();
+    }
     public async Task<MaterialValueResponseDto?> GetMaterialValueById(int id)
     {
         try
@@ -45,7 +52,10 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
 
             var values = valueGroups.Select(i =>
             {
-                var propsUsed = i.Select(x => x.PropertyId).ToList();
+                var propsUsed = i.Where(p => p.ValueDecimal.HasValue || !string.IsNullOrEmpty(p.ValueStr))
+                    .Select(x => x.PropertyId)
+                    .ToList();
+
                 return new MaterialDateMetrics(
                     Id: i.FirstOrDefault()?.Id ?? 0,
                     Date: i.Key.CreatedOn,
@@ -56,7 +66,10 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                     PredWeekly: i.Where(p => p.PropertyId == 4).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
                     PredMonthly: i.Where(p => p.PropertyId == 5).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
                     Supply: i.Where(p => p.PropertyId == 6).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
+                    WeeklyAvg: "",
                     MonthlyAvg: "",
+                    QuarterlyAvg: "",
+                    YearlyAvg: "",
                     MaterialInfo: materialInfo
                 );
             }).ToList();
@@ -149,5 +162,133 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
             currentDate = currentDate.AddMonths(1);
         }
         return months;
+    }
+
+    private async Task<List<MaterialDateMetrics>> GetMaterialDateMetrics(int materialId, (DateOnly, DateOnly) dateRange)
+    {
+        var req = new MaterialDateMetricReq(
+        materialId,
+        new List<int> { 1 },
+        dateRange.Item1,
+        dateRange.Item2,
+        null
+    );
+
+        return await GetMaterialMetricsByDateRange(req);
+    }
+    private async Task<AveragesCalculated> GetAverages((DateOnly, DateOnly) dateRange, List<string> aggregates, int materialId)
+    {
+        var result = new AveragesCalculated();
+
+        if (aggregates.Contains("weekly"))
+            result.WeeklyAvgs = await GetWeeklyAverage(dateRange, materialId);
+
+        if (aggregates.Contains("monthly"))
+            result.MonthlyAvgs = await GetMonthlyAverage(dateRange, materialId);
+
+        if (aggregates.Contains("quarterly"))
+            result.QuarterlyAvgs = await GetQuarterlyAverage(dateRange, materialId);
+
+        if (aggregates.Contains("yearly"))
+            result.YearlyAvgs = await GetYearlyAverage(dateRange, materialId);
+
+        return result;
+    }
+
+
+    private async Task<List<(DateOnly, decimal)>> GetWeeklyAverage((DateOnly, DateOnly) dateRange, int materialId)
+    {
+        DateOnly GetWeekStart(DateOnly date)
+        {
+            int offset = ((int)date.DayOfWeek + 6) % 7;
+            return date.AddDays(-offset);
+        }
+        var metrics = await GetMaterialDateMetrics(materialId, dateRange);
+
+        var grouped = metrics
+            .Where(m => decimal.TryParse(m.ValueAvg, out _))
+            .GroupBy(m => GetWeekStart(m.Date))
+            .Select(g => (
+                Date: g.Key,
+                Avg: g.Average(m => decimal.Parse(m.ValueAvg!))
+            ))
+            .ToList();
+
+        var startWeek = GetWeekStart(dateRange.Item1);
+        var endWeek = GetWeekStart(dateRange.Item2);
+
+        return grouped
+            .Where(g => g.Date >= startWeek && g.Date <= endWeek)
+            .ToList();
+    }
+
+
+
+    private async Task<List<(DateOnly, decimal)>> GetMonthlyAverage((DateOnly, DateOnly) dateRange, int materialId)
+    {
+        DateOnly GetMonthStart(DateOnly date) => new DateOnly(date.Year, date.Month, 1);
+        var metrics = await GetMaterialDateMetrics(materialId, dateRange);
+        var grouped = metrics
+            .Where(m => decimal.TryParse(m.ValueAvg, out _))
+            .GroupBy(m => GetMonthStart(m.Date))
+            .Select(g => (
+                Date: g.Key,
+                Avg: g.Average(m => decimal.Parse(m.ValueAvg!))
+            ))
+            .ToList();
+
+        var startMonth = GetMonthStart(dateRange.Item1);
+        var endMonth = GetMonthStart(dateRange.Item2);
+
+        return grouped
+            .Where(g => g.Date >= startMonth && g.Date <= endMonth)
+            .ToList();
+    }
+
+    private async Task<List<(DateOnly, decimal)>> GetQuarterlyAverage((DateOnly, DateOnly) dateRange, int materialId)
+    {
+        DateOnly GetQuarterStart(DateOnly date)
+        {
+            int startMonth = ((date.Month - 1) / 3) * 3 + 1;
+            return new DateOnly(date.Year, startMonth, 1);
+        }
+
+        var metrics = await GetMaterialDateMetrics(materialId, dateRange);
+
+        var grouped = metrics
+            .Where(m => decimal.TryParse(m.ValueAvg, out _))
+            .GroupBy(m => GetQuarterStart(m.Date))
+            .Select(g => (
+                Date: g.Key,
+                Avg: g.Average(m => decimal.Parse(m.ValueAvg!))
+            ))
+            .ToList();
+
+        var startQuater = GetQuarterStart(dateRange.Item1);
+        var endQuater = GetQuarterStart(dateRange.Item2);
+
+        return grouped
+            .Where(g => g.Date >= startQuater && g.Date <= endQuater)
+            .ToList();
+    }
+    private async Task<List<(DateOnly, decimal)>> GetYearlyAverage((DateOnly, DateOnly) dateRange, int materialId)
+    {
+        DateOnly GetYearStart(DateOnly date) => new DateOnly(date.Year, 1, 1);
+        var metrics = await GetMaterialDateMetrics(materialId, dateRange);
+
+        var grouped = metrics
+            .Where(m => decimal.TryParse(m.ValueAvg, out _))
+            .GroupBy(m => GetYearStart(m.Date))
+            .Select(g => (
+                Date: g.Key,
+                Avg: g.Average(m => decimal.Parse(m.ValueAvg!))
+            ))
+            .ToList();
+        var startYear = GetYearStart(dateRange.Item1);
+        var endYear = GetYearStart(dateRange.Item2);
+
+        return grouped
+            .Where(g => g.Date >= startYear && g.Date <= endYear)
+            .ToList();
     }
 }
