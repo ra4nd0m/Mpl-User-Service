@@ -7,13 +7,19 @@
     "start": "ts-node src/index.ts",
     "dev": "ts-node-dev src/index.ts"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/express": "^5.0.2",
     "@types/node": "^22.15.20",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "xlsx": "^0.18.5"
   }
 }
