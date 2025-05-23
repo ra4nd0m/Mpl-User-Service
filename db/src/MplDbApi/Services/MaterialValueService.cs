@@ -176,6 +176,51 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
 
         return await GetMaterialMetricsByDateRange(req);
     }
+    private static List<MaterialDateMetrics> MergeAveragesIntoMetrics(List<MaterialDateMetrics> metrics, AveragesCalculated averages)
+    {
+        var merged = metrics.ToDictionary(m => m.Date);
+
+        void InsertOrUpdate(DateOnly date, string value)
+        {
+            if (merged.TryGetValue(date, out var existing))
+            {
+                merged[date] = existing with { ValueAvg = value };
+            }
+            else
+            {
+                merged[date] = new MaterialDateMetrics(
+                    Id: 0,
+                    Date: date,
+                    PropsUsed: new(),
+                    ValueAvg: value,
+                    ValueMin: null,
+                    ValueMax: null,
+                    PredWeekly: null,
+                    PredMonthly: null,
+                    Supply: null,
+                    WeeklyAvg: null,
+                    MonthlyAvg: null,
+                    QuarterlyAvg: null,
+                    YearlyAvg: null,
+                    MaterialInfo: null
+                );
+            }
+        }
+
+        foreach (var (date, value) in averages.MonthlyAvgs)
+            InsertOrUpdate(date, value.ToString("F2"));
+
+        foreach (var (date, value) in averages.WeeklyAvgs)
+            InsertOrUpdate(date, value.ToString("F2"));
+
+        foreach (var (date, value) in averages.QuarterlyAvgs)
+            InsertOrUpdate(date, value.ToString("F2"));
+
+        foreach (var (date, value) in averages.YearlyAvgs)
+            InsertOrUpdate(date, value.ToString("F2"));
+
+        return merged.Values.OrderBy(x => x.Date).ToList();
+    }
     private async Task<AveragesCalculated> GetAverages((DateOnly, DateOnly) dateRange, List<string> aggregates, int materialId)
     {
         var result = new AveragesCalculated();
