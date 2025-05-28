@@ -46,7 +46,7 @@ namespace MplUserService.Routes
                 }
 
                 await response.Content.CopyToAsync(context.Response.Body);
-                return null; // No content to return, just copying the response body
+                return Results.Empty;
             });
         }
     }
