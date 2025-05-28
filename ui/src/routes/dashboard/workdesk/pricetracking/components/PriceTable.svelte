@@ -1,6 +1,15 @@
 <script lang="ts">
-	import { getMaterialDateMetrics, getMaterialInfo } from '$lib/api/userClient';
-	import type { MaterialDateMetricsResp, Material } from '$lib/api/userClient';
+	import {
+		getMaterialDateMetrics,
+		getMaterialInfo,
+		getMaterialSpreadsheet
+	} from '$lib/api/userClient';
+	import type {
+		MaterialDateMetricsResp,
+		Material,
+		SpreadsheetReq,
+		SpreadsheetReqData
+	} from '$lib/api/userClient';
 	import { onMount } from 'svelte';
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
@@ -135,6 +144,37 @@
 		fetchData();
 	}
 
+	async function getSpreadsheet() {
+		const spreadsheetReqDataArr: SpreadsheetReqData[] =
+			priceData?.map((item) => {
+				return {
+					date: item.date,
+					valueAvg: item.valueAvg,
+					valueMin: item.valueMin,
+					valueMax: item.valueMax,
+					predWeekly: item.predWeekly,
+					predMonthly: item.predMonthly,
+					supply: item.supply,
+					propsUsed: item.propsUsed
+				};
+			}) ?? [];
+		if (!spreadsheetReqDataArr) {
+			alert('No data available for export');
+			return;
+		}
+		const spreadsheetReq: SpreadsheetReq = {
+			materialName: materialInfo?.materialName || '',
+			market: materialInfo?.market || '',
+			unit: materialInfo?.unit || '',
+			deliveryType: materialInfo?.deliveryType || '',
+			data: spreadsheetReqDataArr
+		};
+		let res = await getMaterialSpreadsheet(spreadsheetReq);
+		if (res === null) {
+			alert('An error occurred while generating the spreadsheet');
+			return;
+		}
+	}
 	onMount(fetchData);
 </script>
 
@@ -172,9 +212,27 @@
 		</div>
 
 		<div class="header-right">
-			{#if priceData && priceData.length > 0}
+			<div class="action-buttons">
+				<button class="download-btn" onclick={getSpreadsheet} aria-label="Download spreadsheet">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+						<polyline points="7 10 12 15 17 10"></polyline>
+						<line x1="12" y1="15" x2="12" y2="3"></line>
+					</svg>
+					<span>Export</span>
+				</button>
 				<ChartModal {priceData} {materialInfo} />
-			{/if}
+			</div>
 		</div>
 
 		{#if isExpanded}
@@ -383,21 +441,21 @@
 		transition: max-height 0.3s ease;
 	}
 
-    .sortable{
-        cursor: pointer;
-        user-select: none;
-        position: relative;
-    }
+	.sortable {
+		cursor: pointer;
+		user-select: none;
+		position: relative;
+	}
 
-    .sortable:hover{
-        background-color: #e9ecef;
-    }
+	.sortable:hover {
+		background-color: #e9ecef;
+	}
 
-    .sort-indicator {
-        display: inline-block;
-        margin-left: 5px;
-        vertical-align: middle;
-    }
+	.sort-indicator {
+		display: inline-block;
+		margin-left: 5px;
+		vertical-align: middle;
+	}
 
 	.date-controls {
 		display: flex;
@@ -471,6 +529,30 @@
 	.apply-btn:hover {
 		background-color: #1c7ed6;
 		border-color: #1c7ed6;
+	}
+
+	.action-buttons {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.download-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		background-color: #4caf50;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		padding: 0.375rem 0.75rem;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.download-btn:hover {
+		background-color: #45a049;
 	}
 
 	h3 {

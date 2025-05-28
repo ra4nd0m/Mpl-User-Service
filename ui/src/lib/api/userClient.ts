@@ -186,6 +186,31 @@ export async function getMaterialDateMetrics(materialId: number | { materialId: 
     }
 }
 
+export async function getMaterialSpreadsheet(spreadsheetReq: SpreadsheetReq): Promise<void | null> {
+    try {
+        const resp = await fetchWithAuth('data/materials/spreadsheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(spreadsheetReq)
+        });
+        if (!resp.ok) {
+            console.error('Failed to get material spreadsheet:', resp.statusText);
+            return null;
+        }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'materials.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (err) {
+        console.error('Error during getMaterialSpreadsheet:', err);
+        return null;
+    }
+}
+
 export interface Material {
     id: number;
     materialName: string;
@@ -234,4 +259,23 @@ export interface MaterialDateMetricsResp {
 export interface DateGroupedMaterialValues {
     date: string;
     materialValues: MaterialDateMetricsResp[]
+}
+
+export interface SpreadsheetReq {
+    materialName: string;
+    unit: string;
+    deliveryType: string;
+    market: string;
+    data: SpreadsheetReqData[];
+}
+
+export interface SpreadsheetReqData {
+    date: string;
+    valueMin: string | null;
+    valueAvg: string | null;
+    valueMax: string | null;
+    predWeekly: string | null;
+    predMonthly: string | null;
+    supply: string | null;
+    propsUsed: number[];
 }
