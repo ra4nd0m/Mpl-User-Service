@@ -201,7 +201,7 @@ export async function getMaterialSpreadsheet(spreadsheetReq: SpreadsheetReq): Pr
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'materials.xlsx';
+        link.download = `${spreadsheetReq.materialName}-${spreadsheetReq.unit}-${spreadsheetReq.deliveryType}-${spreadsheetReq.market}.xlsx`;
         document.body.appendChild(link);
         link.click();
         link.remove();

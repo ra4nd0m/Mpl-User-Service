@@ -47,7 +47,7 @@ namespace MplUserService.Routes
 
                 await response.Content.CopyToAsync(context.Response.Body);
                 return Results.Empty;
-            });
+            }).RequireAuthorization();
         }
     }
 }
