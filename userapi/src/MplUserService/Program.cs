@@ -124,6 +124,7 @@ app.UseAuthorization();
 
 app.MapUserDataRoutes();
 app.MapMaterialRoutes();
+app.MapGeneratorRoutes();
 app.MapInternalRoutes();
 
 

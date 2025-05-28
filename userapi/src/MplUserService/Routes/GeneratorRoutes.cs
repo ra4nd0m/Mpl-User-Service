@@ -4,7 +4,7 @@ namespace MplUserService.Routes
     {
         public static void MapGeneratorRoutes(this WebApplication app)
         {
-            app.MapPost("/spreadsheet/{**catchAll}", async (IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
+            app.MapPost("/generator/spreadsheet/{**catchAll}", async (IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
 
             {
                 var client = httpClientFactory.CreateClient("SpreadsheetApi");
