@@ -188,7 +188,7 @@ export async function getMaterialDateMetrics(materialId: number | { materialId: 
 
 export async function getMaterialSpreadsheet(spreadsheetReq: SpreadsheetReq): Promise<void | null> {
     try {
-        const resp = await fetchWithAuth('data/materials/spreadsheet', {
+        const resp = await fetchWithAuth('generator/spreadsheet/export-excel', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(spreadsheetReq)
