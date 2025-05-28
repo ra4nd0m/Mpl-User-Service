@@ -87,7 +87,7 @@ export async function getMaterials(): Promise<Material[] | null> {
 
 export async function getMaterialsByGroup(id: number): Promise<Material[] | null> {
     try {
-        const resp = await fetchWithAuth(`data/materials/group/${id}`);
+        const resp = await fetchWithAuth(`data/materials/bygroup/${id}`);
         if (!resp.ok) {
             console.error('Failed to get materials by group:', resp.statusText);
             return null;
@@ -100,7 +100,7 @@ export async function getMaterialsByGroup(id: number): Promise<Material[] | null
     }
 }
 
-export async function getMaterialGroups():Promise<{id: number, name: string}[] | null> {
+export async function getMaterialGroups(): Promise<{ id: number, name: string }[] | null> {
     try {
         const resp = await fetchWithAuth('data/materialgroups');
         if (!resp.ok) {
@@ -123,7 +123,7 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
             startDate,
             endDate
         }));
-        
+
         const resp = await fetchWithAuth('data/materialvalues/overview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -142,8 +142,74 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
     }
 }
 
+export async function getMaterialInfo(materialId: number | { materialId: number }): Promise<Material | null> {
+    try {
+        const actualMaterialId = typeof materialId === 'object' && materialId !== null ?
+            (materialId as { materialId: number }).materialId : materialId;
+        const resp = await fetchWithAuth(`data/materials/${actualMaterialId}`);
+        if (!resp.ok) {
+            console.error('Failed to get material info:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getMaterialInfo:', err);
+        return null;
+    }
+}
 
+export async function getMaterialDateMetrics(materialId: number | { materialId: number }, propertyIds: number[], startDate: string, endDate: string): Promise<MaterialDateMetricsResp[] | null> {
+    try {
+        const actualMaterialId = typeof materialId === 'object' && materialId !== null ?
+            (materialId as { materialId: number }).materialId : materialId;
+        const req: MaterialDateMetricReq = {
+            materialId: actualMaterialId,
+            propertyIds,
+            startDate,
+            endDate
+        }
+        const resp = await fetchWithAuth('data/materialvalues/daterange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req)
+        });
+        if (!resp.ok) {
+            console.error('Failed to get material date metrics:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getMaterialDateMetrics:', err);
+        return null;
+    }
+}
 
+export async function getMaterialSpreadsheet(spreadsheetReq: SpreadsheetReq): Promise<void | null> {
+    try {
+        const resp = await fetchWithAuth('data/materials/spreadsheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(spreadsheetReq)
+        });
+        if (!resp.ok) {
+            console.error('Failed to get material spreadsheet:', resp.statusText);
+            return null;
+        }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'materials.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (err) {
+        console.error('Error during getMaterialSpreadsheet:', err);
+        return null;
+    }
+}
 
 export interface Material {
     id: number;
@@ -154,9 +220,9 @@ export interface Material {
     market: string;
     unit: string;
     lastCreatedDate: string | null;
-    latestAvgValue?:number | null;
-    latestMinValue?:number | null;
-    latestMaxValue?:number | null;
+    latestAvgValue?: number | null;
+    latestMinValue?: number | null;
+    latestMaxValue?: number | null;
     avalibleProps: number[];
 
 }
@@ -193,4 +259,23 @@ export interface MaterialDateMetricsResp {
 export interface DateGroupedMaterialValues {
     date: string;
     materialValues: MaterialDateMetricsResp[]
+}
+
+export interface SpreadsheetReq {
+    materialName: string;
+    unit: string;
+    deliveryType: string;
+    market: string;
+    data: SpreadsheetReqData[];
+}
+
+export interface SpreadsheetReqData {
+    date: string;
+    valueMin: string | null;
+    valueAvg: string | null;
+    valueMax: string | null;
+    predWeekly: string | null;
+    predMonthly: string | null;
+    supply: string | null;
+    propsUsed: number[];
 }

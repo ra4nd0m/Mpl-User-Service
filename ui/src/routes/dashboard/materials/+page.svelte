@@ -128,7 +128,7 @@
 					<th rowspan="2">ID</th>
 					<th rowspan="2" class="table-material-name">Material Name</th>
 					<th rowspan="2">Change</th>
-					<th colspan="3">Price Today</th>
+					<th colspan="3">Last Price</th>
 					<th rowspan="2">Last Update</th>
 				</tr>
 				<tr>
