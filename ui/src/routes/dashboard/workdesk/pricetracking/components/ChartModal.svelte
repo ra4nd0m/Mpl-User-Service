@@ -1,15 +1,15 @@
 <script lang="ts">
 	import type { Material, MaterialDateMetricsResp } from '$lib/api/userClient';
-	import Chart from 'chart.js/auto';
-	import zoomPlugin from 'chartjs-plugin-zoom';
 	import { onDestroy, onMount } from 'svelte';
+	import { browser } from '$app/environment';
 
-	Chart.register(zoomPlugin);
+	let Chart: any;
+	let zoomPlugin: any;
 
 	const { priceData, materialInfo } = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
-	let chart: Chart | null = null;
+	let chart: any | null = null;
 	let showModal = $state(false);
 
 	function formatDate(dateString: string): string {
@@ -30,12 +30,28 @@
 		}
 		showModal = false;
 	}
-	function createChart() {
+
+	async function createChart() {
+		if (!browser) return; // Ensure this runs only in the browser
 		if (chart) {
 			chart.destroy();
 			chart = null;
 		}
 		if (!canvas || !priceData || priceData.length === 0) return;
+
+		if (!Chart) {
+			try {
+				const chartModule = await import('chart.js/auto');
+				Chart = chartModule.default;
+
+				const zoomPluginModule = await import('chartjs-plugin-zoom');
+				zoomPlugin = zoomPluginModule.default;
+				Chart.register(zoomPlugin);
+			} catch (error) {
+				console.error('Error loading Chart.js or zoom plugin:', error);
+				return;
+			}
+		}
 
 		// Sort data by date ascending for proper timeline
 		const sortedData = [...priceData].sort(
