@@ -39,6 +39,11 @@ builder.Services.AddHttpClient("DbClient", client =>
     client.BaseAddress = new Uri(configuration["DBApi:BaseUrl"] ?? throw new InvalidOperationException("DBApi:BaseUrl is missing"));
 });
 
+builder.Services.AddHttpClient("SpreadsheetClient", client =>
+{
+    client.BaseAddress = new Uri(configuration["SpreadsheetApi:BaseUrl"] ?? throw new InvalidOperationException("SpreadsheetApi:BaseUrl is missing"));
+});
+
 builder.Services.AddDbContext<UserContext>(options =>
     options.UseNpgsql(dataSource));
 
@@ -119,6 +124,7 @@ app.UseAuthorization();
 
 app.MapUserDataRoutes();
 app.MapMaterialRoutes();
+app.MapGeneratorRoutes();
 app.MapInternalRoutes();
 
 
