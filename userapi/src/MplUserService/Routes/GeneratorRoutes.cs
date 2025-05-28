@@ -20,7 +20,24 @@ namespace MplUserService.Routes
                     requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
                 }
 
+                if (context.Request.ContentType != null)
+                {
+                    requestMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                }
+
                 var response = await client.SendAsync(requestMessage);
+
+                context.Response.StatusCode = (int)response.StatusCode;
+
+                foreach (var header in response.Headers)
+                {
+                    context.Response.Headers[header.Key] = header.Value.ToArray();
+                }
+
+                foreach (var header in response.Content.Headers)
+                {
+                    context.Response.Headers[header.Key] = header.Value.ToArray();
+                }
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -28,8 +45,8 @@ namespace MplUserService.Routes
                     return Results.Problem($"POST request failed for {requestUrl}");
                 }
 
-                var content = await response.Content.ReadAsStringAsync();
-                return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
+                await response.Content.CopyToAsync(context.Response.Body);
+                return null; // No content to return, just copying the response body
             });
         }
     }
