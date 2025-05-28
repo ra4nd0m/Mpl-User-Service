@@ -7,7 +7,7 @@ namespace MplUserService.Routes
             app.MapPost("/generator/spreadsheet/{**catchAll}", async (IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
 
             {
-                var client = httpClientFactory.CreateClient("SpreadsheetApi");
+                var client = httpClientFactory.CreateClient("SpreadsheetClient");
                 var requestUrl = $"{catchAll}{context.Request.QueryString}";
 
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
