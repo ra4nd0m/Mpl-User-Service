@@ -45,7 +45,10 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
         {
             List<DateOnly> months = GetDateRange(req.StartDate, req.EndDate);
             var valueGroups = await _context.MaterialValues
-                .Where(mv => mv.Uid == req.MaterialId && months.Any(m => mv.CreatedOn.Year == m.Year && mv.CreatedOn.Month == m.Month) && req.PropertyIds.Contains(mv.PropertyId))
+                .Where(mv =>
+                    mv.Uid == req.MaterialId &&
+                    months.Any(m => mv.CreatedOn.Year == m.Year && mv.CreatedOn.Month == m.Month) &&
+                    req.PropertyIds.Contains(mv.PropertyId))
                 .GroupBy(x => new { x.CreatedOn })
                 .ToListAsync();
             var materialInfo = await GetCompactMaterialInfo(req.MaterialId);
@@ -60,12 +63,12 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                     Id: i.FirstOrDefault()?.Id ?? 0,
                     Date: i.Key.CreatedOn,
                     PropsUsed: propsUsed,
-                    ValueAvg: i.Where(p => p.PropertyId == 1).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
-                    ValueMin: i.Where(p => p.PropertyId == 2).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
-                    ValueMax: i.Where(p => p.PropertyId == 3).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
-                    PredWeekly: i.Where(p => p.PropertyId == 4).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
-                    PredMonthly: i.Where(p => p.PropertyId == 5).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
-                    Supply: i.Where(p => p.PropertyId == 6).Select(d => d.ValueDecimal).FirstOrDefault().ToString() ?? string.Empty,
+                    ValueAvg: i.Where(p => p.PropertyId == 1).Select(d => d.ValueDecimal).FirstOrDefault()?.ToString() ?? string.Empty,
+                    ValueMin: i.Where(p => p.PropertyId == 2).Select(d => d.ValueDecimal).FirstOrDefault()?.ToString() ?? string.Empty,
+                    ValueMax: i.Where(p => p.PropertyId == 3).Select(d => d.ValueDecimal).FirstOrDefault()?.ToString() ?? string.Empty,
+                    PredWeekly: i.Where(p => p.PropertyId == 4).Select(d => d.ValueDecimal).FirstOrDefault()?.ToString() ?? string.Empty,
+                    PredMonthly: i.Where(p => p.PropertyId == 5).Select(d => d.ValueDecimal).FirstOrDefault()?.ToString() ?? string.Empty,
+                    Supply: i.Where(p => p.PropertyId == 6).Select(d => d.ValueDecimal).FirstOrDefault()?.ToString() ?? string.Empty,
                     WeeklyAvg: "",
                     MonthlyAvg: "",
                     QuarterlyAvg: "",
@@ -73,6 +76,13 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                     MaterialInfo: materialInfo
                 );
             }).ToList();
+
+            if (req.Aggregates != null && req.Aggregates.Any())
+            {
+                var aggregates = await GetAverages((req.StartDate, req.EndDate), req.Aggregates, req.MaterialId);
+                values = MergeAveragesIntoMetrics(values, aggregates);
+            }
+
             return values;
         }
         catch (Exception ex)
@@ -80,7 +90,6 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
             logger.LogError(ex, "Error in GetMaterialMetricsByDateRange");
             throw;
         }
-
     }
     public async Task<List<DateGroupedMaterialValues>> GetOverviewTableData(List<MaterialDateMetricReq> reqs)
     {
@@ -180,45 +189,42 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
     {
         var merged = metrics.ToDictionary(m => m.Date);
 
-        void InsertOrUpdate(DateOnly date, string value)
+        void AddAggregateValue(DateOnly date, string value, Func<MaterialDateMetrics, MaterialDateMetrics> applyAggregate)
         {
             if (merged.TryGetValue(date, out var existing))
             {
-                merged[date] = existing with { ValueAvg = value };
+                merged[date] = applyAggregate(existing);
             }
             else
             {
-                merged[date] = new MaterialDateMetrics(
-                    Id: 0,
+                var template = metrics.FirstOrDefault();
+                var newMetric = new MaterialDateMetrics(
+                    Id: template?.Id ?? 0,
                     Date: date,
-                    PropsUsed: new(),
-                    ValueAvg: value,
-                    ValueMin: null,
-                    ValueMax: null,
-                    PredWeekly: null,
-                    PredMonthly: null,
-                    Supply: null,
-                    WeeklyAvg: null,
-                    MonthlyAvg: null,
-                    QuarterlyAvg: null,
-                    YearlyAvg: null,
-                    MaterialInfo: null
+                    PropsUsed: template?.PropsUsed ?? new(),
+                    ValueAvg: "",
+                    ValueMin: "",
+                    ValueMax: "",
+                    PredWeekly: "",
+                    PredMonthly: "",
+                    Supply: "",
+                    WeeklyAvg: "",
+                    MonthlyAvg: "",
+                    QuarterlyAvg: "",
+                    YearlyAvg: "",
+                    MaterialInfo: template?.MaterialInfo
                 );
+                merged[date] = applyAggregate(newMetric);
             }
         }
-
         foreach (var (date, value) in averages.MonthlyAvgs)
-            InsertOrUpdate(date, value.ToString("F2"));
-
+            AddAggregateValue(date, value.ToString("F2"), m => m with { MonthlyAvg = value.ToString("F2") });
         foreach (var (date, value) in averages.WeeklyAvgs)
-            InsertOrUpdate(date, value.ToString("F2"));
-
+            AddAggregateValue(date, value.ToString("F2"), m => m with { WeeklyAvg = value.ToString("F2") });
         foreach (var (date, value) in averages.QuarterlyAvgs)
-            InsertOrUpdate(date, value.ToString("F2"));
-
+            AddAggregateValue(date, value.ToString("F2"), m => m with { QuarterlyAvg = value.ToString("F2") });
         foreach (var (date, value) in averages.YearlyAvgs)
-            InsertOrUpdate(date, value.ToString("F2"));
-
+            AddAggregateValue(date, value.ToString("F2"), m => m with { YearlyAvg = value.ToString("F2") });
         return merged.Values.OrderBy(x => x.Date).ToList();
     }
     private async Task<AveragesCalculated> GetAverages((DateOnly, DateOnly) dateRange, List<string> aggregates, int materialId)
