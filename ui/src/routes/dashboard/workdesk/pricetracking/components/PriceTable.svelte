@@ -19,7 +19,7 @@
 	let error = $state<string | null>(null);
 	let priceData = $state<MaterialDateMetricsResp[] | null>(null);
 	let materialInfo = $state<Material | null>(null);
-	let sortDirection = $state<'asc' | 'desc'>('asc');
+	let sortDirection = $state<'asc' | 'desc'>('desc');
 
 	const propertyIds = [1, 2, 3];
 
@@ -62,6 +62,7 @@
 			const data = await getMaterialDateMetrics(materialId, propertyIds, startDate, endDate);
 			if (data) {
 				priceData = data;
+				sortByDate('desc'); // Default sort by date descending
 			} else {
 				error = 'No data available';
 			}
