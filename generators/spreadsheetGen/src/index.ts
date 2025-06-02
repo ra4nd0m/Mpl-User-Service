@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
 import { writeFileSync } from 'fs';
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5301;
 
 app.use(cors())
 app.use(express.json());
