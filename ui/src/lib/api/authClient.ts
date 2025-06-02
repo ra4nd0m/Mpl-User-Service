@@ -39,7 +39,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}, useA
 
 export async function refreshAccessToken(): Promise<string | null> {
     try {
-        const storedRememberMe = localStorage.getItem('rememberMe');
+        const storedRememberMe = localStorage.getItem('rememberMe') || sessionStorage.getItem('rememberMe');
         if (!storedRememberMe) {
             await logout();
             return null;
@@ -85,6 +85,8 @@ export async function login(email: string, password: string, rememberMe: boolean
             if (rememberMe) {
                 // Store the token in localStorage for persistent login
                 localStorage.setItem('rememberMe', JSON.stringify({ rememberMe }));
+            } else {
+                sessionStorage.setItem('rememberMe', JSON.stringify({ rememberMe }));
             }
             return { success: true };
         } else {
@@ -99,6 +101,7 @@ export async function login(email: string, password: string, rememberMe: boolean
 export async function logout(): Promise<boolean> {
     try {
         localStorage.removeItem('rememberMe'); // Clear rememberMe from localStorage
+        sessionStorage.removeItem('rememberMe'); // Clear rememberMe from sessionStorage
         const response = await fetch(`${config.apiAuthUrl}/logout`, { method: 'POST', credentials: 'include' });
         return response.ok;
     } catch (error) {
