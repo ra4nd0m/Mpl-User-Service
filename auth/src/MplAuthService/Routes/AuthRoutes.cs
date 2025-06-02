@@ -4,6 +4,7 @@ using MplAuthService.Data;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
 using MplAuthService.Models.Dtos;
+using MplAuthService.Utils;
 
 namespace MplAuthService.Routes
 {
@@ -16,7 +17,7 @@ namespace MplAuthService.Routes
             {
                 try
                 {
-                    logger.LogInformation("Logging in user with email {Email}", loginDto.Email);
+                    logger.LogInformation("Logging in user with email {Email}", EmailObfuscator.ObfuscateEmail(loginDto.Email));
                     var user = await userManager.FindByEmailAsync(loginDto.Email);
                     if (user == null || !await userManager.CheckPasswordAsync(user, loginDto.Password))
                     {
@@ -25,10 +26,10 @@ namespace MplAuthService.Routes
                     }
 
                     user = await dbContext.Users
-                        .Include(u=>u.Organization)
+                        .Include(u => u.Organization)
                         .FirstOrDefaultAsync(u => u.Id == user.Id);
 
-                    logger.LogInformation("User {Email} logged in", loginDto.Email);
+                    logger.LogInformation("User {Email} logged in", EmailObfuscator.ObfuscateEmail(loginDto.Email));
                     string token = await jwtService.GenerateJwtToken(user!);
                     RefreshToken refreshToken = await refreshTokenService.GenerateRefreshToken(user!);
                     context.Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions
@@ -42,7 +43,7 @@ namespace MplAuthService.Routes
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to login user with email {Email}", loginDto.Email);
+                    logger.LogError(ex, "Failed to login user with email {Email}", EmailObfuscator.ObfuscateEmail(loginDto.Email));
                     return Results.StatusCode(StatusCodes.Status500InternalServerError);
                 }
             });
