@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { logout, refreshAccessToken } from '$lib/api/authClient';
 	import { browser } from '$app/environment';
+	import SubscriptionInfo from './components/SubscriptionInfo.svelte';
 
 	let { children } = $props();
 	let checkingAuth = $state(true);
@@ -130,7 +131,7 @@
 			{#if user}
 				<span class="user-email">{user.email}</span>
 				{#if user.subscriptionType}
-					<span class="subscription-badge">{user.subscriptionType}</span>
+					<SubscriptionInfo/>
 				{/if}
 			{/if}
 			<button class="logout-button" onclick={handleLogout}>
@@ -225,13 +226,7 @@
 		text-overflow: ellipsis;
 	}
 
-	.subscription-badge {
-		font-size: 12px;
-		padding: 4px 8px;
-		border-radius: 12px;
-		background-color: #3498db;
-		margin-right: 12px;
-	}
+
 
 	.logout-button {
 		display: flex;
@@ -274,10 +269,6 @@
 	@media (max-width: 600px) {
 		.user-email {
 			display: none;
-		}
-
-		.subscription-badge {
-			margin-right: 8px;
 		}
 
 		.navbar {
