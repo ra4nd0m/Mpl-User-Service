@@ -135,6 +135,14 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Price Tracking Overview</title>
+	<meta
+		name="description"
+		content="Track market values for your favorite materials over time. Monitor historical data and trends."
+	/>
+</svelte:head>
+
 <section class="dashboard-heading">
 	<h1>Overview</h1>
 	<p>Showing market values for your {favoriteMaterials.length} favorite materials</p>

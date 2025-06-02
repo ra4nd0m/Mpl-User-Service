@@ -16,4 +16,8 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Redirecting...</title>
+</svelte:head>
+
 <div>Redirecting...</div>
