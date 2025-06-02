@@ -34,6 +34,11 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Login</title>
+	<meta name="description" content="Login to your account" />
+</svelte:head>
+
 <div class="login-container">
 	<form onsubmit={handleLogin}>
 		<h2 class="form-title">Login</h2>
