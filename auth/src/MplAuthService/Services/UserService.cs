@@ -142,7 +142,7 @@ namespace MplAuthService.Services
                 var refreshTokens = await context.RefreshTokens
                     .Where(rt => rt.UserId == user.Id)
                     .ToListAsync();
-                if (refreshTokens.Count == 0)
+                if (refreshTokens.Count > 0)
                 {
                     context.RefreshTokens.RemoveRange(refreshTokens);
                     await context.SaveChangesAsync();
