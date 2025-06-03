@@ -1,3 +1,4 @@
+import { getUserSettings, updateUserSettings } from '$lib/api/userClient';
 import { writable, get } from 'svelte/store';
 
 export interface DateRangeSetting {
@@ -26,11 +27,16 @@ const getDefaultDateRange = (): DateRangeSetting => {
 };
 
 // Initialize store with data from localStorage or defaults
-const initializeStore = (): WidgetSettings => {
+const initializeStore = async (): Promise<WidgetSettings> => {
+    const fetchedSettings = await getUserSettings();
+    if (fetchedSettings) {
+        return fetchedSettings;
+    }
+
     if (typeof localStorage === 'undefined') {
         return { priceTable: {} };
     }
-    
+
     const storedSettings = localStorage.getItem('widgetSettings');
     if (storedSettings) {
         try {
@@ -39,24 +45,30 @@ const initializeStore = (): WidgetSettings => {
             console.error('Error parsing widget settings from localStorage', e);
         }
     }
-    
+
     return { priceTable: {} };
 };
 
 // Create the store
 const createWidgetSettingsStore = () => {
-    const { subscribe, update, set } = writable<WidgetSettings>(initializeStore());
-    
+    const { subscribe, update, set } = writable<WidgetSettings>({ priceTable: {} });
+
+    // Initialize with data from localStorage
+    initializeStore().then(data => set(data));
+
     // Persist settings to localStorage
-    const persistSettings = (settings: WidgetSettings) => {
+    const persistSettings = async (settings: WidgetSettings) => {
+        await updateUserSettings(settings);
+
+        // Also store in localStorage for quick access
         if (typeof localStorage !== 'undefined') {
             localStorage.setItem('widgetSettings', JSON.stringify(settings));
         }
     };
-    
+
     return {
         subscribe,
-        
+
         // Set date range for a specific price table
         setPriceTableDateRange: (materialId: number | string, dateRange: DateRangeSetting) => {
             update(settings => {
@@ -72,19 +84,19 @@ const createWidgetSettingsStore = () => {
                 return settings;
             });
         },
-        
+
         // Get date range for a specific price table (with fallback to defaults)
         getPriceTableDateRange: (materialId: number | string): DateRangeSetting => {
             const id = materialId.toString();
             const settings = get({ subscribe });
-            
+
             if (settings.priceTable && settings.priceTable[id] && settings.priceTable[id].dateRange) {
                 return settings.priceTable[id].dateRange as DateRangeSetting;
             }
-            
+
             return getDefaultDateRange();
         },
-        
+
         // Set expanded state for a specific price table
         setPriceTableExpanded: (materialId: number | string, isExpanded: boolean) => {
             update(settings => {
@@ -100,19 +112,19 @@ const createWidgetSettingsStore = () => {
                 return settings;
             });
         },
-        
+
         // Get expanded state for a specific price table (defaults to true)
         getPriceTableExpanded: (materialId: number | string): boolean => {
             const id = materialId.toString();
             const settings = get({ subscribe });
-            
+
             if (settings.priceTable && settings.priceTable[id] && settings.priceTable[id].isExpanded !== undefined) {
                 return settings.priceTable[id].isExpanded as boolean;
             }
-            
+
             return true; // Default to expanded
         },
-        
+
         // Reset settings for a specific price table
         resetPriceTableSettings: (materialId: number | string) => {
             update(settings => {
@@ -124,7 +136,7 @@ const createWidgetSettingsStore = () => {
                 return settings;
             });
         },
-        
+
         // Reset all settings
         resetAll: () => {
             const initialSettings = { priceTable: {} };
