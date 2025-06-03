@@ -159,7 +159,7 @@ export async function getMaterialInfo(materialId: number | { materialId: number 
     }
 }
 
-export async function getMaterialDateMetrics(materialId: number | { materialId: number }, propertyIds: number[], startDate: string, endDate: string): Promise<MaterialDateMetricsResp[] | null> {
+export async function getMaterialDateMetrics(materialId: number | { materialId: number }, propertyIds: number[], startDate: string, endDate: string, aggregates: string[] = []): Promise<MaterialDateMetricsResp[] | null> {
     try {
         const actualMaterialId = typeof materialId === 'object' && materialId !== null ?
             (materialId as { materialId: number }).materialId : materialId;
@@ -167,7 +167,8 @@ export async function getMaterialDateMetrics(materialId: number | { materialId: 
             materialId: actualMaterialId,
             propertyIds,
             startDate,
-            endDate
+            endDate,
+            aggregates
         }
         const resp = await fetchWithAuth('data/materialvalues/daterange', {
             method: 'POST',
@@ -232,6 +233,7 @@ export interface MaterialDateMetricReq {
     propertyIds: number[];
     startDate: string;
     endDate: string;
+    aggregates?: string[]; // Optional, e.g., ['weekly', 'monthly', 'quarterly', 'yearly']
 }
 
 export interface CompactMaterialInfo {
@@ -252,7 +254,10 @@ export interface MaterialDateMetricsResp {
     predWeekly: string | null;
     predMonthly: string | null;
     supply: string | null;
+    weeklyAvg: string | null;
     monthlyAvg: string | null;
+    quarterlyAvg: string | null;
+    yearlyAvg: string | null;
     materialInfo: CompactMaterialInfo;
 }
 

@@ -20,6 +20,7 @@
 	let priceData = $state<MaterialDateMetricsResp[] | null>(null);
 	let materialInfo = $state<Material | null>(null);
 	let sortDirection = $state<'asc' | 'desc'>('desc');
+	let aggregatesChosen = $state<string[]>([]);
 
 	const propertyIds = [1, 2, 3];
 
@@ -43,7 +44,6 @@
 
 	function toggleExpand() {
 		isExpanded = !isExpanded;
-
 		widgetSettingsStore.setPriceTableExpanded(normalizedMaterialId, isExpanded);
 	}
 
@@ -59,7 +59,13 @@
 				return;
 			}
 			materialInfo = matInfo;
-			const data = await getMaterialDateMetrics(materialId, propertyIds, startDate, endDate);
+			const data = await getMaterialDateMetrics(
+				materialId,
+				propertyIds,
+				startDate,
+				endDate,
+				aggregatesChosen
+			);
 			if (data) {
 				priceData = data;
 				sortByDate('desc'); // Default sort by date descending
@@ -143,6 +149,14 @@
 		startDate = defaultRange.startDate;
 		endDate = defaultRange.endDate;
 		fetchData();
+	}
+
+	function pushAggregates(aggregate: string) {
+		if (aggregatesChosen.includes(aggregate)) {
+			aggregatesChosen = aggregatesChosen.filter((a) => a !== aggregate);
+		} else {
+			aggregatesChosen.push(aggregate);
+		}
 	}
 
 	async function getSpreadsheet() {
@@ -237,6 +251,55 @@
 		</div>
 
 		{#if isExpanded}
+			<div class="aggregates-controls">
+				<span class="aggregates-label">Show averages:</span>
+				<div class="checkbox-group">
+					<label class="checkbox-label">
+						<input
+							type="checkbox"
+							checked={aggregatesChosen.includes('weekly')}
+							onclick={() => {
+								pushAggregates('weekly');
+								fetchData();
+							}}
+						/>
+						Weekly
+					</label>
+					<label class="checkbox-label">
+						<input
+							type="checkbox"
+							checked={aggregatesChosen.includes('monthly')}
+							onclick={() => {
+								pushAggregates('monthly');
+								fetchData();
+							}}
+						/>
+						Monthly
+					</label>
+					<label class="checkbox-label">
+						<input
+							type="checkbox"
+							checked={aggregatesChosen.includes('quarterly')}
+							onclick={() => {
+								pushAggregates('quarterly');
+								fetchData();
+							}}
+						/>
+						Quarterly
+					</label>
+					<label class="checkbox-label">
+						<input
+							type="checkbox"
+							checked={aggregatesChosen.includes('yearly')}
+							onclick={() => {
+								pushAggregates('yearly');
+								fetchData();
+							}}
+						/>
+						Yearly
+					</label>
+				</div>
+			</div>
 			<div class="date-controls">
 				<div class="date-presets">
 					<button class="date-btn" onclick={setLastWeek}>Last 7 days</button>
@@ -337,6 +400,18 @@
 							{#if priceData[0].propsUsed.some((s) => s === 6)}
 								<th>Supply</th>
 							{/if}
+							{#if priceData[0].propsUsed.some((s) => s === -1)}
+								<th>Weekly Average</th>
+							{/if}
+							{#if priceData[0].propsUsed.some((s) => s === -2)}
+								<th>Monthly Average</th>
+							{/if}
+							{#if priceData[0].propsUsed.some((s) => s === -3)}
+								<th>Quarterly Average</th>
+							{/if}
+							{#if priceData[0].propsUsed.some((s) => s === -4)}
+								<th>Yearly Average</th>
+							{/if}
 						</tr>
 					</thead>
 					<tbody>
@@ -360,6 +435,18 @@
 								{/if}
 								{#if item.propsUsed.some((s) => s === 6)}
 									<td>{formatPrice(item.supply)}</td>
+								{/if}
+								{#if item.propsUsed.some((s) => s === -1)}
+									<td>{formatPrice(item.weeklyAvg)}</td>
+								{/if}
+								{#if item.propsUsed.some((s) => s === -2)}
+									<td>{formatPrice(item.monthlyAvg)}</td>
+								{/if}
+								{#if item.propsUsed.some((s) => s === -3)}
+									<td>{formatPrice(item.quarterlyAvg)}</td>
+								{/if}
+								{#if item.propsUsed.some((s) => s === -4)}
+									<td>{formatPrice(item.yearlyAvg)}</td>
 								{/if}
 							</tr>
 						{/each}
@@ -663,6 +750,50 @@
 		.price-table th,
 		.price-table td {
 			padding: 0.5rem;
+		}
+	}
+
+	.aggregates-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		margin-top: 0.5rem;
+		padding-top: 0.5rem;
+		border-top: 1px solid #e9ecef;
+	}
+
+	.aggregates-label {
+		font-size: 0.875rem;
+		color: #495057;
+		margin-bottom: 0.25rem;
+	}
+
+	.checkbox-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: 0.875rem;
+		color: #495057;
+		cursor: pointer;
+	}
+
+	.checkbox-label input {
+		cursor: pointer;
+	}
+
+	.checkbox-label:hover {
+		color: #228be6;
+	}
+
+	@media (max-width: 768px) {
+		.checkbox-group {
+			gap: 0.5rem;
 		}
 	}
 </style>
