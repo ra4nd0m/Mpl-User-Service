@@ -4,6 +4,7 @@ namespace MplDbApi.Models.Dtos
         int MaterialId,
         List<int> PropertyIds,
         DateOnly StartDate,
-        DateOnly EndDate
+        DateOnly EndDate,
+        List<string>? Aggregates = null
     );
 }
