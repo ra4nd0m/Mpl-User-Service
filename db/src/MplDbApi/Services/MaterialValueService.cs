@@ -59,6 +59,26 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                     .Select(x => x.PropertyId)
                     .ToList();
 
+                switch (req.Aggregates)
+                {
+                    case null:
+                    case []:
+                        // No aggregates requested, use only the properties in the request
+                        break;
+                    default:
+                        // If aggregates are requested, ensure they are included in the propsUsed
+                        propsUsed.AddRange(req.Aggregates.Select(a => a switch
+                        {
+                            // Using negative values to avoid conflicts with actual PropertyIds
+                            "weekly" => -1,
+                            "monthly" => -2,
+                            "quarterly" => -3,
+                            "yearly" => -4,
+                            _ => 0 // Default case, should not happen
+                        }).Where(p => p > 0 || p < 0)); // Only add valid aggregates
+                        break;
+                }
+
                 return new MaterialDateMetrics(
                     Id: i.FirstOrDefault()?.Id ?? 0,
                     Date: i.Key.CreatedOn,
