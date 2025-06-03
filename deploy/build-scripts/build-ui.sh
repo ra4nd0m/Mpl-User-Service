@@ -19,8 +19,24 @@ mkdir -p "${BUILD_DIR}"
 # Navigate to UI directory
 cd "${UI_DIR}"
 
+# Save env
+if [ -f .env ]; then
+  cp .env .env.back
+fi
+
+# Use prod env
+if [ -f .env.prod ]; then
+  cp .env.prod .env
+fi
+
 # Build the UI
 npm run build
+
+# Return env to dev
+if [ -f .env.back ]; then
+  cp .env.back .env
+  rm .env.back
+fi
 
 # Copy the built files to the build directory
 cp -r build/* "${BUILD_DIR}"
