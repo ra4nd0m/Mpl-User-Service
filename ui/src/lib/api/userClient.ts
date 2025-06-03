@@ -316,4 +316,8 @@ export interface SpreadsheetReqData {
     predMonthly: string | null;
     supply: string | null;
     propsUsed: number[];
+    weeklyAvg: string | null;
+    monthlyAvg: string | null;
+    quarterlyAvg: string | null;
+    yearlyAvg: string | null;
 }

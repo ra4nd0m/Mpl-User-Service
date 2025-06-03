@@ -170,7 +170,11 @@
 					predWeekly: item.predWeekly,
 					predMonthly: item.predMonthly,
 					supply: item.supply,
-					propsUsed: item.propsUsed
+					propsUsed: item.propsUsed,
+					weeklyAvg: item.weeklyAvg,
+					monthlyAvg: item.monthlyAvg,
+					quarterlyAvg: item.quarterlyAvg,
+					yearlyAvg: item.yearlyAvg
 				};
 			}) ?? [];
 		if (!spreadsheetReqDataArr) {
