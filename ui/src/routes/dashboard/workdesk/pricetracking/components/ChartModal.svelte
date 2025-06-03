@@ -67,7 +67,7 @@
 		if (sortedData[0].propsUsed.includes(1)) {
 			datasets.push({
 				label: 'Average Price',
-				data: sortedData.map((item) => parseFloat(item.valueAvg || '0')),
+				data: sortedData.map((item) => (item.valueAvg ? parseFloat(item.valueAvg) : null)),
 				borderColor: '#4c6ef5',
 				backgroundColor: 'rgba(76, 110, 245, 0.1)',
 				tension: 0.3,
@@ -78,7 +78,7 @@
 		if (sortedData[0].propsUsed.includes(2)) {
 			datasets.push({
 				label: 'Minimum Price',
-				data: sortedData.map((item) => parseFloat(item.valueMin || '0')),
+				data: sortedData.map((item) => (item.valueMin ? parseFloat(item.valueMin) : null)),
 				borderColor: '#37b24d',
 				backgroundColor: 'rgba(55, 178, 77, 0.1)',
 				tension: 0.3,
@@ -90,7 +90,7 @@
 		if (sortedData[0].propsUsed.includes(3)) {
 			datasets.push({
 				label: 'Maximum Price',
-				data: sortedData.map((item) => parseFloat(item.valueMax || '0')),
+				data: sortedData.map((item) => (item.valueMax ? parseFloat(item.valueMax) : null)),
 				borderColor: '#f03e3e',
 				backgroundColor: 'rgba(240, 62, 62, 0.1)',
 				tension: 0.3,
@@ -102,12 +102,56 @@
 		if (sortedData[0].propsUsed.includes(4)) {
 			datasets.push({
 				label: 'Weekly Forecast',
-				data: sortedData.map((item) => parseFloat(item.predWeekly || '0')),
+				data: sortedData.map((item) => (item.predWeekly ? parseFloat(item.predWeekly) : null)),
 				borderColor: '#fab005',
 				backgroundColor: 'rgba(250, 176, 5, 0.1)',
 				tension: 0.3,
 				fill: false,
 				borderDash: [3, 3]
+			});
+		}
+
+		if (sortedData[0].propsUsed.includes(-1)) {
+			datasets.push({
+				label: 'Weekly Average',
+				data: sortedData.map((item) => (item.weeklyAvg ? parseFloat(item.weeklyAvg) : null)),
+				borderColor: '#d63384',
+				backgroundColor: 'rgba(214, 51, 132, 0.1)',
+				tension: 0.3,
+				fill: false
+			});
+		}
+
+		if(sortedData[0].propsUsed.includes(-2)) {
+			datasets.push({
+				label: 'Monthly Average',
+				data: sortedData.map((item) => (item.monthlyAvg ? parseFloat(item.monthlyAvg) : null)),
+				borderColor: '#0d6efd',
+				backgroundColor: 'rgba(13, 110, 253, 0.1)',
+				tension: 0.3,
+				fill: false
+			});
+		}
+
+		if(sortedData[0].propsUsed.includes(-3)) {
+			datasets.push({
+				label: 'Quarterly Average',
+				data: sortedData.map((item) => (item.yearlyAvg ? parseFloat(item.yearlyAvg) : null)),
+				borderColor: '#198754',
+				backgroundColor: 'rgba(25, 135, 84, 0.1)',
+				tension: 0.3,
+				fill: false
+			});
+		}
+
+		if(sortedData[0].propsUsed.includes(-4)) {
+			datasets.push({
+				label: 'Yearly Average',
+				data: sortedData.map((item) => (item.yearlyAvg ? parseFloat(item.yearlyAvg) : null)),
+				borderColor: '#fd7e14',
+				backgroundColor: 'rgba(253, 126, 20, 0.1)',
+				tension: 0.3,
+				fill: false
 			});
 		}
 
@@ -118,6 +162,11 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
+				elements: {
+					line: {
+						spanGaps: true
+					}
+				},
 				plugins: {
 					title: {
 						display: true,
