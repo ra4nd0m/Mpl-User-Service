@@ -1,0 +1,45 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory
+coverage/
+
+# Environment variables
+.env
+.env.test
+.env.local
+
+# VSCode settings
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Mac system files
+.DS_Store
+
+# Optional: OS + Editor junk
+Thumbs.db
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

@@ -1,0 +1,14 @@
+[Unit]
+Description=MPL Spreadsheet Generator
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mpl-spreadsheet-gen
+ExecStart=/opt/node/bin/node index.js
+Restart=on-failure
+User=mplgenerators
+Environment=NODE_ENV=production
+Environment=PORT=5301
+
+[Install]
+WantedBy=multi-user.target

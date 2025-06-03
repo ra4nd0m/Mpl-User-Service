@@ -69,10 +69,10 @@
 		}
 	}
 
-    async function selectGroup(groupId: number | null) {
-        selectedGroupId = groupId;
-        await loadMaterials(selectedGroupId);
-    }
+	async function selectGroup(groupId: number | null) {
+		selectedGroupId = groupId;
+		await loadMaterials(selectedGroupId);
+	}
 
 	onMount(async () => {
 		await loadGroups();
@@ -80,26 +80,28 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Materials</title>
+	<meta
+		name="description"
+		content="View and manage materials, filter by groups, and track favorites."
+	/>
+</svelte:head>
+
 <section>
 	<h1>Materials</h1>
-    <!-- Material Group Buttons -->
-    <div class="group-buttons">
-        <span class="group-label">Filter by Group:</span>
-        <button
-            class:active={selectedGroupId === null}
-            onclick={() => selectGroup(null)}
-        >
-            All Groups
-        </button>
-        {#each materialGroups as group}
-            <button
-                class:active={selectedGroupId === group.id}
-                onclick={() => selectGroup(group.id)}
-            >
-                {group.name}
-            </button>
-        {/each}
-    </div>
+	<!-- Material Group Buttons -->
+	<div class="group-buttons">
+		<span class="group-label">Filter by Group:</span>
+		<button class:active={selectedGroupId === null} onclick={() => selectGroup(null)}>
+			All Groups
+		</button>
+		{#each materialGroups as group}
+			<button class:active={selectedGroupId === group.id} onclick={() => selectGroup(group.id)}>
+				{group.name}
+			</button>
+		{/each}
+	</div>
 	<div class="debug-favorites">
 		<p class="debug-title">Favorite Material IDs:</p>
 		<div class="debug-ids">
@@ -128,7 +130,7 @@
 					<th rowspan="2">ID</th>
 					<th rowspan="2" class="table-material-name">Material Name</th>
 					<th rowspan="2">Change</th>
-					<th colspan="3">Price Today</th>
+					<th colspan="3">Last Price</th>
 					<th rowspan="2">Last Update</th>
 				</tr>
 				<tr>
@@ -174,7 +176,7 @@
 								' ' +
 								material.market}</td
 						>
-						<td>{"Change Placeholder"}</td>
+						<td>{'Change Placeholder'}</td>
 						<td>{material.latestAvgValue}</td>
 						{#if material.latestMinValue === null}
 							<td>-</td>
@@ -199,44 +201,46 @@
 </section>
 
 <style>
-    .group-buttons {
-        margin-bottom: 1rem;
-        display: flex;
-        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-        align-items: center;
-        gap: 0.5rem;
-    }
+	.group-buttons {
+		margin-bottom: 1rem;
+		display: flex;
+		flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+		align-items: center;
+		gap: 0.5rem;
+	}
 
-    .group-label {
-        font-weight: bold;
-        margin-right: 0.5rem; /* Add some space between label and buttons */
-    }
+	.group-label {
+		font-weight: bold;
+		margin-right: 0.5rem; /* Add some space between label and buttons */
+	}
 
-    .group-buttons button {
-        padding: 0.5rem 1rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: #f8f9fa;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-    }
+	.group-buttons button {
+		padding: 0.5rem 1rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		background-color: #f8f9fa;
+		cursor: pointer;
+		transition:
+			background-color 0.2s ease-in-out,
+			border-color 0.2s ease-in-out;
+	}
 
-    .group-buttons button:hover {
-        background-color: #e2e6ea;
-        border-color: #adb5bd;
-    }
+	.group-buttons button:hover {
+		background-color: #e2e6ea;
+		border-color: #adb5bd;
+	}
 
-    .group-buttons button.active {
-        background-color: #007bff;
-        color: white;
-        border-color: #007bff;
-        font-weight: bold;
-    }
+	.group-buttons button.active {
+		background-color: #007bff;
+		color: white;
+		border-color: #007bff;
+		font-weight: bold;
+	}
 
-    .group-buttons button.active:hover {
-        background-color: #0056b3;
-        border-color: #0056b3;
-    }
+	.group-buttons button.active:hover {
+		background-color: #0056b3;
+		border-color: #0056b3;
+	}
 	.materials-table {
 		width: 100%;
 		border-collapse: collapse;

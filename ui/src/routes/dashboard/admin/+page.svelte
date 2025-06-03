@@ -81,29 +81,34 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Admin Dashboard</title>
+	<meta name="description" content="Admin dashboard for managing users and subscriptions." />
+</svelte:head>
+
 <section>
 	<h1>Admin Dashboard</h1>
-    <div class="actions-header">
-        <div class="header-left">
-            <h2>User Management</h2>
-        </div>
-        <div class="header-right">
-            <button class="legacy-button" onclick={goToLegacy}>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M12 19l9 2-9-18-9 18 9-2z"></path>
-                </svg>
-                Legacy System
-            </button>
+	<div class="actions-header">
+		<div class="header-left">
+			<h2>User Management</h2>
+		</div>
+		<div class="header-right">
+			<button class="legacy-button" onclick={goToLegacy}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M12 19l9 2-9-18-9 18 9-2z"></path>
+				</svg>
+				Legacy System
+			</button>
 			<button class="add-user-button" onclick={() => (showUserModal = true)}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -124,112 +129,108 @@
 				Add User
 			</button>
 		</div>
+	</div>
+
+	{#if error}
+		<div class="error-message">{error}</div>
+	{/if}
+	{#if successMessage}
+		<div class="success-message">{successMessage}</div>
+	{/if}
+	{#if loading}
+		<div class="loading-spinner-container">
+			<div class="loading-spinner"></div>
+			<p>Loading users...</p>
 		</div>
-	
-		{#if error}
-			<div class="error-message">{error}</div>
-		{/if}
-		{#if successMessage}
-			<div class="success-message">{successMessage}</div>
-		{/if}
-		{#if loading}
-			<div class="loading-spinner-container">
-				<div class="loading-spinner"></div>
-				<p>Loading users...</p>
-			</div>
-		{:else if userList.length === 0}
-			<div class="empty-state">
-				<p>No users found in the system.</p>
-			</div>
-		{:else}
-			<div class="table-container">
-				<table class="users-table">
-					<thead>
+	{:else if userList.length === 0}
+		<div class="empty-state">
+			<p>No users found in the system.</p>
+		</div>
+	{:else}
+		<div class="table-container">
+			<table class="users-table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Email</th>
+						<th>Organization</th>
+						<th>INN</th>
+						<th>Subscription</th>
+						<th>Start Date</th>
+						<th>End Date</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each userList as user}
 						<tr>
-							<th>ID</th>
-							<th>Email</th>
-							<th>Organization</th>
-							<th>INN</th>
-							<th>Subscription</th>
-							<th>Start Date</th>
-							<th>End Date</th>
-							<th>Actions</th>
+							<td>{user.id}</td>
+							<td>{user.email}</td>
+							<td>{user.org?.name || 'N/A'}</td>
+							<td>{user.org?.inn || 'N/A'}</td>
+							<td>
+								{#if user.org}
+									<span
+										class="subscription-badge {getSubscriptionTypeName(
+											user.org.subscriptionType
+										).toLowerCase()}"
+									>
+										{getSubscriptionTypeName(user.org.subscriptionType)}
+									</span>
+								{:else}
+									N/A
+								{/if}
+							</td>
+							<td>{formatDate(user.org?.subscriptionStartDate)}</td>
+							<td>{formatDate(user.org?.subscriptionEndDate)}</td>
+							<td class="actions-cell">
+								<button class="action-button edit-button" title="Edit User" aria-label="Edit User">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+										<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+									</svg>
+								</button>
+								<button
+									class="action-button delete-button"
+									title="Delete User"
+									aria-label="Delete User"
+									onclick={() => handleDeleteUser(user.email)}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<path d="M3 6h18"></path>
+										<path
+											d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+										></path>
+									</svg>
+								</button>
+							</td>
 						</tr>
-					</thead>
-					<tbody>
-						{#each userList as user}
-							<tr>
-								<td>{user.id}</td>
-								<td>{user.email}</td>
-								<td>{user.org?.name || 'N/A'}</td>
-								<td>{user.org?.inn || 'N/A'}</td>
-								<td>
-									{#if user.org}
-										<span
-											class="subscription-badge {getSubscriptionTypeName(
-												user.org.subscriptionType
-											).toLowerCase()}"
-										>
-											{getSubscriptionTypeName(user.org.subscriptionType)}
-										</span>
-									{:else}
-										N/A
-									{/if}
-								</td>
-								<td>{formatDate(user.org?.subscriptionStartDate)}</td>
-								<td>{formatDate(user.org?.subscriptionEndDate)}</td>
-								<td class="actions-cell">
-									<button
-										class="action-button edit-button"
-										title="Edit User"
-										aria-label="Edit User"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="16"
-											height="16"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-										>
-											<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-											<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-										</svg>
-									</button>
-									<button
-										class="action-button delete-button"
-										title="Delete User"
-										aria-label="Delete User"
-										onclick={() => handleDeleteUser(user.email)}
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="16"
-											height="16"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-										>
-											<path d="M3 6h18"></path>
-											<path
-												d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-											></path>
-										</svg>
-									</button>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-		<UserRegistrationModal bind:showModal={showUserModal} onUserAdded={handleUserAdded} />
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+	<UserRegistrationModal bind:showModal={showUserModal} onUserAdded={handleUserAdded} />
 </section>
 
 <style>

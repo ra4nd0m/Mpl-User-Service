@@ -44,7 +44,7 @@ namespace MplDbApi.Routes
                 }
             });
 
-            app.MapGet("/materials/bygroup/{id:int}", async (int groupId, IMaterialSourceService service) =>
+            app.MapGet("/materials/bygroup/{groupId:int}", async (int groupId, IMaterialSourceService service) =>
             {
                 try
                 {

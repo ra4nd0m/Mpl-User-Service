@@ -23,7 +23,7 @@ namespace MplUserService.Routes
 
                 var content = await response.Content.ReadAsStringAsync();
                 return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
-            });
+            }).RequireAuthorization();
 
 
             app.MapPost("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
@@ -52,7 +52,7 @@ namespace MplUserService.Routes
 
                 var content = await response.Content.ReadAsStringAsync();
                 return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
-            });
+            }).RequireAuthorization();
         }
     }
 }

@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 
 	onMount(() => {
-		goto('/dashboard/workdesk');
+		goto('/dashboard/workdesk/pricetracking');
 	});
 </script>
 
@@ -12,7 +12,7 @@
 </svelte:head>
 
 <div>
-	<p>Redirecting to workdesk...</p>
+	<p>Redirecting to price tracking...</p>
 </div>
 
 <style>

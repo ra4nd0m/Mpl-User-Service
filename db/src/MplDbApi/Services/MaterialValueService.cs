@@ -58,7 +58,7 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                 var propsUsed = i.Where(p => p.ValueDecimal.HasValue || !string.IsNullOrEmpty(p.ValueStr))
                     .Select(x => x.PropertyId)
                     .ToList();
-
+                    
                 switch (req.Aggregates)
                 {
                     case null:
@@ -78,7 +78,7 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                         }).Where(p => p > 0 || p < 0)); // Only add valid aggregates
                         break;
                 }
-
+                
                 return new MaterialDateMetrics(
                     Id: i.FirstOrDefault()?.Id ?? 0,
                     Date: i.Key.CreatedOn,
