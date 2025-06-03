@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MplUserService.Data;
 using MplUserService.Interfaces;
@@ -75,6 +77,54 @@ namespace MplUserService.Routes
                     return Results.BadRequest();
                 }
 
+            }).RequireAuthorization();
+
+            app.MapGet("/settings", async (IUserService userService, HttpContext context, UserContext dbContext, ILogger<Program> logger) =>
+            {
+                try
+                {
+                    var user = await userService.GetOrCreateUserAsync(context.User);
+                    if (user.SettingsJson == null)
+                    {
+                        return Results.NotFound("User settings not found");
+                    }
+                    return Results.Ok(user.SettingsJson);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to get user settings");
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization();
+
+            app.MapPut("/settings", async (IUserService userService, HttpContext context, UserContext dbContext, ILogger<Program> logger) =>
+            {
+                try
+                {
+                    var jsonDocument = await JsonDocument.ParseAsync(context.Request.Body);
+                    var settingsBlob = JsonSerializer.Serialize(jsonDocument);
+
+                    if (string.IsNullOrEmpty(settingsBlob))
+                    {
+                        return Results.BadRequest("Settings cannot be empty");
+                    }
+
+                    var user = await userService.GetOrCreateUserAsync(context.User);
+                    user.SettingsJson = settingsBlob;
+                    dbContext.Entry(user).State = EntityState.Modified;
+                    await dbContext.SaveChangesAsync();
+                    return Results.Ok();
+                }
+                catch (JsonException jsonEx)
+                {
+                    logger.LogError(jsonEx, "Invalid JSON format for user settings");
+                    return Results.BadRequest("Invalid JSON format for user settings");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to update user settings");
+                    return Results.BadRequest();
+                }
             }).RequireAuthorization();
         }
     }
