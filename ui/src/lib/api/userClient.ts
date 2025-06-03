@@ -1,4 +1,5 @@
 import { delay, ENABLE_MOCKS, mockFavoriteMaterials } from "$lib/mock";
+import type { WidgetSettings } from "$lib/stores/widgetSettingStore";
 import { fetchWithAuth } from "./authClient";
 
 export async function getFavorites(): Promise<number[] | null> {
@@ -208,6 +209,38 @@ export async function getMaterialSpreadsheet(spreadsheetReq: SpreadsheetReq): Pr
         link.remove();
     } catch (err) {
         console.error('Error during getMaterialSpreadsheet:', err);
+        return null;
+    }
+}
+
+export async function getUserSettings(): Promise<WidgetSettings | null> {
+    try {
+        const resp = await fetchWithAuth('settings');
+        if (!resp.ok) {
+            console.error('Failed to get user settings:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data as WidgetSettings;
+    } catch (err) {
+        console.error('Error during getUserSettings:', err);
+        return null;
+    }
+}
+
+export async function updateUserSettings(settings: WidgetSettings): Promise<void | null> {
+    try {
+        const resp = await fetchWithAuth('settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        if (!resp.ok) {
+            console.error('Failed to update user settings:', resp.statusText);
+            return null;
+        }
+    } catch (err) {
+        console.error('Error during updateUserSettings:', err);
         return null;
     }
 }
