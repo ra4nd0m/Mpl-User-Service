@@ -9,9 +9,40 @@ namespace MplUserService.Routes
 {
     public static class MaterialRoutes
     {
+        /// <summary>
+        /// Configures routes related to material data access in the application.
+        /// </summary>
+        /// <param name="app">The WebApplication to which routes will be added</param>
+        /// <remarks>
+        /// This method maps four API endpoints:
+        /// 
+        /// 1. GET /data/filtered/{**catchAll} - Allows filtered data access via GET requests.
+        ///    - Requires basic authorization
+        ///    - Extracts role information from user claims
+        ///    - Forwards requests to database service with role parameter added
+        ///    - Validates query parameters to prevent role injection
+        /// 
+        /// 2. POST /data/filtered/{**catchAll} - Allows filtered data access via POST requests.
+        ///    - Requires basic authorization
+        ///    - Extracts role information from user claims
+        ///    - Validates request body to prevent role injection
+        ///    - Wraps original request data and adds appropriate role
+        /// 
+        /// 3. GET /data/full/{**catchAll} - Provides full data access via GET requests.
+        ///    - Requires admin authorization
+        ///    - Forwards requests directly to the database service
+        /// 
+        /// 4. POST /data/full/{**catchAll} - Provides full data access via POST requests.
+        ///    - Requires admin authorization
+        ///    - Forwards the complete request body to the database service
+        /// 
+        /// All routes use the "DbClient" HTTP client for making backend requests and include
+        /// appropriate error handling and logging.
+        /// </remarks>
         public static void MapMaterialRoutes(this WebApplication app)
         {
-
+            
+            
             app.MapGet("/data/filtered/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
                 var client = httpClientFactory.CreateClient("DbClient");
@@ -123,7 +154,7 @@ namespace MplUserService.Routes
                 var content = await response.Content.ReadAsStringAsync();
                 return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
             }).RequireAuthorization("admin");
-
+            
             app.MapPost("/data/full/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
                 var client = httpClientFactory.CreateClient("DbClient");
