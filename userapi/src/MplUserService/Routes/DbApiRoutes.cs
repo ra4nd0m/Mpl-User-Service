@@ -68,6 +68,14 @@ namespace MplUserService.Routes
 
                 var doc = await JsonDocument.ParseAsync(context.Request.Body);
                 var root = doc.RootElement.Clone();
+
+                // Remove the role from the request body if it exists
+                if(root.ValueKind == JsonValueKind.Object && root.TryGetProperty("role", out _))
+                {
+                    logger.LogWarning("Potential role injection attempt detected");
+                    return Results.Problem("Invalid request format", statusCode: StatusCodes.Status400BadRequest);
+                }
+
                 var newDoc = new { data = root, role = extractedRole };
 
                 var jsonContent = JsonSerializer.Serialize(newDoc);
