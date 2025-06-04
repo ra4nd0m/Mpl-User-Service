@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace MplUserService.Auth
 {
-    public class InternalRequirement(string requiredRole) : IAuthorizationRequirement
+    public class RoleRequirement(string requiredRole) : IAuthorizationRequirement
     {
         public string RequiredRole { get; } = requiredRole;
     }
-    public class InternalRequirementHandler : AuthorizationHandler<InternalRequirement>
+    public class RoleRequirementHandler : AuthorizationHandler<RoleRequirement>
     {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, InternalRequirement requirement)
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, RoleRequirement requirement)
         {
             if (context.User.IsInRole(requirement.RequiredRole) || context.User.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == requirement.RequiredRole))
             {

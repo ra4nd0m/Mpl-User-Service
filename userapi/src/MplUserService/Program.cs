@@ -89,7 +89,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequirePremium", policy =>
         policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Premium)));
     options.AddPolicy("internal", policy =>
-        policy.Requirements.Add(new InternalRequirement("internal")));
+        policy.Requirements.Add(new RoleRequirement("internal")));
+    options.AddPolicy("admin", policy =>
+        policy.Requirements.Add(new RoleRequirement("Admin")));
 });
 
 builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
