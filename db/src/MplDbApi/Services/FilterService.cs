@@ -7,7 +7,7 @@ namespace MplDbApi.Services
 {
     public class FilterService(FilterContext context, Logger<FilterService> logger)
     {
-        public async Task AddFilters(FilterCreateReqDto input)
+        public async Task ModifyFilter(FilterCreateReqDto input)
         {
             try
             {
@@ -49,7 +49,6 @@ namespace MplDbApi.Services
                 logger.LogError(ex, "Error adding filter");
                 throw new InvalidOperationException("Failed to add filter");
             }
-
         }
 
     }
