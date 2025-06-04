@@ -3,6 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace MplUserService.Auth
 {
+    /// <summary>
+    /// Represents an authorization requirement that requires a specific role.
+    /// </summary>
+    /// <param name="requiredRole">The role required for authorization.</param>
+    /// <remarks>
+    /// This class implements the <see cref="IAuthorizationRequirement"/> interface to define
+    /// a requirement that checks if the user has a specific role.
+    /// </remarks>
     public class RoleRequirement(string requiredRole) : IAuthorizationRequirement
     {
         public string RequiredRole { get; } = requiredRole;
