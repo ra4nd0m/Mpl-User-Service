@@ -16,7 +16,27 @@ var configuration = new ConfigurationBuilder()
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BMplbaseContext>(options =>
-    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        {
+            var connectionString = configuration["ConnectionStrings:DefaultConnection"];
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("BMplbaseConnection string is not configured.");
+            }
+            options.UseNpgsql(connectionString);
+        }
+    );
+
+builder.Services.AddDbContext<FilterContext>(options =>
+        {
+            var connectionString = configuration.GetConnectionString("FilterConnection");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("FilterConnection string is not configured.");
+            }
+            options.UseSqlite(connectionString);
+        }
+    );
 
 //This service is internal so no need for restrictive cors 
 builder.Services.AddCors(options =>
@@ -44,5 +64,21 @@ app.MapMaterialSourceRoutes();
 app.MapMaterialValueRoutes();
 app.MapMaterialPropertyRoutes();
 app.MapMaterialGroupRoutes();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<FilterContext>();
+        await context.Database.MigrateAsync(); // Ensure the database is created and migrations are applied
+        app.Logger.LogInformation("Database migration completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred during database migration.");
+        throw; // Re-throw the exception to stop the application startup
+    }
+}
 
 app.Run();
