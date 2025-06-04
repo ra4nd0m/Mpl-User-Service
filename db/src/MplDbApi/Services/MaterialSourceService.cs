@@ -148,62 +148,62 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
 
     public async Task<MaterialSourceResponseDto?> GetMaterialById(int id)
     {
-            int[] propertyIds = { 1, 2, 3, 6 };
-    int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
-    var emptyValueList = new List<PropertyValueInfo>();
+        int[] propertyIds = { 1, 2, 3, 6 };
+        int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
+        var emptyValueList = new List<PropertyValueInfo>();
 
-    // Step 1: Fetch the basic material information
-    var materialQuery = await _context.MaterialSources
-        .Include(m => m.Material)
-        .Include(m => m.Source)
-        .Include(m => m.DeliveryType)
-        .Include(m => m.MaterialGroup)
-        .Include(m => m.Unit)
-        .Where(m => m.Id == id && m.Unit.Id != 5)
-        .Select(m => new
+        // Step 1: Fetch the basic material information
+        var materialQuery = await _context.MaterialSources
+            .Include(m => m.Material)
+            .Include(m => m.Source)
+            .Include(m => m.DeliveryType)
+            .Include(m => m.MaterialGroup)
+            .Include(m => m.Unit)
+            .Where(m => m.Id == id && m.Unit.Id != 5)
+            .Select(m => new
+            {
+                MaterialSource = m,
+                LatestDate = _context.MaterialValues
+                    .Where(mv => mv.Uid == m.Id && propertyIds.Contains(mv.PropertyId))
+                    .Max(mv => (DateOnly?)mv.CreatedOn),
+                AvailableProps = _context.MaterialProperties
+                    .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
+                    .Select(mp => mp.PropertyId)
+                    .ToList()
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+
+        if (materialQuery == null)
+            throw new KeyNotFoundException($"Material with id {id} not found.");
+
+        // Step 2: Fetch the latest values if we have a date
+        var latestValues = new List<PropertyValueInfo>();
+        if (materialQuery.LatestDate.HasValue)
         {
-            MaterialSource = m,
-            LatestDate = _context.MaterialValues
-                .Where(mv => mv.Uid == m.Id && propertyIds.Contains(mv.PropertyId))
-                .Max(mv => (DateOnly?)mv.CreatedOn),
-            AvailableProps = _context.MaterialProperties
-                .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
-                .Select(mp => mp.PropertyId)
-                .ToList()
-        })
-        .AsNoTracking()
-        .FirstOrDefaultAsync();
+            latestValues = await _context.MaterialValues
+                .Where(mv => mv.Uid == materialQuery.MaterialSource.Id &&
+                          mv.CreatedOn == materialQuery.LatestDate.Value &&
+                          propertyIds.Contains(mv.PropertyId))
+                .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
+                .ToListAsync();
+        }
 
-    if (materialQuery == null)
-        throw new KeyNotFoundException($"Material with id {id} not found.");
-
-    // Step 2: Fetch the latest values if we have a date
-    var latestValues = new List<PropertyValueInfo>();
-    if (materialQuery.LatestDate.HasValue)
-    {
-        latestValues = await _context.MaterialValues
-            .Where(mv => mv.Uid == materialQuery.MaterialSource.Id &&
-                      mv.CreatedOn == materialQuery.LatestDate.Value &&
-                      propertyIds.Contains(mv.PropertyId))
-            .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
-            .ToListAsync();
-    }
-
-    // Step 3: Create the DTO with in-memory operations
-    return new MaterialSourceResponseDto(
-        materialQuery.MaterialSource.Id,
-        materialQuery.MaterialSource.Material.Name,
-        materialQuery.MaterialSource.Source.Name,
-        materialQuery.MaterialSource.DeliveryType.Name,
-        materialQuery.MaterialSource.MaterialGroup.Name,
-        materialQuery.MaterialSource.TargetMarket,
-        materialQuery.MaterialSource.Unit.Name,
-        materialQuery.LatestDate,
-        latestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
-        latestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
-        latestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
-        latestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
-        materialQuery.AvailableProps
-    );
+        // Step 3: Create the DTO with in-memory operations
+        return new MaterialSourceResponseDto(
+            materialQuery.MaterialSource.Id,
+            materialQuery.MaterialSource.Material.Name,
+            materialQuery.MaterialSource.Source.Name,
+            materialQuery.MaterialSource.DeliveryType.Name,
+            materialQuery.MaterialSource.MaterialGroup.Name,
+            materialQuery.MaterialSource.TargetMarket,
+            materialQuery.MaterialSource.Unit.Name,
+            materialQuery.LatestDate,
+            latestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
+            latestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
+            latestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
+            latestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
+            materialQuery.AvailableProps
+        );
     }
 }
