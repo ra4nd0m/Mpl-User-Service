@@ -54,6 +54,7 @@ builder.Services.AddScoped<IMaterialSourceService, MaterialSourceService>();
 builder.Services.AddScoped<IMaterialValueService, MaterialValueService>();
 builder.Services.AddScoped<IMaterialPropService, MaterialPropService>();
 builder.Services.AddScoped<IMaterialGroupService, MaterialGroupService>();
+builder.Services.AddScoped<FilterService>();
 
 var app = builder.Build();
 
@@ -64,6 +65,7 @@ app.MapMaterialSourceRoutes();
 app.MapMaterialValueRoutes();
 app.MapMaterialPropertyRoutes();
 app.MapMaterialGroupRoutes();
+app.MapFilterConfigRoutes();
 
 using (var scope = app.Services.CreateScope())
 {

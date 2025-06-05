@@ -2,8 +2,9 @@ using MplDbApi.Data;
 using MplDbApi.Models;
 using MplDbApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using MplDbApi.Services;
 
-public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceService
+public class MaterialSourceService(BMplbaseContext _context, FilterService filterService) : IMaterialSourceService
 {
     private readonly struct PropertyValueInfo
     {
@@ -17,8 +18,9 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             ValueDecimal = valueDecimal;
         }
     }
-    public async Task<List<MaterialSourceResponseDto>> GetAllMaterials()
+    public async Task<List<MaterialSourceResponseDto>> GetAllMaterials(string role)
     {
+        var filter = await filterService.GetFilterByRole(role) ?? throw new InvalidOperationException("Filter not found for the specified role.");
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -30,17 +32,20 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
-            .Where(m => m.Unit.Id != 5) // Exclude mats with supply
+            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id)) // Exclude materials from filter
+            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId)) // Filter by groups
+            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId)) // Filter by sources
+            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId)) // Filter by units
             .Select(m => new // Project to find the latest date first
             {
                 MaterialSource = m,
                 LatestDate = _context.MaterialValues
-                    .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
-                    .Max(mv => (DateOnly?)mv.CreatedOn),
+                .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
+                .Max(mv => (DateOnly?)mv.CreatedOn),
                 AvailableProps = _context.MaterialProperties
-                    .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
-                    .Select(mp => mp.PropertyId)
-                    .ToList() // Materialize AvailableProps list
+                .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
+                .Select(mp => mp.PropertyId)
+                .ToList() // Materialize AvailableProps list
             })
             .Select(result => new // Project to get values for that latest date
             {
@@ -48,15 +53,15 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
                 result.LatestDate,
                 result.AvailableProps,
                 LatestValues = result.LatestDate == null ?
-                    emptyValueList :
-                    _context.MaterialValues
-                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                                     mv.CreatedOn == result.LatestDate.Value &&
-                                     latestValuePropertyIds.Contains(mv.PropertyId))
-                        // Select into the named struct
-                        .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
-                        // Materialize the list of the struct
-                        .ToList()
+                emptyValueList :
+                _context.MaterialValues
+                .Where(mv => mv.Uid == result.MaterialSource.Id &&
+                         mv.CreatedOn == result.LatestDate.Value &&
+                         latestValuePropertyIds.Contains(mv.PropertyId))
+                // Select into the named struct
+                .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
+                // Materialize the list of the struct
+                .ToList()
             })
             .AsNoTracking()
             .ToListAsync(); // Execute the database query
@@ -82,8 +87,9 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
         return materialsList;
     }
 
-    public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId)
+    public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId, string role)
     {
+        var filter = await filterService.GetFilterByRole(role) ?? throw new InvalidOperationException("Filter not found for the specified role.");
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -94,6 +100,10 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
+            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id)) // Exclude materials from filter
+            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId)) // Filter by groups
+            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId)) // Filter by sources
+            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId)) // Filter by units
             .Where(m => m.MaterialGroupId == groupId && m.Unit.Id != 5)
             .Select(m => new // Project to find the latest date first
             {
@@ -146,7 +156,7 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
         //
     }
 
-    public async Task<MaterialSourceResponseDto?> GetMaterialById(int id)
+    public async Task<MaterialSourceResponseDto?> GetMaterialById(int id, string role)
     {
         int[] propertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };

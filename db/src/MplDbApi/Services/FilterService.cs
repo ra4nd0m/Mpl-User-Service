@@ -5,7 +5,7 @@ using MplDbApi.Models.Filters;
 
 namespace MplDbApi.Services
 {
-    public class FilterService(FilterContext context, Logger<FilterService> logger)
+    public class FilterService(FilterContext context, ILogger<FilterService> logger)
     {
         public async Task ModifyFilter(FilterCreateReqDto input)
         {
@@ -50,6 +50,27 @@ namespace MplDbApi.Services
                 throw new InvalidOperationException("Failed to add filter");
             }
         }
+        public async Task<DataFilter> GetFilterByRole(string role)
+        {
+            //If role is not present, treat is an admin request and don't apply any filters
+            if (string.IsNullOrEmpty(role))
+            {
+                return new DataFilter
+                {
+                    AffectedRole = "Default",
+                    Groups = null,
+                    Sources = null,
+                    Units = null,
+                    MaterialIds = null,
+                    Properties = null
+                };
+            }
+
+            var filter = await context.Filters
+                .FirstOrDefaultAsync(f => f.AffectedRole == role) ?? throw new KeyNotFoundException($"No filter found for role: {role}");
+            return filter;
+        }
+
 
     }
 }

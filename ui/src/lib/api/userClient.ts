@@ -73,7 +73,7 @@ export async function removeFavorite(id: number): Promise<number[] | null> {
 
 export async function getMaterials(): Promise<Material[] | null> {
     try {
-        const resp = await fetchWithAuth('data/materials');
+        const resp = await fetchWithAuth('data/filtered/materials');
         if (!resp.ok) {
             console.error('Failed to get materials:', resp.statusText);
             return null;
@@ -88,7 +88,7 @@ export async function getMaterials(): Promise<Material[] | null> {
 
 export async function getMaterialsByGroup(id: number): Promise<Material[] | null> {
     try {
-        const resp = await fetchWithAuth(`data/materials/bygroup/${id}`);
+        const resp = await fetchWithAuth(`data/filtered/materials/bygroup/${id}`);
         if (!resp.ok) {
             console.error('Failed to get materials by group:', resp.statusText);
             return null;
@@ -103,7 +103,7 @@ export async function getMaterialsByGroup(id: number): Promise<Material[] | null
 
 export async function getMaterialGroups(): Promise<{ id: number, name: string }[] | null> {
     try {
-        const resp = await fetchWithAuth('data/materialgroups');
+        const resp = await fetchWithAuth('data/filtered/materialgroups');
         if (!resp.ok) {
             console.error('Failed to get material groups:', resp.statusText);
             return null;
@@ -125,7 +125,7 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
             endDate
         }));
 
-        const resp = await fetchWithAuth('data/materialvalues/overview', {
+        const resp = await fetchWithAuth('data/filtered/materialvalues/overview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(reqsts)
@@ -147,7 +147,7 @@ export async function getMaterialInfo(materialId: number | { materialId: number 
     try {
         const actualMaterialId = typeof materialId === 'object' && materialId !== null ?
             (materialId as { materialId: number }).materialId : materialId;
-        const resp = await fetchWithAuth(`data/materials/${actualMaterialId}`);
+        const resp = await fetchWithAuth(`data/filtered/materials/${actualMaterialId}`);
         if (!resp.ok) {
             console.error('Failed to get material info:', resp.statusText);
             return null;
@@ -171,7 +171,7 @@ export async function getMaterialDateMetrics(materialId: number | { materialId: 
             endDate,
             aggregates
         }
-        const resp = await fetchWithAuth('data/materialvalues/daterange', {
+        const resp = await fetchWithAuth('data/filtered/materialvalues/daterange', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(req)
