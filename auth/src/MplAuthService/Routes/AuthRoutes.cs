@@ -49,7 +49,7 @@ namespace MplAuthService.Routes
             });
 
             app.MapPost("/refresh", async (IJwtService jwtService, IRefreshTokenService refreshTokenService,
-            UserManager<User> userManager, HttpContext context, ILogger<Program> logger) =>
+            UserManager<User> userManager, HttpContext context, AuthContext authContext, ILogger<Program> logger) =>
             {
                 try
                 {
@@ -62,7 +62,10 @@ namespace MplAuthService.Routes
                             var user = await userManager.FindByIdAsync(refreshToken.UserId);
                             if (user != null)
                             {
-                                string newToken = await jwtService.GenerateJwtToken(user);
+                                user = await authContext.Users
+                                    .Include(u => u.Organization)
+                                    .FirstOrDefaultAsync(u => u.Id == user.Id);
+                                string newToken = await jwtService.GenerateJwtToken(user!);
                                 return Results.Ok(new { Token = newToken });
                             }
                         }
