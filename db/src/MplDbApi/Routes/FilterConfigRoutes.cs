@@ -9,7 +9,10 @@ namespace MplDbApi.Routes
         {
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-            app.MapPost("/filter", async (RoleEnhancedReqDto<FilterCreateReqDto> input, FilterService filterService) =>
+            var filterRouteGroup = app.MapGroup("/filter-config")
+                .WithTags("Filter Configuration");
+
+            filterRouteGroup.MapPost("/filter", async (RoleEnhancedReqDto<FilterCreateReqDto> input, FilterService filterService) =>
             {
                 try
                 {
@@ -31,7 +34,7 @@ namespace MplDbApi.Routes
                 }
             });
 
-            app.MapGet("/filter/{role}", async (string role, FilterService filterService) =>
+            filterRouteGroup.MapGet("/filter/{role}", async (string role, FilterService filterService) =>
             {
                 try
                 {
@@ -47,6 +50,20 @@ namespace MplDbApi.Routes
                 {
                     logger.LogError(ex, "Error retrieving filter for role: {Role}", role);
                     return Results.Problem("Failed to retrieve filter.");
+                }
+            });
+
+            filterRouteGroup.MapGet("/filters", async (FilterService filterService) =>
+            {
+                try
+                {
+                    var filters = await filterService.GetAllFilters();
+                    return Results.Ok(filters);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error retrieving all filters.");
+                    return Results.Problem("Failed to retrieve filters.");
                 }
             });
         }
