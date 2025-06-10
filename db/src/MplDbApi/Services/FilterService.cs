@@ -50,7 +50,7 @@ namespace MplDbApi.Services
                 throw new InvalidOperationException("Failed to add filter");
             }
         }
-        public async Task<DataFilter> GetFilterByRole(string role)
+        public async Task<DataFilter> GetFilterByRole(string? role)
         {
             //If role is not present, treat is an admin request and don't apply any filters
             if (string.IsNullOrEmpty(role))
@@ -71,6 +71,18 @@ namespace MplDbApi.Services
             return filter;
         }
 
+        public async Task<List<DataFilter>> GetAllFilters()
+        {
+            try
+            {
+                return await context.Filters.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving all filters");
+                throw new InvalidOperationException("Failed to retrieve filters");
+            }
+        }
 
     }
 }

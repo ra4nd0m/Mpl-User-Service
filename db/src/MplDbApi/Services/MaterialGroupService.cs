@@ -7,7 +7,7 @@ namespace MplDbApi.Services;
 
 public class MaterialGroupService(BMplbaseContext context, FilterService filterService) : IMaterialGroupService
 {
-    public async Task<IEnumerable<MaterialGroupDto>> GetMaterialGroupAsync(string role)
+    public async Task<IEnumerable<MaterialGroupDto>> GetMaterialGroupAsync(string? role)
     {
         var filter = await filterService.GetFilterByRole(role);
         return await context.MaterialGroups

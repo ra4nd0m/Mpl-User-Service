@@ -4,5 +4,5 @@ namespace MplDbApi.Interfaces;
 
 public interface IMaterialGroupService
 {
-    Task<IEnumerable<MaterialGroupDto>> GetMaterialGroupAsync(string role);
+    Task<IEnumerable<MaterialGroupDto>> GetMaterialGroupAsync(string? role);
 }
