@@ -74,6 +74,17 @@
 		await loadMaterials(selectedGroupId);
 	}
 
+	function getChangeClass(changePercent: string | null): string {
+		if (!changePercent) return '';
+
+		// Remove any non-numeric characters except for the minus sign and decimal point
+		const value = parseFloat(changePercent.replace(/[^\d.-]/g, ''));
+
+		if (value > 0) return 'positive-change';
+		if (value < 0) return 'negative-change';
+		return '';
+	}
+
 	onMount(async () => {
 		await loadGroups();
 		await loadMaterials();
@@ -176,7 +187,7 @@
 								' ' +
 								material.market}</td
 						>
-						<td>{'Change Placeholder'}</td>
+						<td class={getChangeClass(material.changePercent)}>{material.changePercent}</td>
 						<td>{material.latestAvgValue}</td>
 						{#if material.latestMinValue === null}
 							<td>-</td>
@@ -310,5 +321,15 @@
 		100% {
 			transform: rotate(360deg);
 		}
+	}
+
+	.positive-change {
+		color: #2ecc71;
+		font-weight: 500;
+	}
+
+	.negative-change {
+		color: #e74c3c;
+		font-weight: 500;
 	}
 </style>
