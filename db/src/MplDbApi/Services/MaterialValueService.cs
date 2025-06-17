@@ -18,7 +18,7 @@ public class MaterialValueService(BMplbaseContext _context, FilterService filter
     {
         try
         {
-            var filter = await filterService.GetFilterByRole(role) ?? throw new Exception("Filter not found for role: " + role);
+            var filter = await filterService.GetFilterByRole(role);
             if (filter.MaterialIds?.Contains(id) == true)
             {
                 logger.LogWarning("Material with id {Id} is included in the filter for role {Role}", id, role);
@@ -53,7 +53,7 @@ public class MaterialValueService(BMplbaseContext _context, FilterService filter
         {
             if (role != "local")
             {
-                var filter = await filterService.GetFilterByRole(role) ?? throw new Exception("Filter not found for role: " + role);
+                var filter = await filterService.GetFilterByRole(role);
                 if (filter.MaterialIds?.Contains(req.MaterialId) == true)
                 {
                     logger.LogWarning("Material with id {MaterialId} is included in the filter for role {Role}", req.MaterialId, role);
@@ -132,7 +132,7 @@ public class MaterialValueService(BMplbaseContext _context, FilterService filter
     {
         try
         {
-            var filter = await filterService.GetFilterByRole(role) ?? throw new Exception("Filter not found for role: " + role);
+            var filter = await filterService.GetFilterByRole(role);
             if (reqs.Any(req => filter.MaterialIds?.Contains(req.MaterialId) == true))
             {
                 logger.LogWarning("One or more materials in the request are included in the filter for role {Role}", role);

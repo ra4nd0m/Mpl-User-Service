@@ -20,7 +20,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
     }
     public async Task<List<MaterialSourceResponseDto>> GetAllMaterials(string role)
     {
-        var filter = await filterService.GetFilterByRole(role) ?? throw new InvalidOperationException("Filter not found for the specified role.");
+        var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -89,7 +89,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
 
     public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId, string role)
     {
-        var filter = await filterService.GetFilterByRole(role) ?? throw new InvalidOperationException("Filter not found for the specified role.");
+        var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
