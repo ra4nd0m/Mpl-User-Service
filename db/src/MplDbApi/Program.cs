@@ -29,6 +29,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddScoped<IDeliveryTypeService, DeliveryTypeService>();
 builder.Services.AddScoped<IMaterialSourceService, MaterialSourceService>();
 builder.Services.AddScoped<IMaterialValueService, MaterialValueService>();
