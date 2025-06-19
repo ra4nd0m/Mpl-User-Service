@@ -4,8 +4,9 @@ using MplDbApi.Interfaces;
 using MplDbApi.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Caching.Memory;
 
-public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceService
+public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memoryCache) : IMaterialSourceService
 {
     private readonly struct PropertyValueInfo
     {
@@ -21,6 +22,11 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
     }
     public async Task<List<MaterialSourceResponseDto>> GetAllMaterials()
     {
+        const string cacheKey = "AllMaterialsCacheKey";
+        if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
+        {
+            return cachedMaterials;
+        }
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -108,11 +114,19 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
                );
         }).ToList(); // Create the final list of DTOs
 
+        memoryCache.Set(cacheKey, materialsList, TimeSpan.FromHours(2)); // Cache the result for 10 minutes
+
         return materialsList;
     }
 
     public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId)
     {
+        string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
+        if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
+        {
+            return cachedMaterials;
+        }
+        // If not cached, proceed with the database query
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -198,12 +212,19 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             );
         }).ToList(); // Create the final list of DTOs
 
+        memoryCache.Set(cacheKey, materialsList, TimeSpan.FromHours(2)); // Cache the result for 2 hours
         return materialsList;
         //
     }
 
     public async Task<MaterialSourceResponseDto?> GetMaterialById(int id)
     {
+        string cacheKey = "MaterialByIdCacheKey_" + id;
+        if (memoryCache.TryGetValue(cacheKey, out MaterialSourceResponseDto? cachedMaterial) && cachedMaterial != null)
+        {
+            return cachedMaterial;
+        }
+        // If not cached, proceed with the database query
         int[] propertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -246,7 +267,7 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
         }
 
         // Step 3: Create the DTO with in-memory operations
-        return new MaterialSourceResponseDto(
+        var response = new MaterialSourceResponseDto(
             materialQuery.MaterialSource.Id,
             materialQuery.MaterialSource.Material.Name,
             materialQuery.MaterialSource.Source.Name,
@@ -262,5 +283,9 @@ public class MaterialSourceService(BMplbaseContext _context) : IMaterialSourceSe
             latestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
             materialQuery.AvailableProps
         );
+
+        memoryCache.Set(cacheKey, response, TimeSpan.FromHours(2)); // Cache the result for 2 hours
+
+        return response;
     }
 }
