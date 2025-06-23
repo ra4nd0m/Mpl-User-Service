@@ -26,6 +26,26 @@ const getDefaultDateRange = (): DateRangeSetting => {
     };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ensureValidSettings = (settings: any): WidgetSettings => {
+    if (typeof settings === 'string') {
+        try {
+            settings = JSON.parse(settings);
+        } catch (e) {
+            console.error('Error parsing settings string', e);
+            return { priceTable: {} };
+        }
+    }
+    if (!settings || typeof settings !== 'object') {
+        console.warn('Invalid settings format, resetting to defaults');
+        return { priceTable: {} };
+    }
+    if (!settings.priceTable || typeof settings.priceTable !== 'object') {
+        settings.priceTable = {};
+    }
+    return settings as WidgetSettings;
+}
+
 // Initialize store with data from localStorage or defaults
 const initializeStore = async (): Promise<WidgetSettings> => {
     const fetchedSettings = await getUserSettings();
@@ -54,7 +74,10 @@ const createWidgetSettingsStore = () => {
     const { subscribe, update, set } = writable<WidgetSettings>({ priceTable: {} });
 
     // Initialize with data from localStorage
-    initializeStore().then(data => set(data));
+    initializeStore().then(data => {
+        const validSettings = ensureValidSettings(data);
+        set(validSettings);
+    });
 
     // Persist settings to localStorage
     const persistSettings = async (settings: WidgetSettings) => {
