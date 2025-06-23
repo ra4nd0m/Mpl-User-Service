@@ -39,16 +39,17 @@
 	let endDate = $state(defaultDateRange.endDate);
 	let startDate = $state(defaultDateRange.startDate);
 
-	let isExpanded = $state(widgetSettingsStore.getPriceTableExpanded(normalizedMaterialId));
+	let isExpanded = $state(false);
 
-	function loadSettings(){
+	async function loadSettings() {
 		try {
+			await widgetSettingsStore.ready();
 			const savedDateRange = widgetSettingsStore.getPriceTableDateRange(normalizedMaterialId);
 			startDate = savedDateRange.startDate || defaultDateRange.startDate;
 			endDate = savedDateRange.endDate || defaultDateRange.endDate;
 
 			isExpanded = widgetSettingsStore.getPriceTableExpanded(normalizedMaterialId);
-		}catch (error) {
+		} catch (error) {
 			console.error('Failed to load settings:', error);
 			// Fallback to defaults if settings are not available
 			startDate = defaultDateRange.startDate;
@@ -221,8 +222,8 @@
 			return;
 		}
 	}
-	onMount(()=>{
-		loadSettings();
+	onMount(async () => {
+		await loadSettings();
 		fetchData();
 	});
 </script>

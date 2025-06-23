@@ -17,6 +17,8 @@ export interface WidgetSettings {
     // otherWidget: { [id: string]: OtherWidgetSettings };
 }
 
+let initialized: Promise<void>;
+
 // Default date ranges
 const getDefaultDateRange = (): DateRangeSetting => {
     const today = new Date();
@@ -74,7 +76,7 @@ const createWidgetSettingsStore = () => {
     const { subscribe, update, set } = writable<WidgetSettings>({ priceTable: {} });
 
     // Initialize with data from localStorage
-    initializeStore().then(data => {
+    initialized = initializeStore().then(data => {
         const validSettings = ensureValidSettings(data);
         set(validSettings);
     });
@@ -91,6 +93,7 @@ const createWidgetSettingsStore = () => {
 
     return {
         subscribe,
+        ready: () => initialized,
 
         // Set date range for a specific price table
         setPriceTableDateRange: (materialId: number | string, dateRange: DateRangeSetting) => {
