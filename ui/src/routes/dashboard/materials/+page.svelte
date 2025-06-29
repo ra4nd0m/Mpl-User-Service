@@ -139,18 +139,6 @@
 		{/if}
 	</div>
 
-	<div class="debug-favorites">
-		<p class="debug-title">Favorite Material IDs:</p>
-		<div class="debug-ids">
-			{#if favoriteIds.length === 0}
-				<span class="no-favorites">No favorites selected</span>
-			{:else}
-				{#each favoriteIds as id}
-					<span class="favorite-id">{id}</span>
-				{/each}
-			{/if}
-		</div>
-	</div>
 	{#if error}
 		<div class="error-message">{error}</div>
 	{/if}
@@ -164,7 +152,6 @@
 			<thead>
 				<tr>
 					<th rowspan="2" class="favorite-cell"> </th>
-					<th rowspan="2">ID</th>
 					<th rowspan="2" class="table-material-name">Material Name</th>
 					<th rowspan="2">Change</th>
 					<th colspan="3">Last Price</th>
@@ -203,7 +190,6 @@
 								</svg>
 							</button>
 						</td>
-						<td>{material.id}</td>
 						<td class="table-material-name"
 							>{material.materialName +
 								' ' +
