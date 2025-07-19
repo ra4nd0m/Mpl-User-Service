@@ -305,7 +305,8 @@ export interface SpreadsheetReq {
     unit: string;
     deliveryType: string;
     market: string;
-    data: SpreadsheetReqData[];
+    data: SpreadsheetReqData[] | SpreadsheetReqAvgData[];
+    type: 'full' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 }
 
 export interface SpreadsheetReqData {
@@ -321,4 +322,9 @@ export interface SpreadsheetReqData {
     monthlyAvg: string | null;
     quarterlyAvg: string | null;
     yearlyAvg: string | null;
+}
+
+export interface SpreadsheetReqAvgData {
+    date: string;
+    value: string | null;
 }

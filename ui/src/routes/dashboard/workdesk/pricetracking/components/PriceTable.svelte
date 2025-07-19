@@ -9,7 +9,8 @@
 		MaterialDateMetricsResp,
 		Material,
 		SpreadsheetReq,
-		SpreadsheetReqData
+		SpreadsheetReqData,
+		SpreadsheetReqAvgData
 	} from '$lib/api/userClient';
 	import { onMount } from 'svelte';
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
@@ -230,33 +231,22 @@
 	}
 
 	async function getSpreadsheet() {
-		const spreadsheetReqDataArr: SpreadsheetReqData[] =
-			priceData?.map((item) => {
-				return {
-					date: item.date,
-					valueAvg: item.valueAvg,
-					valueMin: item.valueMin,
-					valueMax: item.valueMax,
-					predWeekly: item.predWeekly,
-					predMonthly: item.predMonthly,
-					supply: item.supply,
-					propsUsed: item.propsUsed,
-					weeklyAvg: item.weeklyAvg,
-					monthlyAvg: item.monthlyAvg,
-					quarterlyAvg: item.quarterlyAvg,
-					yearlyAvg: item.yearlyAvg
-				};
-			}) ?? [];
+		const spreadsheetReqDataArr = fillSpreadsheetReqData();
 		if (!spreadsheetReqDataArr) {
 			alert('No data available for export');
 			return;
+		}
+		let type: 'full' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' = 'full';
+		if (aggregatesChosen.length > 0) {
+			type = aggregatesChosen[0] as 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 		}
 		const spreadsheetReq: SpreadsheetReq = {
 			materialName: materialInfo?.materialName || '',
 			market: materialInfo?.market || '',
 			unit: materialInfo?.unit || '',
 			deliveryType: materialInfo?.deliveryType || '',
-			data: spreadsheetReqDataArr
+			data: spreadsheetReqDataArr,
+			type: type
 		};
 		let res = await getMaterialSpreadsheet(spreadsheetReq);
 		if (res === null) {
@@ -264,6 +254,32 @@
 			return;
 		}
 	}
+
+	function fillSpreadsheetReqData(): SpreadsheetReqAvgData[] | SpreadsheetReqData[] {
+		if (aggregatesChosen.length > 0) {
+			return filteredData as SpreadsheetReqAvgData[];
+		} else {
+			const spreadsheetReqDataArr: SpreadsheetReqData[] =
+				priceData?.map((item) => {
+					return {
+						date: item.date,
+						valueAvg: item.valueAvg,
+						valueMin: item.valueMin,
+						valueMax: item.valueMax,
+						predWeekly: item.predWeekly,
+						predMonthly: item.predMonthly,
+						supply: item.supply,
+						propsUsed: item.propsUsed,
+						weeklyAvg: item.weeklyAvg,
+						monthlyAvg: item.monthlyAvg,
+						quarterlyAvg: item.quarterlyAvg,
+						yearlyAvg: item.yearlyAvg
+					};
+				}) ?? [];
+			return spreadsheetReqDataArr;
+		}
+	}
+
 	onMount(async () => {
 		await loadSettings();
 		fetchData();
