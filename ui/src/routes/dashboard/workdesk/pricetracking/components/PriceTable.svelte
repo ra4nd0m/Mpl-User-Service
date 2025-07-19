@@ -337,7 +337,7 @@
 							name="aggregate"
 							value="weekly"
 							checked={aggregatesChosen.includes('weekly')}
-							onclick={async () => {
+							onchange={async () => {
 								await pushAggregates('weekly');
 							}}
 						/>
@@ -349,7 +349,7 @@
 							name="aggregate"
 							value="monthly"
 							checked={aggregatesChosen.includes('monthly')}
-							onclick={async () => {
+							onchange={async () => {
 								await pushAggregates('monthly');
 							}}
 						/>
@@ -361,7 +361,7 @@
 							name="aggregate"
 							value="quarterly"
 							checked={aggregatesChosen.includes('quarterly')}
-							onclick={async () => {
+							onchange={async () => {
 								await pushAggregates('quarterly');
 							}}
 						/>
@@ -373,7 +373,7 @@
 							name="aggregate"
 							value="yearly"
 							checked={aggregatesChosen.includes('yearly')}
-							onclick={async () => {
+							onchange={async () => {
 								await pushAggregates('yearly');
 							}}
 						/>
@@ -383,9 +383,9 @@
 						<input
 							type="radio"
 							name="aggregate"
-							value=""
+							value="none"
 							checked={aggregatesChosen.length === 0}
-							onclick={async () => {
+							onchange={async () => {
 								aggregatesChosen = [];
 								await fetchData();
 							}}
