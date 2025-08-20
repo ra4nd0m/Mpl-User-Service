@@ -101,6 +101,40 @@ export async function deleteUser(email: string): Promise<boolean> {
     }
 }
 
+export async function getFilters(): Promise<DataFilter[] | null> {
+    try {
+        const response = await fetchWithAuth('data/filtered/filter-config/filters');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Failed to get filters:', errorData || response.statusText);
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error during getFilters:', error);
+        return null;
+    }
+}
+
+export async function pushFilter(filter: DataFilter): Promise<void> {
+    try{
+        const response = await fetchWithAuth('data/filtered/filter-config/filter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filter)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Failed to push filter:', errorData || response.statusText);
+        }
+    } catch (error) {
+        console.error('Error during pushFilter:', error);
+    }
+}
+
 export enum SubscriptionType {
     Free = 0,
     Basic = 1,
@@ -125,4 +159,14 @@ export interface NewUser {
     email: string;
     password: string;
     organization: OrgResponse | null;
+}
+
+export interface DataFilter {
+    id: number;
+    affectedRole: string;
+    groups: number[];
+    sources: number[];
+    units: number[];
+    materialIds: number[];
+    properties: number[];
 }
