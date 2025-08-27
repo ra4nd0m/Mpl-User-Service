@@ -6,7 +6,7 @@ namespace MplDbApi.Routes
     {
         public static void MapMaterialPropertyRoutes(this WebApplication app)
         {
-            app.MapGet("/api/material/{materialId}/properties", async (IMaterialPropService service, int materialId) =>
+            app.MapGet("/material/{materialId}/properties", async (IMaterialPropService service, int materialId) =>
             {
                 try
                 {
@@ -16,6 +16,19 @@ namespace MplDbApi.Routes
                 catch
                 {
                     return Results.Problem("An error occurred while retrieving material properties");
+                }
+            });
+
+            app.MapGet("/properties/dropdown", async (IMaterialPropService service) =>
+            {
+                try
+                {
+                    var props = await service.GetMaterialPropertiesForDropdown();
+                    return Results.Ok(props);
+                }
+                catch
+                {
+                    return Results.Problem("An error occurred while retrieving material properties for dropdown");
                 }
             });
         }

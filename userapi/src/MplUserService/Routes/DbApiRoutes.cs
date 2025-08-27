@@ -68,7 +68,7 @@ namespace MplUserService.Routes
 
                 var content = await response.Content.ReadAsStringAsync();
                 return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
-            }).RequireAuthorization("admin");
+            }).RequireAuthorization("RequireAdmin");
 
             app.MapPost("/data/filtered/filter-config/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, UserContext dbContext, ILogger<Program> logger) =>
             {
@@ -134,7 +134,7 @@ namespace MplUserService.Routes
 
                 var content = await response.Content.ReadAsStringAsync();
                 return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
-            }).RequireAuthorization("admin");
+            }).RequireAuthorization("RequireAdmin");
 
             app.MapGet("/data/filtered/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {

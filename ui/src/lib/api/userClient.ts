@@ -116,6 +116,52 @@ export async function getMaterialGroups(): Promise<{ id: number, name: string }[
     }
 }
 
+export async function getSources(): Promise<{ id: number, name: string }[] | null> {
+    try {
+        const resp = await fetchWithAuth('data/filtered/sources');
+        if (!resp.ok) {
+            console.error('Failed to get sources:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getSources:', err);
+        return null;
+    }
+}
+
+export async function getUnits(): Promise<{ id: number, name: string }[] | null> {
+    try {
+        const resp = await fetchWithAuth('data/filtered/units');
+        if (!resp.ok) {
+            console.error('Failed to get units:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getUnits:', err);
+        return null;
+    }
+}
+
+export async function getPropertiesForDropdown(): Promise<{ id: number, name: string }[] | null> {
+    try {
+        const resp = await fetchWithAuth('data/filtered/properties/dropdown');
+        if (!resp.ok) {
+            console.error('Failed to get properties:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        console.error('Error during getUnits:', err);
+        return null;
+    }
+}
+
+
 export async function getOverview(materialIds: number[], propertyIds: number[], startDate: string, endDate: string): Promise<DateGroupedMaterialValues[] | null> {
     try {
         const reqsts: MaterialDateMetricReq[] = materialIds.map(id => ({
@@ -320,4 +366,9 @@ export interface SpreadsheetReqData {
     monthlyAvg: string | null;
     quarterlyAvg: string | null;
     yearlyAvg: string | null;
+}
+
+export interface IdNamePair {
+    id: number;
+    name: string;
 }

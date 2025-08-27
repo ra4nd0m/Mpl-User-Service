@@ -90,8 +90,7 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new SubscriptionRequirement(SubscriptionType.Premium)));
     options.AddPolicy("internal", policy =>
         policy.Requirements.Add(new RoleRequirement("internal")));
-    options.AddPolicy("admin", policy =>
-        policy.Requirements.Add(new RoleRequirement("Admin")));
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
 });
 
 builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
@@ -102,6 +101,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
 
 builder.Services.AddCors(options =>
 {

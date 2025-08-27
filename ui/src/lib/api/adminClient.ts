@@ -162,7 +162,6 @@ export interface NewUser {
 }
 
 export interface DataFilter {
-    id: number;
     affectedRole: string;
     groups: number[];
     sources: number[];

@@ -67,7 +67,7 @@ namespace MplDbApi.Services
             }
 
             var filter = await context.Filters
-                .FirstOrDefaultAsync(f => f.AffectedRole == role) ?? throw new KeyNotFoundException($"No filter found for role: {role}");
+                .FirstOrDefaultAsync(f => f.AffectedRole == role) ?? new DataFilter();
             return filter;
         }
 

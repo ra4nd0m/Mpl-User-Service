@@ -3,6 +3,7 @@ using MplDbApi.Interfaces;
 using MplDbApi.Services;
 using MplDbApi.Data;
 using MplDbApi.Routes;
+using MplDbApi.Utils;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
@@ -54,6 +55,8 @@ builder.Services.AddScoped<IMaterialSourceService, MaterialSourceService>();
 builder.Services.AddScoped<IMaterialValueService, MaterialValueService>();
 builder.Services.AddScoped<IMaterialPropService, MaterialPropService>();
 builder.Services.AddScoped<IMaterialGroupService, MaterialGroupService>();
+builder.Services.AddScoped<ISourceService, SourceService>();
+builder.Services.AddScoped<IUnitService, UnitService>();
 builder.Services.AddScoped<FilterService>();
 
 var app = builder.Build();
@@ -65,22 +68,16 @@ app.MapMaterialSourceRoutes();
 app.MapMaterialValueRoutes();
 app.MapMaterialPropertyRoutes();
 app.MapMaterialGroupRoutes();
+app.MapSourceRoutes();
+app.MapUnitRoutes();
 app.MapFilterConfigRoutes();
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<FilterContext>();
-        await context.Database.MigrateAsync(); // Ensure the database is created and migrations are applied
-        app.Logger.LogInformation("Database migration completed successfully.");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "An error occurred during database migration.");
-        throw; // Re-throw the exception to stop the application startup
-    }
+
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    await DatabaseInitializer.InitializeFilterDatabase(scope.ServiceProvider, logger);
 }
 
 app.Run();
