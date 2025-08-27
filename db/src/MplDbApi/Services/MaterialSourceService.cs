@@ -23,7 +23,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
     }
     public async Task<List<MaterialSourceResponseDto>> GetAllMaterials(string role)
     {
-        const string cacheKey = "AllMaterialsCacheKey";
+        string cacheKey = role + "AllMaterialsCacheKey";
         if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
         {
             return cachedMaterials;
