@@ -3,8 +3,9 @@ using MplDbApi.Models;
 using MplDbApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MplDbApi.Models.Dtos;
+using MplDbApi.Services;
 
-public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValueService> logger) : IMaterialValueService
+public class MaterialValueService(BMplbaseContext _context, FilterService filterService, ILogger<MaterialValueService> logger) : IMaterialValueService
 {
     private class AveragesCalculated
     {
@@ -13,10 +14,17 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
         public List<(DateOnly Date, decimal Value)> QuarterlyAvgs { get; set; } = new();
         public List<(DateOnly Date, decimal Value)> YearlyAvgs { get; set; } = new();
     }
-    public async Task<MaterialValueResponseDto?> GetMaterialValueById(int id)
+    public async Task<MaterialValueResponseDto?> GetMaterialValueById(int id, string role)
     {
         try
         {
+            var filter = await filterService.GetFilterByRole(role);
+            if (filter.MaterialIds?.Contains(id) == true)
+            {
+                logger.LogWarning("Material with id {Id} is included in the filter for role {Role}", id, role);
+                return null;
+            }
+
             var materialvalue = await _context.MaterialValues
                        .Where(mv => mv.Id == id)
                        .Select(mv => new MaterialValueResponseDto(
@@ -39,10 +47,19 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
         }
 
     }
-    public async Task<List<MaterialDateMetrics>> GetMaterialMetricsByDateRange(MaterialDateMetricReq req)
+    public async Task<List<MaterialDateMetrics>> GetMaterialMetricsByDateRange(MaterialDateMetricReq req, string role)
     {
         try
         {
+            if (role != "local")
+            {
+                var filter = await filterService.GetFilterByRole(role);
+                if (filter.MaterialIds?.Contains(req.MaterialId) == true)
+                {
+                    logger.LogWarning("Material with id {MaterialId} is included in the filter for role {Role}", req.MaterialId, role);
+                    return [];
+                }
+            }
             List<DateOnly> months = GetDateRange(req.StartDate, req.EndDate);
             var valueGroups = await _context.MaterialValues
                 .Where(mv =>
@@ -58,7 +75,7 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                 var propsUsed = i.Where(p => p.ValueDecimal.HasValue || !string.IsNullOrEmpty(p.ValueStr))
                     .Select(x => x.PropertyId)
                     .ToList();
-                    
+
                 switch (req.Aggregates)
                 {
                     case null:
@@ -78,7 +95,7 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
                         }).Where(p => p > 0 || p < 0)); // Only add valid aggregates
                         break;
                 }
-                
+
                 return new MaterialDateMetrics(
                     Id: i.FirstOrDefault()?.Id ?? 0,
                     Date: i.Key.CreatedOn,
@@ -111,10 +128,16 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
             throw;
         }
     }
-    public async Task<List<DateGroupedMaterialValues>> GetOverviewTableData(List<MaterialDateMetricReq> reqs)
+    public async Task<List<DateGroupedMaterialValues>> GetOverviewTableData(List<MaterialDateMetricReq> reqs, string role)
     {
         try
         {
+            var filter = await filterService.GetFilterByRole(role);
+            if (reqs.Any(req => filter.MaterialIds?.Contains(req.MaterialId) == true))
+            {
+                logger.LogWarning("One or more materials in the request are included in the filter for role {Role}", role);
+                return [];
+            }
             var metrics = await GetMultipleMaterialDateMetrics(reqs);
             var groupedValues = GroupMultipleMaterialMetricsByDate(metrics);
             return groupedValues;
@@ -158,7 +181,7 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
             List<MaterialDateMetrics> metrics = [];
             foreach (var req in reqs)
             {
-                metrics.AddRange(await GetMaterialMetricsByDateRange(req));
+                metrics.AddRange(await GetMaterialMetricsByDateRange(req, "local"));
             }
             return metrics;
         }
@@ -203,7 +226,7 @@ public class MaterialValueService(BMplbaseContext _context, ILogger<MaterialValu
         null
     );
 
-        return await GetMaterialMetricsByDateRange(req);
+        return await GetMaterialMetricsByDateRange(req, "local");
     }
     private static List<MaterialDateMetrics> MergeAveragesIntoMetrics(List<MaterialDateMetrics> metrics, AveragesCalculated averages)
     {

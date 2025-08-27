@@ -3,10 +3,11 @@ using MplDbApi.Models;
 using MplDbApi.Interfaces;
 using MplDbApi.Utils;
 using Microsoft.EntityFrameworkCore;
+using MplDbApi.Services;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Caching.Memory;
 
-public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memoryCache) : IMaterialSourceService
+public class MaterialSourceService(BMplbaseContext _context, FilterService filterService, IMemoryCache memoryCache) : IMaterialSourceService
 {
     private readonly struct PropertyValueInfo
     {
@@ -20,13 +21,14 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
             ValueDecimal = valueDecimal;
         }
     }
-    public async Task<List<MaterialSourceResponseDto>> GetAllMaterials()
+    public async Task<List<MaterialSourceResponseDto>> GetAllMaterials(string role)
     {
         const string cacheKey = "AllMaterialsCacheKey";
         if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
         {
             return cachedMaterials;
         }
+        var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -38,7 +40,10 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
-            .Where(m => m.Unit.Id != 5) // Exclude mats with supply
+            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id)) // Exclude materials from filter
+            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId)) // Filter by groups
+            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId)) // Filter by sources
+            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId)) // Filter by units
             .Select(m => new // Project to find the latest date first
             {
                 MaterialSource = m,
@@ -48,9 +53,9 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
                     .Take(2)
                     .ToList(),
                 AvailableProps = _context.MaterialProperties
-                    .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
-                    .Select(mp => mp.PropertyId)
-                    .ToList() // Materialize AvailableProps list
+                .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
+                .Select(mp => mp.PropertyId)
+                .ToList() // Materialize AvailableProps list
             })
             .Select(result => new // Project to get values for that latest date
             {
@@ -119,7 +124,7 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
         return materialsList;
     }
 
-    public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId)
+    public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId, string role)
     {
         string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
         if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
@@ -127,6 +132,7 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
             return cachedMaterials;
         }
         // If not cached, proceed with the database query
+        var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -137,6 +143,10 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
+            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id)) // Exclude materials from filter
+            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId)) // Filter by groups
+            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId)) // Filter by sources
+            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId)) // Filter by units
             .Where(m => m.MaterialGroupId == groupId && m.Unit.Id != 5)
             .Select(m => new // Project to find the latest date first
             {
@@ -217,7 +227,7 @@ public class MaterialSourceService(BMplbaseContext _context, IMemoryCache memory
         //
     }
 
-    public async Task<MaterialSourceResponseDto?> GetMaterialById(int id)
+    public async Task<MaterialSourceResponseDto?> GetMaterialById(int id, string role)
     {
         string cacheKey = "MaterialByIdCacheKey_" + id;
         if (memoryCache.TryGetValue(cacheKey, out MaterialSourceResponseDto? cachedMaterial) && cachedMaterial != null)

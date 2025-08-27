@@ -29,5 +29,24 @@ namespace MplDbApi.Services
 
             }
         }
+        public async Task<List<IdValuePair>> GetMaterialPropertiesForDropdown()
+        {
+            try
+            {
+                var props = await context.Properties
+                    .Select(mp => new IdValuePair(
+                        mp.Id,
+                        mp.Name
+                    ))
+                    .AsNoTracking()
+                    .ToListAsync();
+                return props;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in GetMaterialPropertiesForDropdown");
+                throw;
+            }
+        }
     }
 }
