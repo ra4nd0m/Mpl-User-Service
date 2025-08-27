@@ -13,6 +13,19 @@
 	let materialList: Material[] = $state([]);
 	let loading = $state(true);
 	let error = $state('');
+	let searchQuery = $state('');
+
+	let filteredMaterials: Material[] = $derived(
+		searchQuery
+			? materialList.filter(
+					(material) =>
+						material.materialName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+						material.deliveryType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+						material.market.toLowerCase().includes(searchQuery.toLowerCase()) ||
+						material.id.toString().includes(searchQuery)
+				)
+			: materialList
+	);
 
 	const favoriteIds = $derived($favoritesStore.ids);
 
@@ -74,6 +87,17 @@
 		await loadMaterials(selectedGroupId);
 	}
 
+	function getChangeClass(changePercent: string | null): string {
+		if (!changePercent) return '';
+
+		// Remove any non-numeric characters except for the minus sign and decimal point
+		const value = parseFloat(changePercent.replace(/[^\d.-]/g, ''));
+
+		if (value > 0) return 'positive-change';
+		if (value < 0) return 'negative-change';
+		return '';
+	}
+
 	onMount(async () => {
 		await loadGroups();
 		await loadMaterials();
@@ -102,6 +126,19 @@
 			</button>
 		{/each}
 	</div>
+
+	<div class="search-container">
+		<input
+			type="text"
+			placeholder="Search materials..."
+			bind:value={searchQuery}
+			class="search-input"
+		/>
+		{#if searchQuery}
+			<button class="clear-search" onclick={() => (searchQuery = '')}> x </button>
+		{/if}
+	</div>
+
 	<div class="debug-favorites">
 		<p class="debug-title">Favorite Material IDs:</p>
 		<div class="debug-ids">
@@ -140,7 +177,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each materialList as material}
+				{#each filteredMaterials as material}
 					<tr>
 						<td class="favorite-cell">
 							<button
@@ -176,7 +213,7 @@
 								' ' +
 								material.market}</td
 						>
-						<td>{'Change Placeholder'}</td>
+						<td class={getChangeClass(material.changePercent)}>{material.changePercent}</td>
 						<td>{material.latestAvgValue}</td>
 						{#if material.latestMinValue === null}
 							<td>-</td>
@@ -192,7 +229,9 @@
 					</tr>
 				{:else}
 					<tr>
-						<td colspan="7" class="no-data">No materials found</td>
+						<td colspan="8" class="no-data">
+							{searchQuery? 'No materials found for the search query.' : 'No materials available.'}
+						</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -240,6 +279,38 @@
 	.group-buttons button.active:hover {
 		background-color: #0056b3;
 		border-color: #0056b3;
+	}
+
+	.search-container {
+		position: relative;
+		margin-bottom: 1rem;
+		width: 100%;
+		max-width: 500px;
+	}
+
+	.search-input {
+		width: 100%;
+		padding: 0.75rem;
+		padding-right: 2.5rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 1rem;
+	}
+
+	.clear-search {
+		position: absolute;
+		right: -35px;
+		top: 50%;
+		transform: translateY(-50%);
+		background: none;
+		border: none;
+		font-size: 1.5rem;
+		cursor: pointer;
+		color: #6c757d;
+	}
+
+	.clear-search:hover {
+		color: #343a40;
 	}
 	.materials-table {
 		width: 100%;
@@ -310,5 +381,15 @@
 		100% {
 			transform: rotate(360deg);
 		}
+	}
+
+	.positive-change {
+		color: #2ecc71;
+		font-weight: 500;
+	}
+
+	.negative-change {
+		color: #e74c3c;
+		font-weight: 500;
 	}
 </style>

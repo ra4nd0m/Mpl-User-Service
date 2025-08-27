@@ -300,6 +300,7 @@ export interface Material {
     market: string;
     unit: string;
     lastCreatedDate: string | null;
+    changePercent: string | null;
     latestAvgValue?: number | null;
     latestMinValue?: number | null;
     latestMaxValue?: number | null;

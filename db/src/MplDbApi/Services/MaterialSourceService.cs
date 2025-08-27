@@ -1,10 +1,13 @@
 using MplDbApi.Data;
 using MplDbApi.Models;
 using MplDbApi.Interfaces;
+using MplDbApi.Utils;
 using Microsoft.EntityFrameworkCore;
 using MplDbApi.Services;
+using System.Security.Cryptography;
+using Microsoft.Extensions.Caching.Memory;
 
-public class MaterialSourceService(BMplbaseContext _context, FilterService filterService) : IMaterialSourceService
+public class MaterialSourceService(BMplbaseContext _context, FilterService filterService, IMemoryCache memoryCache) : IMaterialSourceService
 {
     private readonly struct PropertyValueInfo
     {
@@ -20,6 +23,11 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
     }
     public async Task<List<MaterialSourceResponseDto>> GetAllMaterials(string role)
     {
+        const string cacheKey = "AllMaterialsCacheKey";
+        if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
+        {
+            return cachedMaterials;
+        }
         var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
@@ -40,8 +48,10 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
             {
                 MaterialSource = m,
                 LatestDate = _context.MaterialValues
-                .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
-                .Max(mv => (DateOnly?)mv.CreatedOn),
+                    .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
+                    .OrderByDescending(mv => mv.CreatedOn)
+                    .Take(2)
+                    .ToList(),
                 AvailableProps = _context.MaterialProperties
                 .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
                 .Select(mp => mp.PropertyId)
@@ -53,42 +63,75 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                 result.LatestDate,
                 result.AvailableProps,
                 LatestValues = result.LatestDate == null ?
-                emptyValueList :
-                _context.MaterialValues
-                .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                         mv.CreatedOn == result.LatestDate.Value &&
-                         latestValuePropertyIds.Contains(mv.PropertyId))
-                // Select into the named struct
-                .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
-                // Materialize the list of the struct
-                .ToList()
+                    emptyValueList :
+                    _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
+                                     mv.CreatedOn == result.LatestDate.Max(mv => mv.CreatedOn) &&
+                                     latestValuePropertyIds.Contains(mv.PropertyId))
+                        // Select into the named struct
+                        .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
+                        // Materialize the list of the struct
+                        .ToList(),
+                PreviousValues = result.LatestDate == null ?
+                    emptyValueList :
+                    _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
+                                    mv.CreatedOn == result.LatestDate.Min(mv => mv.CreatedOn) &&
+                                    latestValuePropertyIds.Contains(mv.PropertyId))
+                        .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
+                        .ToList()
             })
             .AsNoTracking()
             .ToListAsync(); // Execute the database query
 
+
         // Step 2: Perform the final projection in memory
-        var materialsList = intermediateResults.Select(finalResult => new MaterialSourceResponseDto(
-            finalResult.MaterialSource.Id,
-            finalResult.MaterialSource.Material.Name,
-            finalResult.MaterialSource.Source.Name,
-            finalResult.MaterialSource.DeliveryType.Name,
-            finalResult.MaterialSource.MaterialGroup.Name,
-            finalResult.MaterialSource.TargetMarket,
-            finalResult.MaterialSource.Unit.Name,
-            finalResult.LatestDate,
-            // These FirstOrDefault calls now operate on the in-memory list
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
-            finalResult.AvailableProps
-        )).ToList(); // Create the final list of DTOs
+        var materialsList = intermediateResults.Select(finalResult =>
+        {
+            var latestAvgValue = finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal;
+            var previousAvgValue = finalResult.PreviousValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal;
+
+            string changePercent = "";
+            if (latestAvgValue.HasValue && previousAvgValue.HasValue)
+            {
+                changePercent = ValueChangeFormatter.FormatValueChange(previousAvgValue.Value, latestAvgValue.Value);
+            }
+            DateOnly? latestDate = finalResult.LatestDate != null && finalResult.LatestDate.Count != 0
+                ? finalResult.LatestDate.Max(mv => mv.CreatedOn)
+                : null;
+
+            return new MaterialSourceResponseDto(
+                   finalResult.MaterialSource.Id,
+                   finalResult.MaterialSource.Material.Name,
+                   finalResult.MaterialSource.Source.Name,
+                   finalResult.MaterialSource.DeliveryType.Name,
+                   finalResult.MaterialSource.MaterialGroup.Name,
+                   finalResult.MaterialSource.TargetMarket,
+                   finalResult.MaterialSource.Unit.Name,
+                   latestDate, // Get the latest date
+                   changePercent,
+                   // These FirstOrDefault calls now operate on the in-memory list
+                   finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
+                   finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
+                   finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
+                   finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
+                   finalResult.AvailableProps
+               );
+        }).ToList(); // Create the final list of DTOs
+
+        memoryCache.Set(cacheKey, materialsList, TimeSpan.FromHours(2)); // Cache the result for 10 minutes
 
         return materialsList;
     }
 
     public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId, string role)
     {
+        string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
+        if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
+        {
+            return cachedMaterials;
+        }
+        // If not cached, proceed with the database query
         var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
@@ -110,7 +153,9 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                 MaterialSource = m,
                 LatestDate = _context.MaterialValues
                     .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
-                    .Max(mv => (DateOnly?)mv.CreatedOn),
+                    .OrderByDescending(mv => mv.CreatedOn)
+                    .Take(2)
+                    .ToList(),
                 AvailableProps = _context.MaterialProperties
                     .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
                     .Select(mp => mp.PropertyId)
@@ -125,18 +170,41 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                     emptyValueList :
                     _context.MaterialValues
                         .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                                     mv.CreatedOn == result.LatestDate.Value &&
+                                     mv.CreatedOn == result.LatestDate.Max(res => res.CreatedOn) &&
                                      latestValuePropertyIds.Contains(mv.PropertyId))
                         // Select into the named struct
                         .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
                         // Materialize the list of the struct
+                        .ToList(),
+                PreviousValues = result.LatestDate == null ?
+                    emptyValueList :
+                    _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
+                                    mv.CreatedOn == result.LatestDate.Min(mv => mv.CreatedOn) &&
+                                    latestValuePropertyIds.Contains(mv.PropertyId))
+                        .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
                         .ToList()
+
             })
             .AsNoTracking()
             .ToListAsync(); // Execute the database query
 
         // Step 2: Perform the final projection in memory
-        var materialsList = intermediateResults.Select(finalResult => new MaterialSourceResponseDto(
+        var materialsList = intermediateResults.Select(finalResult =>
+        {
+            var latestAvgValue = finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal;
+            var previousAvgValue = finalResult.PreviousValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal;
+
+            string changePercent = "";
+            if (latestAvgValue.HasValue && previousAvgValue.HasValue)
+            {
+                changePercent = ValueChangeFormatter.FormatValueChange(previousAvgValue.Value, latestAvgValue.Value);
+            }
+            DateOnly? latestDate = finalResult.LatestDate != null && finalResult.LatestDate.Count != 0
+                ? finalResult.LatestDate.Max(mv => mv.CreatedOn)
+                : null;
+
+            return new MaterialSourceResponseDto(
             finalResult.MaterialSource.Id,
             finalResult.MaterialSource.Material.Name,
             finalResult.MaterialSource.Source.Name,
@@ -144,20 +212,29 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
             finalResult.MaterialSource.MaterialGroup.Name,
             finalResult.MaterialSource.TargetMarket,
             finalResult.MaterialSource.Unit.Name,
-            finalResult.LatestDate,
+            latestDate,
+            changePercent,
             finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
             finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
             finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
             finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
             finalResult.AvailableProps
-        )).ToList(); // Create the final list of DTOs
+            );
+        }).ToList(); // Create the final list of DTOs
 
+        memoryCache.Set(cacheKey, materialsList, TimeSpan.FromHours(2)); // Cache the result for 2 hours
         return materialsList;
         //
     }
 
     public async Task<MaterialSourceResponseDto?> GetMaterialById(int id, string role)
     {
+        string cacheKey = "MaterialByIdCacheKey_" + id;
+        if (memoryCache.TryGetValue(cacheKey, out MaterialSourceResponseDto? cachedMaterial) && cachedMaterial != null)
+        {
+            return cachedMaterial;
+        }
+        // If not cached, proceed with the database query
         int[] propertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
@@ -200,7 +277,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
         }
 
         // Step 3: Create the DTO with in-memory operations
-        return new MaterialSourceResponseDto(
+        var response = new MaterialSourceResponseDto(
             materialQuery.MaterialSource.Id,
             materialQuery.MaterialSource.Material.Name,
             materialQuery.MaterialSource.Source.Name,
@@ -209,11 +286,16 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
             materialQuery.MaterialSource.TargetMarket,
             materialQuery.MaterialSource.Unit.Name,
             materialQuery.LatestDate,
+            "",
             latestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
             latestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
             latestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
             latestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
             materialQuery.AvailableProps
         );
+
+        memoryCache.Set(cacheKey, response, TimeSpan.FromHours(2)); // Cache the result for 2 hours
+
+        return response;
     }
 }

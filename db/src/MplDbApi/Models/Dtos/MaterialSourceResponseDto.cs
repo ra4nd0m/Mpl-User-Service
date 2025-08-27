@@ -9,6 +9,7 @@ public record MaterialSourceResponseDto(
     string Market,
     string Unit,
     DateOnly? LastCreatedDate,
+    string? ChangePercent,
     decimal? LatestAvgValue,
     decimal? LatestMinValue,
     decimal? LatestMaxValue,

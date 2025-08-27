@@ -22,24 +22,52 @@
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 	let aggregatesChosen = $state<string[]>([]);
 
+	const defaultDateRange = (() => {
+		const today = new Date();
+		return {
+			endDate: today.toISOString().split('T')[0],
+			startDate: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+		};
+	})();
+
 	const propertyIds = [1, 2, 3];
 
 	// Get materialId as number for lookup
 	const normalizedMaterialId = typeof materialId === 'object' ? materialId.materialId : materialId;
 
 	// Load date settings from store or use defaults
-	const savedDateRange = widgetSettingsStore.getPriceTableDateRange(normalizedMaterialId);
-	let endDate = $state(savedDateRange.endDate);
-	let startDate = $state(savedDateRange.startDate);
+	let endDate = $state(defaultDateRange.endDate);
+	let startDate = $state(defaultDateRange.startDate);
 
-	let isExpanded = $state(widgetSettingsStore.getPriceTableExpanded(normalizedMaterialId));
+	let isExpanded = $state(false);
+
+	async function loadSettings() {
+		try {
+			await widgetSettingsStore.ready();
+			const savedDateRange = widgetSettingsStore.getPriceTableDateRange(normalizedMaterialId);
+			startDate = savedDateRange.startDate || defaultDateRange.startDate;
+			endDate = savedDateRange.endDate || defaultDateRange.endDate;
+
+			isExpanded = widgetSettingsStore.getPriceTableExpanded(normalizedMaterialId);
+		} catch (error) {
+			console.error('Failed to load settings:', error);
+			// Fallback to defaults if settings are not available
+			startDate = defaultDateRange.startDate;
+			endDate = defaultDateRange.endDate;
+			isExpanded = false;
+		}
+	}
 
 	// Save current date settings to store
 	function saveDateSettings() {
-		widgetSettingsStore.setPriceTableDateRange(normalizedMaterialId, {
-			startDate,
-			endDate
-		});
+		try {
+			widgetSettingsStore.setPriceTableDateRange(normalizedMaterialId, {
+				startDate,
+				endDate
+			});
+		} catch (error) {
+			console.error('Failed to save date settings:', error);
+		}
 	}
 
 	function toggleExpand() {
@@ -194,7 +222,10 @@
 			return;
 		}
 	}
-	onMount(fetchData);
+	onMount(async () => {
+		await loadSettings();
+		fetchData();
+	});
 </script>
 
 <div class="price-table-container">
