@@ -24,6 +24,7 @@
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 	let aggregatesChosen = $state<string[]>([]);
 	let filteredData = $state<FilteredData[]>([]);
+	let filteredDataOrdered = $state<FilteredData[]>([]);
 
 	type FilteredData = {
 		date: string;
@@ -118,6 +119,11 @@
 	function sortByDate(direction: 'asc' | 'desc') {
 		if (!priceData) return;
 
+		if(aggregatesChosen.length > 0){
+			filteredDataOrdered = [...filteredDataOrdered].reverse();
+			sortDirection = direction;
+		}
+
 		const sortedData = [...priceData];
 
 		sortedData.sort((a, b) => {
@@ -192,6 +198,7 @@
 		aggregatesChosen.push(aggregate);
 		await fetchData();
 		filteredData = formatData(aggregate);
+		filteredDataOrdered = filteredData;
 	}
 
 	function formatData(aggregate: string) {
@@ -541,7 +548,7 @@
 					</thead>
 					<tbody>
 						{#if aggregatesChosen.length > 0}
-							{#each filteredData as item}
+							{#each filteredDataOrdered as item}
 								<tr>
 									<td>{item.date}</td>
 									<td>{item.value}</td>
