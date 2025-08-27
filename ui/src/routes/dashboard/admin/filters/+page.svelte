@@ -302,7 +302,6 @@
                     <button class="edit-btn" onclick={() => startEdit(filter)} disabled={updating}>
                         {updating ? 'Updating...' : 'Edit'}
                     </button>
-                    <button class="delete-btn" disabled={updating}>Delete</button>
                 </div>
             </div>
         {/each}
@@ -641,8 +640,7 @@
         gap: 0.5rem;
     }
 
-    .edit-btn,
-    .delete-btn {
+    .edit-btn {
         padding: 0.5rem 1rem;
         border: none;
         border-radius: 4px;
@@ -663,15 +661,6 @@
 
     .edit-btn:hover:not(:disabled) {
         background-color: #0056b3;
-    }
-
-    .delete-btn {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .delete-btn:hover:not(:disabled) {
-        background-color: #c82333;
     }
 
     /* Modal Styles */
