@@ -10,7 +10,7 @@
         type Material
     } from '$lib/api/userClient';
     import { onMount } from 'svelte';
-
+    
     let filters = $state<DataFilter[]>([]);
     let materials = $state<Material[]>([]);
     let materialGroups = $state<{ id: number; name: string }[]>([]);
@@ -330,10 +330,11 @@
                             </span>
                         {/each}
                     </div>
-                    <select onchange={(e) => {
-                        const id = parseInt(e.target.value);
+                    <select onchange={(e: Event) => {
+                        const target = e.target as HTMLSelectElement;
+                        const id = parseInt(target.value);
                         if (id) addToFilter('groups', id);
-                        e.target.value = '';
+                        target.value = '';
                     }}>
                         <option value="">Add group...</option>
                         {#each materialGroups as group}
@@ -355,10 +356,11 @@
                             </span>
                         {/each}
                     </div>
-                    <select onchange={(e) => {
-                        const id = parseInt(e.target.value);
+                    <select onchange={(e: Event) => {
+                        const target = e.target as HTMLSelectElement;
+                        const id = parseInt(target.value);
                         if (id) addToFilter('sources', id);
-                        e.target.value = '';
+                        target.value = '';
                     }}>
                         <option value="">Add source...</option>
                         {#each sources as source}
@@ -380,10 +382,11 @@
                             </span>
                         {/each}
                     </div>
-                    <select onchange={(e) => {
-                        const id = parseInt(e.target.value);
+                    <select onchange={(e:Event) => {
+                        const target = e.target as HTMLSelectElement;
+                        const id = parseInt(target.value);
                         if (id) addToFilter('units', id);
-                        e.target.value = '';
+                        target.value = '';
                     }}>
                         <option value="">Add unit...</option>
                         {#each units as unit}
@@ -406,10 +409,11 @@
                             </span>
                         {/each}
                     </div>
-                    <select onchange={(e) => {
-                        const id = parseInt(e.target.value);
+                    <select onchange={(e:Event) => {
+                        const target = e.target as HTMLSelectElement;
+                        const id = parseInt(target.value);
                         if (id) addToFilter('materialIds', id);
-                        e.target.value = '';
+                        target.value = '';
                     }}>
                         <option value="">Add material...</option>
                         {#each materials as material}
@@ -431,10 +435,11 @@
                             </span>
                         {/each}
                     </div>
-                    <select onchange={(e) => {
-                        const id = parseInt(e.target.value);
+                    <select onchange={(e:Event) => {
+                        const target = e.target as HTMLSelectElement;
+                        const id = parseInt(target.value);
                         if (id) addToFilter('properties', id);
-                        e.target.value = '';
+                        target.value = '';
                     }}>
                         <option value="">Add property...</option>
                         {#each properties as property}
@@ -448,7 +453,7 @@
 
             <div class="modal-footer">
                 <button class="cancel-btn" onclick={cancelEdit} disabled={updating}>Cancel</button>
-                <button class="save-btn" onclick={() => updateFilter(editingFilter)} disabled={updating}>
+                <button class="save-btn" onclick={() => editingFilter && updateFilter(editingFilter)} disabled={updating}>
                     {updating ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
