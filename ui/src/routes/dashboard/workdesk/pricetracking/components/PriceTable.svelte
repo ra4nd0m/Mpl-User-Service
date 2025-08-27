@@ -4,11 +4,13 @@
 		getMaterialInfo,
 		getMaterialSpreadsheet
 	} from '$lib/api/userClient';
+	import { getWeekRange, getMonthRange, getQuarterRange, getYearRange } from '$lib/utils/dateUtil';
 	import type {
 		MaterialDateMetricsResp,
 		Material,
 		SpreadsheetReq,
-		SpreadsheetReqData
+		SpreadsheetReqData,
+		SpreadsheetReqAvgData
 	} from '$lib/api/userClient';
 	import { onMount } from 'svelte';
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
@@ -21,6 +23,13 @@
 	let materialInfo = $state<Material | null>(null);
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 	let aggregatesChosen = $state<string[]>([]);
+	let filteredData = $state<FilteredData[]>([]);
+	let filteredDataOrdered = $state<FilteredData[]>([]);
+
+	type FilteredData = {
+		date: string;
+		value: string | null;
+	};
 
 	const defaultDateRange = (() => {
 		const today = new Date();
@@ -110,6 +119,11 @@
 	function sortByDate(direction: 'asc' | 'desc') {
 		if (!priceData) return;
 
+		if(aggregatesChosen.length > 0){
+			filteredDataOrdered = [...filteredDataOrdered].reverse();
+			sortDirection = direction;
+		}
+
 		const sortedData = [...priceData];
 
 		sortedData.sort((a, b) => {
@@ -179,42 +193,67 @@
 		fetchData();
 	}
 
-	function pushAggregates(aggregate: string) {
-		if (aggregatesChosen.includes(aggregate)) {
-			aggregatesChosen = aggregatesChosen.filter((a) => a !== aggregate);
-		} else {
-			aggregatesChosen.push(aggregate);
+	async function pushAggregates(aggregate: string) {
+		aggregatesChosen = [];
+		aggregatesChosen.push(aggregate);
+		await fetchData();
+		filteredData = formatData(aggregate);
+		filteredDataOrdered = filteredData;
+	}
+
+	function formatData(aggregate: string) {
+		if (!priceData) return [];
+		switch (aggregate) {
+			case 'weekly':
+				return priceData
+					.filter((item) => item.weeklyAvg !== '')
+					.map((item) => ({
+						date: getWeekRange(item.date),
+						value: item.weeklyAvg
+					}));
+			case 'monthly':
+				return priceData
+					.filter((item) => item.monthlyAvg !== '')
+					.map((item) => ({
+						date: getMonthRange(item.date),
+						value: item.monthlyAvg
+					}));
+			case 'quarterly':
+				return priceData
+					.filter((item) => item.quarterlyAvg !== '')
+					.map((item) => ({
+						date: getQuarterRange(item.date),
+						value: item.quarterlyAvg
+					}));
+			case 'yearly':
+				return priceData
+					.filter((item) => item.yearlyAvg !== '')
+					.map((item) => ({
+						date: getYearRange(item.date),
+						value: item.yearlyAvg
+					}));
+			default:
+				return [];
 		}
 	}
 
 	async function getSpreadsheet() {
-		const spreadsheetReqDataArr: SpreadsheetReqData[] =
-			priceData?.map((item) => {
-				return {
-					date: item.date,
-					valueAvg: item.valueAvg,
-					valueMin: item.valueMin,
-					valueMax: item.valueMax,
-					predWeekly: item.predWeekly,
-					predMonthly: item.predMonthly,
-					supply: item.supply,
-					propsUsed: item.propsUsed,
-					weeklyAvg: item.weeklyAvg,
-					monthlyAvg: item.monthlyAvg,
-					quarterlyAvg: item.quarterlyAvg,
-					yearlyAvg: item.yearlyAvg
-				};
-			}) ?? [];
+		const spreadsheetReqDataArr = fillSpreadsheetReqData();
 		if (!spreadsheetReqDataArr) {
 			alert('No data available for export');
 			return;
+		}
+		let type: 'full' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' = 'full';
+		if (aggregatesChosen.length > 0) {
+			type = aggregatesChosen[0] as 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 		}
 		const spreadsheetReq: SpreadsheetReq = {
 			materialName: materialInfo?.materialName || '',
 			market: materialInfo?.market || '',
 			unit: materialInfo?.unit || '',
 			deliveryType: materialInfo?.deliveryType || '',
-			data: spreadsheetReqDataArr
+			data: spreadsheetReqDataArr,
+			type: type
 		};
 		let res = await getMaterialSpreadsheet(spreadsheetReq);
 		if (res === null) {
@@ -222,6 +261,32 @@
 			return;
 		}
 	}
+
+	function fillSpreadsheetReqData(): SpreadsheetReqAvgData[] | SpreadsheetReqData[] {
+		if (aggregatesChosen.length > 0) {
+			return filteredData as SpreadsheetReqAvgData[];
+		} else {
+			const spreadsheetReqDataArr: SpreadsheetReqData[] =
+				priceData?.map((item) => {
+					return {
+						date: item.date,
+						valueAvg: item.valueAvg,
+						valueMin: item.valueMin,
+						valueMax: item.valueMax,
+						predWeekly: item.predWeekly,
+						predMonthly: item.predMonthly,
+						supply: item.supply,
+						propsUsed: item.propsUsed,
+						weeklyAvg: item.weeklyAvg,
+						monthlyAvg: item.monthlyAvg,
+						quarterlyAvg: item.quarterlyAvg,
+						yearlyAvg: item.yearlyAvg
+					};
+				}) ?? [];
+			return spreadsheetReqDataArr;
+		}
+	}
+
 	onMount(async () => {
 		await loadSettings();
 		fetchData();
@@ -281,57 +346,74 @@
 					</svg>
 					<span>Export</span>
 				</button>
-				<ChartModal {priceData} {materialInfo} />
+				<ChartModal {priceData} {materialInfo} {filteredData} {aggregatesChosen}/>
 			</div>
 		</div>
 
 		{#if isExpanded}
 			<div class="aggregates-controls">
 				<span class="aggregates-label">Show averages:</span>
-				<div class="checkbox-group">
-					<label class="checkbox-label">
+				<div class="radio-group">
+					<label class="radio-label">
 						<input
-							type="checkbox"
+							type="radio"
+							name="aggregate"
+							value="weekly"
 							checked={aggregatesChosen.includes('weekly')}
-							onclick={() => {
-								pushAggregates('weekly');
-								fetchData();
+							onchange={async () => {
+								await pushAggregates('weekly');
 							}}
 						/>
 						Weekly
 					</label>
-					<label class="checkbox-label">
+					<label class="radio-label">
 						<input
-							type="checkbox"
+							type="radio"
+							name="aggregate"
+							value="monthly"
 							checked={aggregatesChosen.includes('monthly')}
-							onclick={() => {
-								pushAggregates('monthly');
-								fetchData();
+							onchange={async () => {
+								await pushAggregates('monthly');
 							}}
 						/>
 						Monthly
 					</label>
-					<label class="checkbox-label">
+					<label class="radio-label">
 						<input
-							type="checkbox"
+							type="radio"
+							name="aggregate"
+							value="quarterly"
 							checked={aggregatesChosen.includes('quarterly')}
-							onclick={() => {
-								pushAggregates('quarterly');
-								fetchData();
+							onchange={async () => {
+								await pushAggregates('quarterly');
 							}}
 						/>
 						Quarterly
 					</label>
-					<label class="checkbox-label">
+					<label class="radio-label">
 						<input
-							type="checkbox"
+							type="radio"
+							name="aggregate"
+							value="yearly"
 							checked={aggregatesChosen.includes('yearly')}
-							onclick={() => {
-								pushAggregates('yearly');
-								fetchData();
+							onchange={async () => {
+								await pushAggregates('yearly');
 							}}
 						/>
 						Yearly
+					</label>
+					<label class="radio-label">
+						<input
+							type="radio"
+							name="aggregate"
+							value="none"
+							checked={aggregatesChosen.length === 0}
+							onchange={async () => {
+								aggregatesChosen = [];
+								await fetchData();
+							}}
+						/>
+						None
 					</label>
 				</div>
 			</div>
@@ -417,74 +499,98 @@
 									</span>
 								{/if}</th
 							>
-							{#if priceData[0].propsUsed.some((s) => s === 1)}
-								<th>Average Price</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === 2)}
-								<th>Min Price</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === 3)}
-								<th>Max Price</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === 4)}
-								<th>Weekly Forecast</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === 5)}
-								<th>Monthly Forecast</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === 6)}
-								<th>Supply</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === -1)}
-								<th>Weekly Average</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === -2)}
-								<th>Monthly Average</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === -3)}
-								<th>Quarterly Average</th>
-							{/if}
-							{#if priceData[0].propsUsed.some((s) => s === -4)}
-								<th>Yearly Average</th>
+							{#if aggregatesChosen.length === 0}
+								{#if priceData[0].propsUsed.some((s) => s === 1)}
+									<th>Average Price</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === 2)}
+									<th>Min Price</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === 3)}
+									<th>Max Price</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === 4)}
+									<th>Weekly Forecast</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === 5)}
+									<th>Monthly Forecast</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === 6)}
+									<th>Supply</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === -1)}
+									<th>Weekly Average</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === -2)}
+									<th>Monthly Average</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === -3)}
+									<th>Quarterly Average</th>
+								{/if}
+								{#if priceData[0].propsUsed.some((s) => s === -4)}
+									<th>Yearly Average</th>
+								{/if}
+							{:else}
+								{#if aggregatesChosen.includes('weekly')}
+									<th>Weekly Average</th>
+								{/if}
+								{#if aggregatesChosen.includes('monthly')}
+									<th>Monthly Average</th>
+								{/if}
+								{#if aggregatesChosen.includes('quarterly')}
+									<th>Quarterly Average</th>
+								{/if}
+								{#if aggregatesChosen.includes('yearly')}
+									<th>Yearly Average</th>
+								{/if}
 							{/if}
 						</tr>
 					</thead>
 					<tbody>
-						{#each priceData as item}
-							<tr>
-								<td>{formatDate(item.date)}</td>
-								{#if item.propsUsed.some((s) => s === 1)}
-									<td>{formatPrice(item.valueAvg)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === 2)}
-									<td>{formatPrice(item.valueMin)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === 3)}
-									<td>{formatPrice(item.valueMax)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === 4)}
-									<td>{formatPrice(item.predWeekly)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === 5)}
-									<td>{formatPrice(item.predMonthly)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === 6)}
-									<td>{formatPrice(item.supply)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === -1)}
-									<td>{formatPrice(item.weeklyAvg)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === -2)}
-									<td>{formatPrice(item.monthlyAvg)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === -3)}
-									<td>{formatPrice(item.quarterlyAvg)}</td>
-								{/if}
-								{#if item.propsUsed.some((s) => s === -4)}
-									<td>{formatPrice(item.yearlyAvg)}</td>
-								{/if}
-							</tr>
-						{/each}
+						{#if aggregatesChosen.length > 0}
+							{#each filteredDataOrdered as item}
+								<tr>
+									<td>{item.date}</td>
+									<td>{item.value}</td>
+								</tr>
+							{/each}
+						{:else}
+							{#each priceData as item}
+								<tr>
+									<td>{formatDate(item.date)}</td>
+									{#if item.propsUsed.some((s) => s === 1)}
+										<td>{formatPrice(item.valueAvg)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === 2)}
+										<td>{formatPrice(item.valueMin)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === 3)}
+										<td>{formatPrice(item.valueMax)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === 4)}
+										<td>{formatPrice(item.predWeekly)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === 5)}
+										<td>{formatPrice(item.predMonthly)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === 6)}
+										<td>{formatPrice(item.supply)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === -1)}
+										<td>{formatPrice(item.weeklyAvg)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === -2)}
+										<td>{formatPrice(item.monthlyAvg)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === -3)}
+										<td>{formatPrice(item.quarterlyAvg)}</td>
+									{/if}
+									{#if item.propsUsed.some((s) => s === -4)}
+										<td>{formatPrice(item.yearlyAvg)}</td>
+									{/if}
+								</tr>
+							{/each}
+						{/if}
 					</tbody>
 				</table>
 			{:else}
@@ -803,13 +909,28 @@
 		margin-bottom: 0.25rem;
 	}
 
-	.checkbox-group {
+	.aggregates-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		margin-top: 0.5rem;
+		padding-top: 0.5rem;
+		border-top: 1px solid #e9ecef;
+	}
+
+	.aggregates-label {
+		font-size: 0.875rem;
+		color: #495057;
+		margin-bottom: 0.25rem;
+	}
+
+	.radio-group {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.75rem;
 	}
 
-	.checkbox-label {
+	.radio-label {
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
@@ -818,16 +939,16 @@
 		cursor: pointer;
 	}
 
-	.checkbox-label input {
+	.radio-label input {
 		cursor: pointer;
 	}
 
-	.checkbox-label:hover {
+	.radio-label:hover {
 		color: #228be6;
 	}
 
 	@media (max-width: 768px) {
-		.checkbox-group {
+		.radio-group {
 			gap: 0.5rem;
 		}
 	}

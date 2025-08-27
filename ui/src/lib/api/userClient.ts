@@ -351,7 +351,8 @@ export interface SpreadsheetReq {
     unit: string;
     deliveryType: string;
     market: string;
-    data: SpreadsheetReqData[];
+    data: SpreadsheetReqData[] | SpreadsheetReqAvgData[];
+    type: 'full' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 }
 
 export interface SpreadsheetReqData {
@@ -372,4 +373,9 @@ export interface SpreadsheetReqData {
 export interface IdNamePair {
     id: number;
     name: string;
+}
+
+export interface SpreadsheetReqAvgData {
+    date: string;
+    value: string | null;
 }
