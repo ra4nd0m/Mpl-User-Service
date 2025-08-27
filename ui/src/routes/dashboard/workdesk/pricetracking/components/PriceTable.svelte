@@ -339,7 +339,7 @@
 					</svg>
 					<span>Export</span>
 				</button>
-				<ChartModal {priceData} {materialInfo} />
+				<ChartModal {priceData} {materialInfo} {filteredData} {aggregatesChosen}/>
 			</div>
 		</div>
 
