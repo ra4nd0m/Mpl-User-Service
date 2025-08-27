@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using MplDbApi.Data;
 using MplDbApi.Models.Dtos;
 using MplDbApi.Models.Filters;
 
 namespace MplDbApi.Services
 {
-    public class FilterService(FilterContext context, ILogger<FilterService> logger)
+    public class FilterService(FilterContext context, ILogger<FilterService> logger, IMemoryCache memoryCache)
     {
         public async Task ModifyFilter(FilterCreateReqDto input)
         {
@@ -43,6 +44,12 @@ namespace MplDbApi.Services
                     context.Filters.Add(filter);
                 }
                 await context.SaveChangesAsync();
+
+                if (memoryCache is MemoryCache mc)
+                {
+                    mc.Clear();
+                }
+
             }
             catch (Exception ex)
             {
