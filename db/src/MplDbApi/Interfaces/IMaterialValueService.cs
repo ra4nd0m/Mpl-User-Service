@@ -5,7 +5,7 @@ namespace MplDbApi.Interfaces;
 
 public interface IMaterialValueService
 {
-    Task<MaterialValueResponseDto?> GetMaterialValueById(int id);
-    Task<List<MaterialDateMetrics>> GetMaterialMetricsByDateRange(MaterialDateMetricReq req);
-    Task<List<DateGroupedMaterialValues>> GetOverviewTableData(List<MaterialDateMetricReq> reqs);
+    Task<MaterialValueResponseDto?> GetMaterialValueById(int id, string role);
+    Task<List<MaterialDateMetrics>> GetMaterialMetricsByDateRange(MaterialDateMetricReq req, string role);
+    Task<List<DateGroupedMaterialValues>> GetOverviewTableData(List<MaterialDateMetricReq> reqs, string role);
 }

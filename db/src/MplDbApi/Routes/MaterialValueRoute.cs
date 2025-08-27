@@ -10,11 +10,15 @@ namespace MplDbApi.Routes
             var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("MaterialValueRoutes");
 
-            app.MapGet("/materialvalues/{id:int}", async (IMaterialValueService materialValue, int id) =>
+            app.MapGet("/materialvalues/{id:int}", async (string role, IMaterialValueService materialValue, int id) =>
             {
                 try
                 {
-                    var materialValueItem = await materialValue.GetMaterialValueById(id);
+                    if(string.IsNullOrEmpty(role))
+                    {
+                        return Results.BadRequest("Role must be provided.");
+                    }
+                    var materialValueItem = await materialValue.GetMaterialValueById(id, role);
                     return materialValueItem is not null
                         ? Results.Ok(materialValueItem)
                         : Results.NotFound($"Material with id {id} not found.");
@@ -25,11 +29,19 @@ namespace MplDbApi.Routes
                     return Results.Problem($"An error occurred while retrieving material value with ID {id}.");
                 }
             });
-            app.MapPost("/materialvalues/overview", async (IMaterialValueService service, List<MaterialDateMetricReq> req) =>
+            app.MapPost("/materialvalues/overview", async (IMaterialValueService service, RoleEnhancedReqDto<List<MaterialDateMetricReq>> req) =>
             {
                 try
                 {
-                    var overviewData = await service.GetOverviewTableData(req);
+                    if (req.Data == null || req.Data.Count == 0)
+                    {
+                        return Results.BadRequest("Request data cannot be null or empty.");
+                    }
+                    if (string.IsNullOrEmpty(req.Role))
+                    {
+                        return Results.BadRequest("Role must be provided.");
+                    }
+                    var overviewData = await service.GetOverviewTableData(req.Data, req.Role);
                     return Results.Ok(overviewData);
                 }
                 catch (Exception ex)
@@ -38,11 +50,19 @@ namespace MplDbApi.Routes
                     return Results.Problem("An error occurred while retrieving overview data");
                 }
             });
-            app.MapPost("/materialvalues/daterange", async (IMaterialValueService service, MaterialDateMetricReq req) =>
+            app.MapPost("/materialvalues/daterange", async (IMaterialValueService service, RoleEnhancedReqDto<MaterialDateMetricReq> req) =>
             {
                 try
                 {
-                    var valueRange = await service.GetMaterialMetricsByDateRange(req);
+                    if (req.Data == null)
+                    {
+                        return Results.BadRequest("Request data cannot be null.");
+                    }
+                    if (string.IsNullOrEmpty(req.Role))
+                    {
+                        return Results.BadRequest("Role must be provided.");
+                    }
+                    var valueRange = await service.GetMaterialMetricsByDateRange(req.Data, req.Role);
                     return Results.Ok(valueRange);
                 }
                 catch (Exception ex)

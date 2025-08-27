@@ -5,18 +5,13 @@ using MplDbApi.Models.Dtos;
 
 namespace MplDbApi.Services;
 
-public class MaterialGroupService : IMaterialGroupService
+public class MaterialGroupService(BMplbaseContext context, FilterService filterService) : IMaterialGroupService
 {
-    private readonly BMplbaseContext _context;
-
-    public MaterialGroupService(BMplbaseContext context)
+    public async Task<IEnumerable<MaterialGroupDto>> GetMaterialGroupAsync(string? role)
     {
-        _context = context;
-    }
-
-    public async Task<IEnumerable<MaterialGroupDto>> GetMaterialGroupAsync()
-    {
-        return await _context.MaterialGroups
+        var filter = await filterService.GetFilterByRole(role);
+        return await context.MaterialGroups
+            .Where(mg => filter.Groups == null || !filter.Groups.Contains(mg.Id))
             .Select(dt => new MaterialGroupDto(dt.Id, dt.Name))
             .ToListAsync();
     }

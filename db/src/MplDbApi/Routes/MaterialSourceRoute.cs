@@ -11,11 +11,11 @@ namespace MplDbApi.Routes
         {
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-            app.MapGet("/materials", async (IMaterialSourceService materialService) =>
+            app.MapGet("/materials", async (string role, IMaterialSourceService materialService) =>
             {
                 try
                 {
-                    var materials = await materialService.GetAllMaterials();
+                    var materials = await materialService.GetAllMaterials(role);
                     return Results.Ok(materials);
                 }
                 catch (Exception ex)
@@ -25,11 +25,11 @@ namespace MplDbApi.Routes
                 }
             });
 
-            app.MapGet("/materials/{id:int}", async (int id, IMaterialSourceService materialService) =>
+            app.MapGet("/materials/{id:int}", async (int id, string role, IMaterialSourceService materialService) =>
             {
                 try
                 {
-                    var material = await materialService.GetMaterialById(id);
+                    var material = await materialService.GetMaterialById(id, role);
                     return Results.Ok(material);
                 }
                 catch (KeyNotFoundException ex)
@@ -44,11 +44,11 @@ namespace MplDbApi.Routes
                 }
             });
 
-            app.MapGet("/materials/bygroup/{groupId:int}", async (int groupId, IMaterialSourceService service) =>
+            app.MapGet("/materials/bygroup/{groupId:int}", async (int groupId, string role, IMaterialSourceService service) =>
             {
                 try
                 {
-                    var materials = await service.GetMaterialsByGroup(groupId);
+                    var materials = await service.GetMaterialsByGroup(groupId, role);
                     return Results.Ok(materials);
                 }
                 catch (KeyNotFoundException ex)

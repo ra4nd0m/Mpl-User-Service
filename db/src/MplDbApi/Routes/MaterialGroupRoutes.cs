@@ -10,11 +10,11 @@ public static class MaterialGroupRoutes
     {
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-        app.MapGet("/materialgroups", async (IMaterialGroupService service) =>
+        app.MapGet("/materialgroups", async(string? role, IMaterialGroupService service) =>
         {
             try
             {
-                var groups = await service.GetMaterialGroupAsync();
+                var groups = await service.GetMaterialGroupAsync(role);
                 return Results.Ok(groups);
             }
             catch (Exception ex)

@@ -14,6 +14,10 @@
 		goto('/legacy/index.html#/login');
 	}
 
+	function goToFilters() {
+		goto('/dashboard/admin/filters');
+	}
+
 	function getSubscriptionTypeName(type: SubscriptionType | undefined): string {
 		if (type === undefined) return 'N/A';
 
@@ -93,6 +97,22 @@
 			<h2>User Management</h2>
 		</div>
 		<div class="header-right">
+			<button class="filters-button" onclick={goToFilters}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+				</svg>
+				Filters
+			</button>
 			<button class="legacy-button" onclick={goToLegacy}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -422,5 +442,25 @@
 
 	.legacy-button:hover {
 		background-color: #2980b9;
+	}
+	.filters-button {
+		display: flex;
+		align-items: center;
+		background-color: #9b59b6;
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.filters-button svg {
+		margin-right: 8px;
+	}
+
+	.filters-button:hover {
+		background-color: #8e44ad;
 	}
 </style>

@@ -2,10 +2,21 @@ namespace MplUserService.Routes
 {
     public static class GeneratorRoutes
     {
+        /// <summary>
+        /// Maps routes for the spreadsheet generator functionality.
+        /// </summary>
+        /// <param name="app">The WebApplication instance to which the routes should be mapped.</param>
+        /// <remarks>
+        /// This method adds a POST endpoint "/generator/spreadsheet/{**catchAll}" that acts as a proxy to forward requests 
+        /// to the spreadsheet service. The endpoint:
+        /// - Forwards the request body, headers and query parameters to the configured spreadsheet service
+        /// - Requires authorization for access
+        /// - Returns the response from the spreadsheet service including status code and headers
+        /// - Logs warnings for unsuccessful responses
+        /// </remarks>
         public static void MapGeneratorRoutes(this WebApplication app)
         {
             app.MapPost("/generator/spreadsheet/{**catchAll}", async (IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
-
             {
                 var client = httpClientFactory.CreateClient("SpreadsheetClient");
                 var requestUrl = $"{catchAll}{context.Request.QueryString}";
