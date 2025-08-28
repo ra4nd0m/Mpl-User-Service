@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MplDataReceiver.Data;
+using MplDataReceiver.Routes;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
@@ -38,6 +39,6 @@ var app = builder.Build();
 
 app.UseCors();
 
-app.MapGet("/", () => "Hello World!");
+app.MapDataInsertRoutes();
 
 app.Run();
