@@ -60,6 +60,7 @@ builder.Services.AddScoped<IMaterialGroupService, MaterialGroupService>();
 builder.Services.AddScoped<ISourceService, SourceService>();
 builder.Services.AddScoped<IUnitService, UnitService>();
 builder.Services.AddScoped<FilterService>();
+builder.Services.AddScoped<CacheManagementService>();
 
 var app = builder.Build();
 
@@ -73,6 +74,7 @@ app.MapMaterialGroupRoutes();
 app.MapSourceRoutes();
 app.MapUnitRoutes();
 app.MapFilterConfigRoutes();
+app.MapCacheManagementRoutes();
 
 using (var scope = app.Services.CreateScope())
 {
