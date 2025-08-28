@@ -10,10 +10,11 @@ public static class DataInsertRoutes
         var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("MaterialValueRoutes");
 
-        app.MapPost("/insertBatch", async (List<MaterialUpdate> updates, DataInsertService dataInsertService) =>
+        app.MapPost("/insertBatch", async (Payload<List<MaterialUpdate>> payload, DataInsertService dataInsertService) =>
         {
             try
             {
+                var updates = payload.Data;
                 await dataInsertService.InsertValuesRange(updates);
                 return Results.Ok();
             }
