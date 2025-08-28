@@ -5,7 +5,7 @@ using MplDataReceiver.Models.DTOs;
 
 namespace MplDataReceiver.Services;
 
-public class DataInsertService(BMplbaseContext context)
+public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpClientFactory, ILogger<DataInsertService> logger)
 {
     public async Task InsertValuesRange(List<MaterialUpdate> updates)
     {
@@ -43,7 +43,7 @@ public class DataInsertService(BMplbaseContext context)
                 {
                     if (!validPropertyIds.Contains(propertyValue.PropertyId))
                         continue;
-                        
+
                     materialValuesToProcess.Add((update.MaterialId, propertyValue.PropertyId, parsedDate, propertyValue.Value));
                 }
             }
@@ -54,9 +54,9 @@ public class DataInsertService(BMplbaseContext context)
 
         // Get existing MaterialValues that match our criteria
         var existingValues = await context.MaterialValues
-            .Where(mv => materialValuesToProcess.Any(mvp => 
-                mvp.Uid == mv.Uid && 
-                mvp.PropertyId == mv.PropertyId && 
+            .Where(mv => materialValuesToProcess.Any(mvp =>
+                mvp.Uid == mv.Uid &&
+                mvp.PropertyId == mv.PropertyId &&
                 mvp.CreatedOn == mv.CreatedOn))
             .ToListAsync();
 
@@ -65,9 +65,9 @@ public class DataInsertService(BMplbaseContext context)
         foreach (var (uid, propertyId, createdOn, value) in materialValuesToProcess)
         {
             // Check if this combination already exists
-            var existingValue = existingValues.FirstOrDefault(ev => 
-                ev.Uid == uid && 
-                ev.PropertyId == propertyId && 
+            var existingValue = existingValues.FirstOrDefault(ev =>
+                ev.Uid == uid &&
+                ev.PropertyId == propertyId &&
                 ev.CreatedOn == createdOn);
 
             if (existingValue != null)
@@ -107,5 +107,20 @@ public class DataInsertService(BMplbaseContext context)
         }
 
         await context.SaveChangesAsync();
+
+        try
+        {
+            var httpClient = httpClientFactory.CreateClient("DbApi");
+
+            var response = await httpClient.PostAsync("clear", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to notify DB API to clear cache");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
+        }
     }
 }

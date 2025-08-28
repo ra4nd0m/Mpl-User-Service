@@ -26,6 +26,16 @@ builder.Services.AddDbContext<BMplbaseContext>(options =>
     options.UseNpgsql(connectionString);
 });
 
+builder.Services.AddHttpClient("DbApi", client =>
+{
+    var baseUrl = configuration["ApiSettings:BaseUrl"];
+    if (string.IsNullOrEmpty(baseUrl))
+    {
+        throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+    }
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
