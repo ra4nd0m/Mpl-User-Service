@@ -27,7 +27,7 @@ public class DataInsertService(BMplbaseContext context)
                 .Select(p => p.Id)
                 .ToHashSetAsync();
 
-        var materialValues = new List<MaterialValue>();
+        var materialValuesToProcess = new List<(int Uid, int PropertyId, DateOnly CreatedOn, string Value)>();
 
         foreach (var update in updates)
         {
@@ -44,24 +44,68 @@ public class DataInsertService(BMplbaseContext context)
                     if (!validPropertyIds.Contains(propertyValue.PropertyId))
                         continue;
                         
-                    var materialValue = new MaterialValue(update.MaterialId, propertyValue.PropertyId, parsedDate);
-
-                    if (decimal.TryParse(propertyValue.Value, out var parsedDecimal))
-                        materialValue.ValueDecimal = parsedDecimal;
-                    else
-                        materialValue.ValueStr = propertyValue.Value;
-
-                    materialValue.LastUpdated = DateTime.UtcNow;
-                    materialValues.Add(materialValue);
+                    materialValuesToProcess.Add((update.MaterialId, propertyValue.PropertyId, parsedDate, propertyValue.Value));
                 }
             }
-
         }
 
-        if (materialValues.Count != 0)
+        if (materialValuesToProcess.Count == 0)
+            return;
+
+        // Get existing MaterialValues that match our criteria
+        var existingValues = await context.MaterialValues
+            .Where(mv => materialValuesToProcess.Any(mvp => 
+                mvp.Uid == mv.Uid && 
+                mvp.PropertyId == mv.PropertyId && 
+                mvp.CreatedOn == mv.CreatedOn))
+            .ToListAsync();
+
+        var newMaterialValues = new List<MaterialValue>();
+
+        foreach (var (uid, propertyId, createdOn, value) in materialValuesToProcess)
         {
-            await context.MaterialValues.AddRangeAsync(materialValues);
-            await context.SaveChangesAsync();
+            // Check if this combination already exists
+            var existingValue = existingValues.FirstOrDefault(ev => 
+                ev.Uid == uid && 
+                ev.PropertyId == propertyId && 
+                ev.CreatedOn == createdOn);
+
+            if (existingValue != null)
+            {
+                // Update existing value
+                if (decimal.TryParse(value, out var parsedDecimal))
+                {
+                    existingValue.ValueDecimal = parsedDecimal;
+                    existingValue.ValueStr = null; // Clear string value when setting decimal
+                }
+                else
+                {
+                    existingValue.ValueStr = value;
+                    existingValue.ValueDecimal = null; // Clear decimal value when setting string
+                }
+                existingValue.LastUpdated = DateTime.UtcNow;
+            }
+            else
+            {
+                // Create new MaterialValue
+                var materialValue = new MaterialValue(uid, propertyId, createdOn);
+
+                if (decimal.TryParse(value, out var parsedDecimal))
+                    materialValue.ValueDecimal = parsedDecimal;
+                else
+                    materialValue.ValueStr = value;
+
+                materialValue.LastUpdated = DateTime.UtcNow;
+                newMaterialValues.Add(materialValue);
+            }
         }
+
+        // Add new values to context
+        if (newMaterialValues.Count > 0)
+        {
+            await context.MaterialValues.AddRangeAsync(newMaterialValues);
+        }
+
+        await context.SaveChangesAsync();
     }
 }
