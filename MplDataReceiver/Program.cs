@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MplDataReceiver.Data;
 using MplDataReceiver.Routes;
+using MplDataReceiver.Services;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
@@ -34,6 +35,8 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader();
     });
 });
+
+builder.Services.AddScoped<DataInsertService>();
 
 var app = builder.Build();
 
