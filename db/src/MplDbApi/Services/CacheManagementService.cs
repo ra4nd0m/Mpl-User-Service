@@ -12,6 +12,7 @@ namespace MplDbApi.Services
                 {
                     mc.Clear();
                 }
+                logger.LogInformation("Cache cleared successfully");
             }
             catch (Exception ex)
             {

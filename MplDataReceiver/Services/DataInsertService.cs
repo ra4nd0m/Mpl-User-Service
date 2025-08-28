@@ -52,13 +52,26 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         if (materialValuesToProcess.Count == 0)
             return;
 
-        // Get existing MaterialValues that match our criteria
+        // Extract unique combinations for querying
+        var uids = materialValuesToProcess.Select(mvp => mvp.Uid).Distinct().ToList();
+        var processPropertyIds = materialValuesToProcess.Select(mvp => mvp.PropertyId).Distinct().ToList();
+        var dates = materialValuesToProcess.Select(mvp => mvp.CreatedOn).Distinct().ToList();
+
+        // Get existing MaterialValues with broader criteria, then filter in memory
         var existingValues = await context.MaterialValues
-            .Where(mv => materialValuesToProcess.Any(mvp =>
-                mvp.Uid == mv.Uid &&
-                mvp.PropertyId == mv.PropertyId &&
-                mvp.CreatedOn == mv.CreatedOn))
+            .Where(mv => uids.Contains(mv.Uid) &&
+                        processPropertyIds.Contains(mv.PropertyId) &&
+                        dates.Contains(mv.CreatedOn))
             .ToListAsync();
+
+        // Filter to exact matches in memory
+        var materialValuesToProcessSet = materialValuesToProcess
+            .Select(mvp => new { mvp.Uid, mvp.PropertyId, mvp.CreatedOn })
+            .ToHashSet();
+
+        existingValues = existingValues
+            .Where(ev => materialValuesToProcessSet.Contains(new { ev.Uid, ev.PropertyId, ev.CreatedOn }))
+            .ToList();
 
         var newMaterialValues = new List<MaterialValue>();
 
@@ -83,7 +96,6 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
                     existingValue.ValueStr = value;
                     existingValue.ValueDecimal = null; // Clear decimal value when setting string
                 }
-                existingValue.LastUpdated = DateTime.UtcNow;
             }
             else
             {
@@ -95,7 +107,6 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
                 else
                     materialValue.ValueStr = value;
 
-                materialValue.LastUpdated = DateTime.UtcNow;
                 newMaterialValues.Add(materialValue);
             }
         }
@@ -112,7 +123,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         {
             var httpClient = httpClientFactory.CreateClient("DbApi");
 
-            var response = await httpClient.PostAsync("clear", null);
+            var response = await httpClient.PostAsync("cache/clear", null);
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception("Failed to notify DB API to clear cache");
