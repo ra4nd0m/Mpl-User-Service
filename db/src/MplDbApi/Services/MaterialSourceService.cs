@@ -35,6 +35,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
 
         // Step 1: Query the database for intermediate data
         var intermediateResults = await _context.MaterialSources
+            .AsSplitQuery()
             .Include(m => m.Material)
             .Include(m => m.Source)
             .Include(m => m.DeliveryType)
@@ -49,8 +50,10 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                 MaterialSource = m,
                 LatestDate = _context.MaterialValues
                     .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
-                    .OrderByDescending(mv => mv.CreatedOn)
+                    .GroupBy(mv => mv.CreatedOn)
+                    .OrderByDescending(g => g.Key)
                     .Take(2)
+                    .Select(g => g.Key)
                     .ToList(),
                 AvailableProps = _context.MaterialProperties
                 .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
@@ -62,21 +65,21 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                 result.MaterialSource,
                 result.LatestDate,
                 result.AvailableProps,
-                LatestValues = result.LatestDate == null ?
+                LatestValues = result.LatestDate == null || result.LatestDate.Count == 0 ?
                     emptyValueList :
                     _context.MaterialValues
                         .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                                     mv.CreatedOn == result.LatestDate.Max(mv => mv.CreatedOn) &&
+                                     mv.CreatedOn == result.LatestDate.Max() &&
                                      latestValuePropertyIds.Contains(mv.PropertyId))
                         // Select into the named struct
                         .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
                         // Materialize the list of the struct
                         .ToList(),
-                PreviousValues = result.LatestDate == null ?
+                PreviousValues = result.LatestDate == null || result.LatestDate.Count < 2 ?
                     emptyValueList :
                     _context.MaterialValues
                         .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                                    mv.CreatedOn == result.LatestDate.Min(mv => mv.CreatedOn) &&
+                                    mv.CreatedOn == result.LatestDate.Min() &&
                                     latestValuePropertyIds.Contains(mv.PropertyId))
                         .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
                         .ToList()
@@ -97,7 +100,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                 changePercent = ValueChangeFormatter.FormatValueChange(previousAvgValue.Value, latestAvgValue.Value);
             }
             DateOnly? latestDate = finalResult.LatestDate != null && finalResult.LatestDate.Count != 0
-                ? finalResult.LatestDate.Max(mv => mv.CreatedOn)
+                ? finalResult.LatestDate.Max()
                 : null;
 
             return new MaterialSourceResponseDto(
