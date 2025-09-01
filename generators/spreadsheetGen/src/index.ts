@@ -10,7 +10,9 @@ const app = express();
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5301;
 
 app.use(cors())
-app.use(express.json());
+app.use(express.json({
+    limit:'1mb'
+}));
 
 app.post('/export-excel', ((req: Request<{}, {}, ExportExcelRequestBody>, res: Response) => {
     try {
