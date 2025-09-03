@@ -161,123 +161,123 @@
 </div>
 
 <style>
-	.dashboard-layout {
-		display: flex;
-		flex-direction: column;
-		min-height: 100vh;
-	}
+    .dashboard-layout {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
 
-	.navbar {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background-color: #2c3e50;
-		color: white;
-		padding: 0 20px;
-		height: 60px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: white;
+        color: #727271;
+        padding: 0 20px;
+        height: 60px;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid #e0e0e0;
+    }
 
-	.navbar-left,
-	.navbar-right {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
+    .navbar-left,
+    .navbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-	.nav-button {
-		display: flex;
-		align-items: center;
-		background: none;
-		border: none;
-		color: white;
-		font-size: 14px;
-		cursor: pointer;
-		padding: 8px 12px;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
+    .nav-button {
+        display: flex;
+        align-items: center;
+        background: none;
+        border: none;
+        color: #727271;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
 
-	.nav-button:hover {
-		background-color: rgba(255, 255, 255, 0.1);
-	}
+    .nav-button:hover {
+        background-color: rgba(234, 91, 33, 0.1);
+    }
 
-	.nav-button svg {
-		margin-right: 8px;
-	}
+    .nav-button svg {
+        margin-right: 8px;
+    }
 
-	.admin-button {
-		background-color: rgba(231, 76, 60, 0.2);
-	}
+    .admin-button {
+        background-color: rgba(231, 76, 60, 0.2);
+    }
 
-	.admin-button:hover {
-		background-color: rgba(231, 76, 60, 0.3);
-	}
+    .admin-button:hover {
+        background-color: rgba(231, 76, 60, 0.3);
+    }
 
-	.user-email {
-		margin-right: 8px;
-		font-size: 14px;
-		background-color: rgba(255, 255, 255, 0.1);
-		padding: 6px 12px;
-		border-radius: 20px;
-		max-width: 200px;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
+    .user-email {
+        margin-right: 8px;
+        font-size: 14px;
+        background-color: rgba(114, 114, 113, 0.1);
+        color: #727271;
+        padding: 6px 12px;
+        border-radius: 20px;
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
+    .logout-button {
+        display: flex;
+        align-items: center;
+        background-color: rgba(114, 114, 113, 0.1);
+        border: none;
+        color: #727271;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
 
+    .logout-button:hover {
+        background-color: rgba(234, 91, 33, 0.1);
+    }
 
-	.logout-button {
-		display: flex;
-		align-items: center;
-		background-color: rgba(255, 255, 255, 0.1);
-		border: none;
-		color: white;
-		padding: 8px 16px;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
+    .logout-button svg {
+        margin-left: 8px;
+    }
 
-	.logout-button:hover {
-		background-color: rgba(255, 255, 255, 0.2);
-	}
+    .content {
+        flex: 1;
+        padding: 20px;
+        background-color: #f5f5f5;
+    }
 
-	.logout-button svg {
-		margin-left: 8px;
-	}
+    @media (max-width: 768px) {
+        .navbar-left {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
 
-	.content {
-		flex: 1;
-		padding: 20px;
-		background-color: #f5f5f5;
-	}
+        .navbar-left::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Edge */
+        }
+    }
 
-	@media (max-width: 768px) {
-		.navbar-left {
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
-			scrollbar-width: none; /* Firefox */
-		}
+    @media (max-width: 600px) {
+        .user-email {
+            display: none;
+        }
 
-		.navbar-left::-webkit-scrollbar {
-			display: none; /* Chrome, Safari, Edge */
-		}
-	}
+        .navbar {
+            padding: 0 10px;
+        }
 
-	@media (max-width: 600px) {
-		.user-email {
-			display: none;
-		}
-
-		.navbar {
-			padding: 0 10px;
-		}
-
-		.nav-button {
-			padding: 8px 6px;
-			font-size: 12px;
-		}
-	}
+        .nav-button {
+            padding: 8px 6px;
+            font-size: 12px;
+        }
+    }
 </style>
