@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/authStore';
 	import { login } from '$lib/api/authClient';
-	import { ENABLE_MOCKS, users } from '$lib/mock';
 
 	let email = '';
 	let password = '';
@@ -52,13 +51,6 @@
 			<div class="error-message">{error}</div>
 		{/if}
 		<button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
-
-		{#if ENABLE_MOCKS}
-			<div class="dev-help">
-				<p>Test user: {users.test.email} / {users.test.password}</p>
-				<p>Admin user: {users.admin.email} / {users.admin.password}</p>
-			</div>
-		{/if}
 	</form>
 </div>
 
@@ -105,15 +97,6 @@
 		text-align: center;
 		width: 200px;
 		font-size: 14px;
-	}
-
-	.dev-help {
-		margin-top: 15px;
-		font-size: 12px;
-		color: #777;
-		border-top: 1px dashed #ddd;
-		padding-top: 10px;
-		text-align: center;
 	}
 
 	button {
