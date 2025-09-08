@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import {m} from '$lib/i18n';
 
 	let { children } = $props();
 
@@ -37,7 +38,7 @@
 					<polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
 					<line x1="12" y1="22.08" x2="12" y2="12"></line>
 				</svg>
-				Price Tracking
+				{m.workdesk_price_tracking()}
 			</button>
 		</div>
 	</div>
