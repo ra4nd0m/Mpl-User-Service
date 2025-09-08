@@ -4,6 +4,8 @@
 	import UserRegistrationModal from './UserRegistrationModal.svelte';
 	import { goto } from '$app/navigation';
 
+	import {m} from '$lib/i18n';
+
 	let userList: UserResponse[] = $state([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
@@ -86,15 +88,15 @@
 </script>
 
 <svelte:head>
-	<title>Admin Dashboard</title>
+	<title>{m.admin_dashboard_header()}</title>
 	<meta name="description" content="Admin dashboard for managing users and subscriptions." />
 </svelte:head>
 
 <section>
-	<h1>Admin Dashboard</h1>
+	<h1>{m.admin_dashboard_header()}</h1>
 	<div class="actions-header">
 		<div class="header-left">
-			<h2>User Management</h2>
+			<h2>{m.admin_user_management()}</h2>
 		</div>
 		<div class="header-right">
 			<button class="filters-button" onclick={goToFilters}>
@@ -111,7 +113,7 @@
 				>
 					<polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
 				</svg>
-				Filters
+				{m.admin_filters_button()}
 			</button>
 			<button class="legacy-button" onclick={goToLegacy}>
 				<svg
@@ -146,7 +148,7 @@
 					<line x1="19" y1="8" x2="19" y2="14"></line>
 					<line x1="16" y1="11" x2="22" y2="11"></line>
 				</svg>
-				Add User
+				{m.admin_add_user_button()}
 			</button>
 		</div>
 	</div>
@@ -160,11 +162,11 @@
 	{#if loading}
 		<div class="loading-spinner-container">
 			<div class="loading-spinner"></div>
-			<p>Loading users...</p>
+			<p>{m.admin_loading_users()}</p>
 		</div>
 	{:else if userList.length === 0}
 		<div class="empty-state">
-			<p>No users found in the system.</p>
+			<p>{m.admin_no_users()}</p>
 		</div>
 	{:else}
 		<div class="table-container">
@@ -172,13 +174,13 @@
 				<thead>
 					<tr>
 						<th>ID</th>
-						<th>Email</th>
-						<th>Organization</th>
-						<th>INN</th>
-						<th>Subscription</th>
-						<th>Start Date</th>
-						<th>End Date</th>
-						<th>Actions</th>
+						<th>{m.admin_user_table_email()}</th>
+						<th>{m.admin_user_table_organization()}</th>
+						<th>{m.admin_user_table_inn()}</th>
+						<th>{m.admin_user_table_subscription()}</th>
+						<th>{m.admin_user_table_start_date()}</th>
+						<th>{m.admin_user_table_end_date()}</th>
+						<th>{m.admin_user_table_actions()}</th>
 					</tr>
 				</thead>
 				<tbody>

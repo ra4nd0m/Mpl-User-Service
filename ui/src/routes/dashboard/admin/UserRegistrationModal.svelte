@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { registerUser, SubscriptionType, type NewUser } from '$lib/api/adminClient';
 
+	import { m } from '$lib/i18n';
+
 	let { showModal = $bindable(), onUserAdded = $bindable() } = $props();
 
 	let newUser: NewUser = $state({
@@ -126,7 +128,7 @@
 	<div class="modal-backdrop" onclick={handleBackdropClick} role="presentation">
 		<div class="modal-container">
 			<div class="modal-header">
-				<h3>Register New User</h3>
+				<h3>{m.admin_create_user_header()}</h3>
 				<button class="close-button" onclick={closeModal} aria-label="Close">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -156,14 +158,14 @@
 
 				<form onsubmit={handleRegisterSubmit}>
 					<div class="form-section">
-						<h4>Account Details</h4>
+						<h4>{m.admin_create_user_account_details()}</h4>
 						<div class="form-group">
-							<label for="email">Email</label>
+							<label for="email">{m.admin_create_user_email()}</label>
 							<input type="email" id="email" bind:value={newUser.email} required />
 						</div>
 
 						<div class="form-group">
-							<label for="password">Password</label>
+							<label for="password">{m.admin_create_user_password()}</label>
 							<div class="password-input-group">
 								<input
 									type={showPassword ? 'text' : 'password'}
@@ -175,8 +177,12 @@
 									type="button"
 									class="password-toggle-button"
 									onclick={togglePasswordVisibility}
-									title={showPassword ? 'Hide password' : 'Show password'}
-									aria-label={showPassword ? 'Hide password' : 'Show password'}
+									title={showPassword
+										? m.admin_create_user_hide_password()
+										: m.admin_create_user_show_password()}
+									aria-label={showPassword
+										? m.admin_create_user_hide_password()
+										: m.admin_create_user_show_password()}
 								>
 									{#if showPassword}
 										<svg
@@ -217,8 +223,8 @@
 									type="button"
 									class="generate-password-button"
 									onclick={handleGeneratePassword}
-									title="Generate secure password"
-									aria-label="Generate secure password"
+									title={m.admin_create_user_generate_password()}
+									aria-label={m.admin_create_user_generate_password()}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -243,12 +249,12 @@
 								</button>
 							</div>
 							<small class="password-requirements">
-								Password must contain: uppercase, lowercase, digit, special character (min 8 chars)
+								{m.admin_create_user_password_requirements()}
 							</small>
 						</div>
 
 						<div class="form-group">
-							<label for="confirm-password">Confirm Password</label>
+							<label for="confirm-password">{m.admin_create_user_confirm_password()}</label>
 							<input
 								type={showPassword ? 'text' : 'password'}
 								id="confirm-password"
@@ -259,29 +265,29 @@
 					</div>
 
 					<div class="form-section">
-						<h4>Organization Details</h4>
+						<h4>{m.admin_create_user_organization_details()}</h4>
 						<div class="form-group">
-							<label for="org-name">Organization Name</label>
+							<label for="org-name">{m.admin_create_user_organization_name()}</label>
 							<input type="text" id="org-name" bind:value={newUser.organization!.name} required />
 						</div>
 
 						<div class="form-group">
-							<label for="inn">INN</label>
+							<label for="inn">{m.admin_create_user_organization_inn()}</label>
 							<input type="text" id="inn" bind:value={newUser.organization!.inn} required />
 						</div>
 
 						<div class="form-group">
-							<label for="subscription-type">Subscription Type</label>
+							<label for="subscription-type">{m.admin_create_user_subscription_type()}</label>
 							<select id="subscription-type" bind:value={newUser.organization!.subscriptionType}>
-								<option value={SubscriptionType.Free}>Free</option>
-								<option value={SubscriptionType.Basic}>Basic</option>
-								<option value={SubscriptionType.Premium}>Premium</option>
+								<option value={SubscriptionType.Free}>{m.admin_create_user_subscription_type_free()}</option>
+								<option value={SubscriptionType.Basic}>{m.admin_create_user_subscription_type_basic()}</option>
+								<option value={SubscriptionType.Premium}>{m.admin_create_user_subscription_type_premium()}</option>
 							</select>
 						</div>
 
 						<div class="form-row">
 							<div class="form-group half">
-								<label for="start-date">Start Date</label>
+								<label for="start-date">{m.admin_create_user_subscription_start_date()}</label>
 								<input
 									type="date"
 									id="start-date"
@@ -290,7 +296,7 @@
 							</div>
 
 							<div class="form-group half">
-								<label for="end-date">End Date</label>
+								<label for="end-date">{m.admin_create_user_subscription_end_date()}</label>
 								<input
 									type="date"
 									id="end-date"
@@ -301,9 +307,9 @@
 					</div>
 
 					<div class="form-actions">
-						<button type="button" class="cancel-button" onclick={closeModal}>Cancel</button>
+						<button type="button" class="cancel-button" onclick={closeModal}>{m.admin_create_user_cancel_button()}</button>
 						<button type="submit" class="submit-button" disabled={formSubmitting}>
-							{formSubmitting ? 'Registering...' : 'Register User'}
+							{formSubmitting ? m.admin_create_user_registering() : m.admin_create_user_register_button()}
 						</button>
 					</div>
 				</form>
