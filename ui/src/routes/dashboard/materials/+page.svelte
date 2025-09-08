@@ -226,46 +226,50 @@
 </section>
 
 <style>
-	.group-buttons {
-		margin-bottom: 1rem;
-		display: flex;
-		flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-		align-items: center;
-		gap: 0.5rem;
-	}
+	    .group-buttons {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-	.group-label {
-		font-weight: bold;
-		margin-right: 0.5rem; /* Add some space between label and buttons */
-	}
+    .group-label {
+        font-weight: bold;
+        margin-right: 0.5rem; /* Add some space between label and buttons */
+        color: #727271;
+    }
 
-	.group-buttons button {
-		padding: 0.5rem 1rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		background-color: #f8f9fa;
-		cursor: pointer;
-		transition:
-			background-color 0.2s ease-in-out,
-			border-color 0.2s ease-in-out;
-	}
+    .group-buttons button {
+        padding: 0.5rem 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        color: #727271;
+        cursor: pointer;
+        transition:
+            background-color 0.2s ease-in-out,
+            border-color 0.2s ease-in-out,
+            color 0.2s ease-in-out;
+    }
 
-	.group-buttons button:hover {
-		background-color: #e2e6ea;
-		border-color: #adb5bd;
-	}
+    .group-buttons button:hover {
+        background-color: rgba(234, 91, 33, 0.1);
+        border-color: #EA5B21;
+        color: #EA5B21;
+    }
 
-	.group-buttons button.active {
-		background-color: #007bff;
-		color: white;
-		border-color: #007bff;
-		font-weight: bold;
-	}
+    .group-buttons button.active {
+        background-color: #EA5B21;
+        color: white;
+        border-color: #EA5B21;
+        font-weight: bold;
+    }
 
-	.group-buttons button.active:hover {
-		background-color: #0056b3;
-		border-color: #0056b3;
-	}
+    .group-buttons button.active:hover {
+        background-color: #d54e1a;
+        border-color: #d54e1a;
+    }
 
 	.search-container {
 		position: relative;
