@@ -172,8 +172,8 @@
 							<button
 								class="favorite-button {isFavorite(material.id) ? 'is-favorite' : ''}"
 								onclick={() => toggleFavorite(material.id)}
-								title={isFavorite(material.id) ? 'Remove from favorites' : 'Add to favorites'}
-								aria-label={isFavorite(material.id) ? 'Remove from favorites' : 'Add to favorites'}
+								title={isFavorite(material.id) ? m.materials_table_remove_from_favorites() : m.materials_table_add_to_favorites()}
+								aria-label={isFavorite(material.id) ? m.materials_table_remove_from_favorites() : m.materials_table_add_to_favorites()}
 							>
 								{#if isFavorite(material.id)}
 									<!-- Checkmark for favorites -->
