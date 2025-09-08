@@ -21,6 +21,37 @@
 	let formError: string | null = $state(null);
 	let formSuccess: string | null = $state(null);
 	let formSubmitting = $state(false);
+	let showPassword = $state(false);
+
+	function generateSecurePassword(length: number = 12): string {
+		const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+		const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		const digits = '0123456789';
+		const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+		let password = '';
+		password += lowercase[Math.floor(Math.random() * lowercase.length)];
+		password += uppercase[Math.floor(Math.random() * uppercase.length)];
+		password += digits[Math.floor(Math.random() * digits.length)];
+		password += symbols[Math.floor(Math.random() * symbols.length)];
+
+		const allCharacters = lowercase + uppercase + digits + symbols;
+		for (let i = 4; i < length; i++) {
+			password += allCharacters[Math.floor(Math.random() * allCharacters.length)];
+		}
+
+		return password;
+	}
+
+	function handleGeneratePassword() {
+		const generatedPassword = generateSecurePassword(12);
+		newUser.password = generatedPassword;
+		confirmPassword = generatedPassword;
+	}
+
+	function togglePasswordVisibility() {
+		showPassword = !showPassword;
+	}
 
 	function closeModal() {
 		showModal = false;
@@ -133,12 +164,97 @@
 
 						<div class="form-group">
 							<label for="password">Password</label>
-							<input type="password" id="password" bind:value={newUser.password} required />
+							<div class="password-input-group">
+								<input
+									type={showPassword ? 'text' : 'password'}
+									id="password"
+									bind:value={newUser.password}
+									required
+								/>
+								<button
+									type="button"
+									class="password-toggle-button"
+									onclick={togglePasswordVisibility}
+									title={showPassword ? 'Hide password' : 'Show password'}
+									aria-label={showPassword ? 'Hide password' : 'Show password'}
+								>
+									{#if showPassword}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="16"
+											height="16"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										>
+											<path d="m15 18-.722-3.25"></path>
+											<path d="M2 8a10.645 10.645 0 0 0 20 0"></path>
+											<path d="m20 15-1.726-2.05"></path>
+											<path d="m4 15 1.726-2.05"></path>
+											<path d="m9 18 .722-3.25"></path>
+										</svg>
+									{:else}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="16"
+											height="16"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										>
+											<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+											<circle cx="12" cy="12" r="3"></circle>
+										</svg>
+									{/if}
+								</button>
+								<button
+									type="button"
+									class="generate-password-button"
+									onclick={handleGeneratePassword}
+									title="Generate secure password"
+									aria-label="Generate secure password"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<path d="M12 2v4"></path>
+										<path d="m16.2 7.8 2.9-2.9"></path>
+										<path d="M18 12h4"></path>
+										<path d="m16.2 16.2 2.9 2.9"></path>
+										<path d="M12 18v4"></path>
+										<path d="m4.9 19.1 2.9-2.9"></path>
+										<path d="M2 12h4"></path>
+										<path d="m4.9 4.9 2.9 2.9"></path>
+									</svg>
+								</button>
+							</div>
+							<small class="password-requirements">
+								Password must contain: uppercase, lowercase, digit, special character (min 8 chars)
+							</small>
 						</div>
 
 						<div class="form-group">
 							<label for="confirm-password">Confirm Password</label>
-							<input type="password" id="confirm-password" bind:value={confirmPassword} required />
+							<input
+								type={showPassword ? 'text' : 'password'}
+								id="confirm-password"
+								bind:value={confirmPassword}
+								required
+							/>
 						</div>
 					</div>
 
@@ -299,6 +415,78 @@
 		outline: none;
 		border-color: #4dabf7;
 		box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+	}
+
+	.password-input-group {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	.password-input-group input {
+		padding-right: 5rem;
+	}
+
+	.password-input-group {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	.password-input-group input {
+		padding-right: 5rem;
+	}
+
+	.password-toggle-button {
+		position: absolute;
+		right: 2.5rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #6c757d;
+		padding: 0.25rem;
+		border-radius: 4px;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.password-toggle-button:hover {
+		background-color: #f8f9fa;
+		color: #495057;
+	}
+
+	.generate-password-button {
+		position: absolute;
+		right: 0.5rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #6c757d;
+		padding: 0.25rem;
+		border-radius: 4px;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.generate-password-button:hover {
+		background-color: #f8f9fa;
+		color: #495057;
+	}
+
+	.password-requirements {
+		display: block;
+		margin-top: 0.25rem;
+		font-size: 0.875rem;
+		color: #6c757d;
+		font-style: italic;
 	}
 
 	.form-actions {
