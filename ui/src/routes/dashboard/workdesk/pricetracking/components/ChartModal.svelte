@@ -130,7 +130,8 @@
                     borderColor: '#37b24d',
                     backgroundColor: 'rgba(55, 178, 77, 0.1)',
                     tension: 0.3,
-                    fill: false
+                    fill: false,
+                    borderDash: [5, 5]
                 });
             }
 

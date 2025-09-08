@@ -172,24 +172,41 @@
 							<button
 								class="favorite-button {isFavorite(material.id) ? 'is-favorite' : ''}"
 								onclick={() => toggleFavorite(material.id)}
-								title={isFavorite(material.id) ? 'Remove from favorites' : 'Add to favorites'}
-								aria-label={isFavorite(material.id) ? 'Remove from favorites' : 'Add to favorites'}
+								title={isFavorite(material.id) ? m.materials_table_remove_from_favorites() : m.materials_table_add_to_favorites()}
+								aria-label={isFavorite(material.id) ? m.materials_table_remove_from_favorites() : m.materials_table_add_to_favorites()}
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
-									fill={isFavorite(material.id) ? 'currentColor' : 'none'}
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								>
-									<polygon
-										points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-									></polygon>
-								</svg>
+								{#if isFavorite(material.id)}
+									<!-- Checkmark for favorites -->
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<polyline points="20 6 9 17 4 12"></polyline>
+									</svg>
+								{:else}
+									<!-- Cross for non-favorites -->
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<line x1="18" y1="6" x2="6" y2="18"></line>
+										<line x1="6" y1="6" x2="18" y2="18"></line>
+									</svg>
+								{/if}
 							</button>
 						</td>
 						<td class="table-material-name"
@@ -228,160 +245,184 @@
 </section>
 
 <style>
-	.group-buttons {
-		margin-bottom: 1rem;
-		display: flex;
-		flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-		align-items: center;
-		gap: 0.5rem;
-	}
+    .group-buttons {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-	.group-label {
-		font-weight: bold;
-		margin-right: 0.5rem; /* Add some space between label and buttons */
-		color: #727271;
-	}
+    .group-label {
+        font-weight: bold;
+        margin-right: 0.5rem; /* Add some space between label and buttons */
+        color: #727271;
+    }
 
-	.group-buttons button {
-		padding: 0.5rem 1rem;
-		border: 1px solid #ced4da;
-		border-radius: 4px;
-		background-color: #f8f9fa;
-		color: #727271;
-		cursor: pointer;
-		transition:
-			background-color 0.2s ease-in-out,
-			border-color 0.2s ease-in-out,
-			color 0.2s ease-in-out;
-	}
+    .group-buttons button {
+        padding: 0.5rem 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        color: #727271;
+        cursor: pointer;
+        transition:
+            background-color 0.2s ease-in-out,
+            border-color 0.2s ease-in-out,
+            color 0.2s ease-in-out;
+    }
 
-	.group-buttons button:hover {
-		background-color: rgba(234, 91, 33, 0.1);
-		border-color: #ea5b21;
-		color: #ea5b21;
-	}
+    .group-buttons button:hover {
+        background-color: rgba(234, 91, 33, 0.1);
+        border-color: #ea5b21;
+        color: #ea5b21;
+    }
 
-	.group-buttons button.active {
-		background-color: #ea5b21;
-		color: white;
-		border-color: #ea5b21;
-		font-weight: bold;
-	}
+    .group-buttons button.active {
+        background-color: #ea5b21;
+        color: white;
+        border-color: #ea5b21;
+        font-weight: bold;
+    }
 
-	.group-buttons button.active:hover {
-		background-color: #d54e1a;
-		border-color: #d54e1a;
-	}
+    .group-buttons button.active:hover {
+        background-color: #d54e1a;
+        border-color: #d54e1a;
+    }
 
-	.search-container {
-		position: relative;
-		margin-bottom: 1rem;
-		width: 100%;
-		max-width: 500px;
-	}
+    .search-container {
+        position: relative;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 500px;
+    }
 
-	.search-input {
-		width: 100%;
-		padding: 0.75rem;
-		padding-right: 2.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		font-size: 1rem;
-	}
+    .search-input {
+        width: 100%;
+        padding: 0.75rem;
+        padding-right: 2.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
 
-	.clear-search {
-		position: absolute;
-		right: -35px;
-		top: 50%;
-		transform: translateY(-50%);
-		background: none;
-		border: none;
-		font-size: 1.5rem;
-		cursor: pointer;
-		color: #6c757d;
-	}
+    .clear-search {
+        position: absolute;
+        right: -35px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6c757d;
+    }
 
-	.clear-search:hover {
-		color: #343a40;
-	}
-	.materials-table {
-		width: 100%;
-		border-collapse: collapse;
-		margin-top: 1rem;
-	}
+    .clear-search:hover {
+        color: #343a40;
+    }
+    .materials-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
 
-	.materials-table th,
-	.materials-table td {
-		padding: 0.75rem;
-		text-align: left;
-		border-bottom: 1px solid #ddd;
-		vertical-align: middle;
-	}
+    .materials-table th,
+    .materials-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle;
+    }
 
-	.materials-table th {
-		background-color: #f8f9fa;
-		font-weight: bold;
-		text-align: center;
-	}
+    .materials-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        text-align: center;
+    }
 
-	.materials-table .table-material-name {
-		text-align: left;
-	}
+    .materials-table .table-material-name {
+        text-align: left;
+    }
 
-	.materials-table td {
-		text-align: center;
-	}
+    .materials-table td {
+        text-align: center;
+    }
 
-	.materials-table tbody tr:hover {
-		background-color: #f1f1f1;
-	}
-	.no-data {
-		text-align: center;
-		padding: 2rem !important;
-		color: #6c757d;
-	}
+    .materials-table tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+    .no-data {
+        text-align: center;
+        padding: 2rem !important;
+        color: #6c757d;
+    }
 
-	.error-message {
-		color: #dc3545;
-		padding: 0.75rem;
-		background-color: rgba(220, 53, 69, 0.1);
-		border-radius: 4px;
-		margin-bottom: 1rem;
-	}
+    .error-message {
+        color: #dc3545;
+        padding: 0.75rem;
+        background-color: rgba(220, 53, 69, 0.1);
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
 
-	.loading-spinner-container {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 2rem;
-	}
+    .loading-spinner-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+    }
 
-	.loading-spinner {
-		width: 40px;
-		height: 40px;
-		border: 4px solid #f3f3f3;
-		border-top: 4px solid #3498db;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 1rem;
-	}
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
 
-	@keyframes spin {
-		0% {
-			transform: rotate(0deg);
-		}
-		100% {
-			transform: rotate(360deg);
-		}
-	}
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
 
-	.positive-change {
-		color: #2ecc71;
-		font-weight: 500;
-	}
+    .positive-change {
+        color: #2ecc71;
+        font-weight: 500;
+    }
 
-	.negative-change {
-		color: #e74c3c;
-		font-weight: 500;
-	}
+    .negative-change {
+        color: #e74c3c;
+        font-weight: 500;
+    }
+
+    .favorite-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+
+    .favorite-button:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .favorite-button.is-favorite svg {
+        color: #2ecc71;
+    }
+
+    .favorite-button:not(.is-favorite) svg {
+        color: #e74c3c;
+    }
 </style>
