@@ -5,5 +5,13 @@
 	"login_password": "Пароль",
 	"login_button": "Войти",
 	"login_remember_me": "Запомнить меня",
-	"login_process": "Вход в систему..."
+	"login_process": "Вход в систему...",
+	"login_meta": "Вход в вашу учетную запись",
+	"nav_home": "Главная",
+	"nav_all_materials": "Все материалы",
+	"nav_admin_panel": "Административная панель",
+	"nav_logout": "Выйти",
+	"nav_subscription_details": "Детали подписки",
+	"nav_subscription_type": "Тип",
+	"nav_subscription_expires": "Истекает:"
 }
