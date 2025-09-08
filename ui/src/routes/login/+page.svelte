@@ -40,8 +40,10 @@
 </script>
 
 <svelte:head>
-	<title>Login</title>
-	<meta name="description" content="Login to your account" />
+	{#key $locale}
+		<title>{m.login_header()}</title>
+		<meta name="description" content={m.login_meta()} />
+	{/key}
 </svelte:head>
 
 {#key $locale}
