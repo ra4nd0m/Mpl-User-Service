@@ -16,6 +16,8 @@
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
 
+	import { m } from '$lib/i18n';
+
 	const materialId = $props<number>();
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
@@ -119,7 +121,7 @@
 	function sortByDate(direction: 'asc' | 'desc') {
 		if (!priceData) return;
 
-		if(aggregatesChosen.length > 0){
+		if (aggregatesChosen.length > 0) {
 			filteredDataOrdered = [...filteredDataOrdered].reverse();
 			sortDirection = direction;
 		}
@@ -344,15 +346,15 @@
 						<polyline points="7 10 12 15 17 10"></polyline>
 						<line x1="12" y1="15" x2="12" y2="3"></line>
 					</svg>
-					<span>Export</span>
+					<span>{m.workdesk_price_tracking_table_export()}</span>
 				</button>
-				<ChartModal {priceData} {materialInfo} {filteredData} {aggregatesChosen}/>
+				<ChartModal {priceData} {materialInfo} {filteredData} {aggregatesChosen} />
 			</div>
 		</div>
 
 		{#if isExpanded}
 			<div class="aggregates-controls">
-				<span class="aggregates-label">Show averages:</span>
+				<span class="aggregates-label">{m.workdesk_price_tracking_table_show_averages()}</span>
 				<div class="radio-group">
 					<label class="radio-label">
 						<input
@@ -364,7 +366,7 @@
 								await pushAggregates('weekly');
 							}}
 						/>
-						Weekly
+						{m.workdesk_price_tracking_table_averages_weekly()}
 					</label>
 					<label class="radio-label">
 						<input
@@ -376,7 +378,7 @@
 								await pushAggregates('monthly');
 							}}
 						/>
-						Monthly
+						{m.workdesk_price_tracking_table_averages_monthly()}
 					</label>
 					<label class="radio-label">
 						<input
@@ -388,7 +390,7 @@
 								await pushAggregates('quarterly');
 							}}
 						/>
-						Quarterly
+						{m.workdesk_price_tracking_table_averages_quarterly()}
 					</label>
 					<label class="radio-label">
 						<input
@@ -400,7 +402,7 @@
 								await pushAggregates('yearly');
 							}}
 						/>
-						Yearly
+						{m.workdesk_price_tracking_table_averages_yearly()}
 					</label>
 					<label class="radio-label">
 						<input
@@ -413,26 +415,26 @@
 								await fetchData();
 							}}
 						/>
-						None
+						{m.workdesk_price_tracking_table_averages_none()}
 					</label>
 				</div>
 			</div>
 			<div class="date-controls">
 				<div class="date-presets">
-					<button class="date-btn" onclick={setLastWeek}>Last 7 days</button>
-					<button class="date-btn" onclick={setLastMonth}>Last 30 days</button>
-					<button class="date-btn" onclick={setLast3Months}>Last 90 days</button>
-					<button class="date-btn reset-btn" onclick={resetDateSettings}>Reset</button>
+					<button class="date-btn" onclick={setLastWeek}>{m.workdesk_price_tracking_table_selector_date_last_7_days()}</button>
+					<button class="date-btn" onclick={setLastMonth}>{m.workdesk_price_tracking_table_selector_date_last_30_days()}</button>
+					<button class="date-btn" onclick={setLast3Months}>{m.workdesk_price_tracking_table_selector_date_last_90_days()}</button>
+					<button class="date-btn reset-btn" onclick={resetDateSettings}>{m.workdesk_price_tracking_table_selector_date_reset()}</button>
 				</div>
 
 				<div class="date-range-picker">
 					<div class="date-input">
-						<label for="start-date">From:</label>
+						<label for="start-date">{m.workdesk_price_tracking_table_selector_date_from()}</label>
 						<input type="date" id="start-date" bind:value={startDate} max={endDate} />
 					</div>
 
 					<div class="date-input">
-						<label for="end-date">To:</label>
+						<label for="end-date">{m.workdesk_price_tracking_table_selector_date_to()}</label>
 						<input
 							type="date"
 							id="end-date"
@@ -442,7 +444,7 @@
 						/>
 					</div>
 
-					<button class="apply-btn" onclick={applyDateRange}>Apply</button>
+					<button class="apply-btn" onclick={applyDateRange}>{m.workdesk_price_tracking_table_selector_date_apply()}</button>
 				</div>
 			</div>
 		{/if}
@@ -453,19 +455,19 @@
 			{#if isLoading}
 				<div class="loading-container">
 					<div class="loading-spinner"></div>
-					<p>Loading price data...</p>
+					<p>{m.workdesk_price_tracking_table_loading()}</p>
 				</div>
 			{:else if error}
 				<div class="error-message">
 					{error}
-					<button class="retry-button" onclick={fetchData}>Retry</button>
+					<button class="retry-button" onclick={fetchData}>{m.workdesk_price_tracking_table_retry()}</button>
 				</div>
 			{:else if priceData && priceData.length > 0}
 				<table class="price-table">
 					<thead>
 						<tr>
 							<th class="sortable" onclick={toggleSort}
-								>Date {#if sortDirection}
+								>{m.workdesk_price_tracking_table_head_date()} {#if sortDirection}
 									<span class="sort-indicator">
 										{#if sortDirection === 'asc'}
 											<svg
@@ -501,47 +503,47 @@
 							>
 							{#if aggregatesChosen.length === 0}
 								{#if priceData[0].propsUsed.some((s) => s === 1)}
-									<th>Average Price</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 2)}
-									<th>Min Price</th>
+									<th>{m.workdesk_price_tracking_table_head_price_min()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 3)}
-									<th>Max Price</th>
+									<th>{m.workdesk_price_tracking_table_head_price_max()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 4)}
-									<th>Weekly Forecast</th>
+									<th>{m.workdesk_price_tracking_table_head_price_forecast_weekly()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 5)}
-									<th>Monthly Forecast</th>
+									<th>{m.workdesk_price_tracking_table_head_price_forecast_monthly()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 6)}
-									<th>Supply</th>
+									<th>{m.workdesk_price_tracking_table_head_price_supply()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -1)}
-									<th>Weekly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_weekly()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -2)}
-									<th>Monthly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_monthly()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -3)}
-									<th>Quarterly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_quarterly()}</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -4)}
-									<th>Yearly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_yearly()}</th>
 								{/if}
 							{:else}
 								{#if aggregatesChosen.includes('weekly')}
-									<th>Weekly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_weekly()}</th>
 								{/if}
 								{#if aggregatesChosen.includes('monthly')}
-									<th>Monthly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_monthly()}</th>
 								{/if}
 								{#if aggregatesChosen.includes('quarterly')}
-									<th>Quarterly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_quarterly()}</th>
 								{/if}
 								{#if aggregatesChosen.includes('yearly')}
-									<th>Yearly Average</th>
+									<th>{m.workdesk_price_tracking_table_head_price_average_yearly()}</th>
 								{/if}
 							{/if}
 						</tr>

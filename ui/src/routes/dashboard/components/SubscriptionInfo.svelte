@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import type { User } from '$lib/stores/authStore';
+	import { m } from '$lib/i18n';
 
 	let isOpen = $state(false);
 	let user = $state<User | null>(null);
@@ -76,17 +77,17 @@
 	{#if isOpen}
 		<div class="dropdown-menu">
 			<div class="dropdown-header">
-				<h4>Subscription Details</h4>
+				<h4>{m.nav_subscription_details()}</h4>
 			</div>
 			<div class="dropdown-content">
 				<div class="detail-row">
-					<span class="detail-label">Type:</span>
+					<span class="detail-label">{m.nav_subscription_type()}:</span>
 					<span class="detail-value {user?.subscriptionType?.toLowerCase() || 'free'}"
 						>{user?.subscriptionType || 'Free'}</span
 					>
 				</div>
 				<div class="detail-row">
-					<span class="detail-label">Expires:</span>
+					<span class="detail-label">{m.nav_subscription_expires()}</span>
 					<span class="detail-value end-date">{formatDate(user?.subscriptionEnd)}</span>
 				</div>
 				{#if getDaysRemaining(user?.subscriptionEnd)}

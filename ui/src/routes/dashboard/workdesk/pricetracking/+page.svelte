@@ -1,30 +1,27 @@
 <script lang="ts">
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 	import PriceTable from './components/PriceTable.svelte';
+	import { m } from '$lib/i18n';
 
 	const favoriteIds = $derived($favoritesStore.ids.sort((a, b) => a - b));
 	const widgetSettings = $derived($favoritesStore);
 </script>
 
 <svelte:head>
-	<title>Price Tracking</title>
-	<meta
-		name="description"
-		content="Track price changes for your favorite materials over time. Monitor historical data and trends."
-	/>
+	<title>{m.workdesk_price_tracking()}</title>
+	<meta name="description" content={m.workdesk_price_tracking_description()} />
 </svelte:head>
 
 <section class="price-tracking-header">
-	<h1>Price Tracking</h1>
+	<h1>{m.workdesk_price_tracking()}</h1>
 	<p>
-		Monitor price changes over time for your favorite materials. Track historical data, identify
-		trends, and make informed decisions based on price fluctuations.
+		{m.workdesk_price_tracking_description()}
 	</p>
 </section>
 
 {#if favoriteIds.length === 0}
 	<div class="no-favorites">
-		<p>No favorite materials found. Add materials to your favorites to track their prices.</p>
+		<p>{m.workdesk_price_tracking_no_favorites()}</p>
 	</div>
 {:else}
 	<div class="price-tables-container">

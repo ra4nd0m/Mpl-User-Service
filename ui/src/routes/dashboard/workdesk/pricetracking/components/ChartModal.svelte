@@ -2,6 +2,7 @@
     import type { Material, MaterialDateMetricsResp } from '$lib/api/userClient';
     import { onDestroy, onMount } from 'svelte';
     import { browser } from '$app/environment';
+    import { m } from '$lib/i18n';
 
     let Chart: any;
     let zoomPlugin: any;
@@ -72,23 +73,23 @@
             
             switch (aggregateType) {
                 case 'weekly':
-                    labelName = 'Weekly Average';
+                    labelName = m.workdesk_price_tracking_table_head_price_average_weekly();
                     borderColor = '#d63384';
                     break;
                 case 'monthly':
-                    labelName = 'Monthly Average';
+                    labelName = m.workdesk_price_tracking_table_head_price_average_monthly();
                     borderColor = '#0d6efd';
                     break;
                 case 'quarterly':
-                    labelName = 'Quarterly Average';
+                    labelName = m.workdesk_price_tracking_table_head_price_average_quarterly();
                     borderColor = '#198754';
                     break;
                 case 'yearly':
-                    labelName = 'Yearly Average';
+                    labelName = m.workdesk_price_tracking_table_head_price_average_yearly();
                     borderColor = '#fd7e14';
                     break;
                 default:
-                    labelName = 'Average';
+                    labelName = m.workdesk_price_tracking_table_head_price_average();
                     borderColor = '#4c6ef5';
             }
 
@@ -111,7 +112,7 @@
             // Only add datasets for props that exist in the data
             if (sortedData[0].propsUsed.includes(1)) {
                 datasets.push({
-                    label: 'Average Price',
+                    label: m.workdesk_price_tracking_table_head_price_average(),
                     data: sortedData.map((item) => (item.valueAvg ? parseFloat(item.valueAvg) : null)),
                     borderColor: '#4c6ef5',
                     backgroundColor: 'rgba(76, 110, 245, 0.1)',
@@ -122,7 +123,7 @@
 
             if (sortedData[0].propsUsed.includes(2)) {
                 datasets.push({
-                    label: 'Minimum Price',
+                    label: m.workdesk_price_tracking_table_head_price_min(),
                     data: sortedData.map((item) => (item.valueMin ? parseFloat(item.valueMin) : null)),
                     borderColor: '#37b24d',
                     backgroundColor: 'rgba(55, 178, 77, 0.1)',
@@ -133,7 +134,7 @@
 
             if (sortedData[0].propsUsed.includes(3)) {
                 datasets.push({
-                    label: 'Maximum Price',
+                    label: m.workdesk_price_tracking_table_head_price_max(),
                     data: sortedData.map((item) => (item.valueMax ? parseFloat(item.valueMax) : null)),
                     borderColor: '#f03e3e',
                     backgroundColor: 'rgba(240, 62, 62, 0.1)',
@@ -145,7 +146,7 @@
 
             if (sortedData[0].propsUsed.includes(4)) {
                 datasets.push({
-                    label: 'Weekly Forecast',
+                    label: m.workdesk_price_tracking_table_head_price_forecast_weekly(),
                     data: sortedData.map((item) => (item.predWeekly ? parseFloat(item.predWeekly) : null)),
                     borderColor: '#fab005',
                     backgroundColor: 'rgba(250, 176, 5, 0.1)',
@@ -216,8 +217,8 @@
                     title: {
                         display: true,
                         text: materialInfo
-                            ? `Price History: ${materialInfo.materialName} (${materialInfo.unit})`
-                            : 'Price History',
+                            ? `${m.workdesk_price_tracking_chart_price_history()}: ${materialInfo.materialName} (${materialInfo.unit})`
+                            : m.workdesk_price_tracking_chart_price_history(),
                         font: { size: 16 }
                     },
                     tooltip: {
@@ -316,7 +317,7 @@
 			<line x1="12" y1="20" x2="12" y2="4"></line>
 			<line x1="6" y1="20" x2="6" y2="14"></line>
 		</svg>
-		View Chart
+		{m.workdesk_price_tracking_chart_view_chart()}
 	</button>
 
 	{#if showModal}
@@ -333,9 +334,9 @@
 				<div class="modal-header">
 					<h2>
 						{#if materialInfo}
-							Price History: {materialInfo.materialName}
+							{m.workdesk_price_tracking_chart_price_history()}: {materialInfo.materialName}
 						{:else}
-							Price History
+							{m.workdesk_price_tracking_chart_price_history()}
 						{/if}
 					</h2>
 					<button class="close-btn" onclick={close}>×</button>
