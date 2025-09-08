@@ -2,7 +2,7 @@
     import type { Material, MaterialDateMetricsResp } from '$lib/api/userClient';
     import { onDestroy, onMount } from 'svelte';
     import { browser } from '$app/environment';
-    import { m } from '$lib/i18n';
+    import { m, getLocale } from '$lib/i18n';
 
     let Chart: any;
     let zoomPlugin: any;
@@ -14,7 +14,9 @@
     let showModal = $state(false);
 
     function formatDate(dateString: string): string {
-        return new Date(dateString).toLocaleDateString('ru-RU', {
+        const currentLocale = getLocale();
+        return new Date(dateString).toLocaleDateString(currentLocale, {
+            year: 'numeric',
             month: 'short',
             day: 'numeric'
         });
@@ -250,7 +252,7 @@
                     x: {
                         title: {
                             display: true,
-                            text: aggregatesChosen && aggregatesChosen.length > 0 ? 'Period' : 'Date'
+                            text: aggregatesChosen && aggregatesChosen.length > 0 ? m.workdesk_price_tracking_chart_period() : m.workdesk_price_tracking_chart_date()
                         },
                         grid: {
                             display: false
@@ -259,7 +261,7 @@
                     y: {
                         title: {
                             display: true,
-                            text: materialInfo ? `Price (${materialInfo.unit})` : 'Price'
+                            text: materialInfo ? `${m.workdesk_price_tracking_chart_price()} (${materialInfo.unit})` : m.workdesk_price_tracking_chart_price()
                         },
                         beginAtZero: false
                     }
