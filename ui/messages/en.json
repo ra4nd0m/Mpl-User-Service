@@ -45,5 +45,19 @@
 	"workdesk_price_tracking_table_head_price_average_quarterly": "Quarterly Average",
 	"workdesk_price_tracking_table_head_price_average_yearly": "Yearly Average",
 	"workdesk_price_tracking_chart_view_chart": "View Chart",
-	"workdesk_price_tracking_chart_price_history": "Price History"
+	"workdesk_price_tracking_chart_price_history": "Price History",
+	"materials_header": "All Materials",
+	"materials_filter_by_group": "Filter by Group:",
+	"materials_group_all": "All Groups",
+	"materials_search_placeholder": "Search materials...",
+	"materials_loading": "Loading materials...",
+	"materials_table_material_name": "Material Name",
+	"materials_table_change":"Change",
+	"materials_table_price_last": "Last Price",
+	"materials_table_price_min": "Minimum",
+	"materials_table_price_max": "Maximum",
+	"materials_table_price_average": "Average",
+	"materials_table_last_updated": "Last Update",
+	"materials_no_results": "No materials found",
+	"materials_not_available": "No materials available."
 }

@@ -8,6 +8,8 @@
 		type Material
 	} from '$lib/api/userClient';
 
+	import { m } from '$lib/i18n';
+
 	let materialGroups: { id: number; name: string }[] = $state([]);
 	let selectedGroupId: number | null = $state(null);
 	let materialList: Material[] = $state([]);
@@ -105,7 +107,7 @@
 </script>
 
 <svelte:head>
-	<title>Materials</title>
+	<title>{m.materials_header()}</title>
 	<meta
 		name="description"
 		content="View and manage materials, filter by groups, and track favorites."
@@ -113,12 +115,12 @@
 </svelte:head>
 
 <section>
-	<h1>Materials</h1>
+	<h1>{m.materials_header()}</h1>
 	<!-- Material Group Buttons -->
 	<div class="group-buttons">
-		<span class="group-label">Filter by Group:</span>
+		<span class="group-label">{m.materials_filter_by_group()}</span>
 		<button class:active={selectedGroupId === null} onclick={() => selectGroup(null)}>
-			All Groups
+			{m.materials_group_all()}
 		</button>
 		{#each materialGroups as group}
 			<button class:active={selectedGroupId === group.id} onclick={() => selectGroup(group.id)}>
@@ -130,7 +132,7 @@
 	<div class="search-container">
 		<input
 			type="text"
-			placeholder="Search materials..."
+			placeholder={m.materials_search_placeholder()}
 			bind:value={searchQuery}
 			class="search-input"
 		/>
@@ -145,22 +147,22 @@
 	{#if loading}
 		<div class="loading-spinner-container">
 			<div class="loading-spinner"></div>
-			<p>Loading materials...</p>
+			<p>{m.materials_loading()}</p>
 		</div>
 	{:else}
 		<table class="materials-table">
 			<thead>
 				<tr>
 					<th rowspan="2" class="favorite-cell"> </th>
-					<th rowspan="2" class="table-material-name">Material Name</th>
-					<th rowspan="2">Change</th>
-					<th colspan="3">Last Price</th>
-					<th rowspan="2">Last Update</th>
+					<th rowspan="2" class="table-material-name">{m.materials_table_material_name()}</th>
+					<th rowspan="2">{m.materials_table_change()}</th>
+					<th colspan="3">{m.materials_table_price_last()}</th>
+					<th rowspan="2">{m.materials_table_last_updated()}</th>
 				</tr>
 				<tr>
-					<th>Average</th>
-					<th>Minimum</th>
-					<th>Maximum</th>
+					<th>{m.materials_table_price_average()}</th>
+					<th>{m.materials_table_price_min()}</th>
+					<th>{m.materials_table_price_max()}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -216,7 +218,7 @@
 				{:else}
 					<tr>
 						<td colspan="8" class="no-data">
-							{searchQuery? 'No materials found for the search query.' : 'No materials available.'}
+							{searchQuery ? m.materials_no_results() : m.materials_not_available()}
 						</td>
 					</tr>
 				{/each}
@@ -226,50 +228,50 @@
 </section>
 
 <style>
-	    .group-buttons {
-        margin-bottom: 1rem;
-        display: flex;
-        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-        align-items: center;
-        gap: 0.5rem;
-    }
+	.group-buttons {
+		margin-bottom: 1rem;
+		display: flex;
+		flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+		align-items: center;
+		gap: 0.5rem;
+	}
 
-    .group-label {
-        font-weight: bold;
-        margin-right: 0.5rem; /* Add some space between label and buttons */
-        color: #727271;
-    }
+	.group-label {
+		font-weight: bold;
+		margin-right: 0.5rem; /* Add some space between label and buttons */
+		color: #727271;
+	}
 
-    .group-buttons button {
-        padding: 0.5rem 1rem;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        background-color: #f8f9fa;
-        color: #727271;
-        cursor: pointer;
-        transition:
-            background-color 0.2s ease-in-out,
-            border-color 0.2s ease-in-out,
-            color 0.2s ease-in-out;
-    }
+	.group-buttons button {
+		padding: 0.5rem 1rem;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		background-color: #f8f9fa;
+		color: #727271;
+		cursor: pointer;
+		transition:
+			background-color 0.2s ease-in-out,
+			border-color 0.2s ease-in-out,
+			color 0.2s ease-in-out;
+	}
 
-    .group-buttons button:hover {
-        background-color: rgba(234, 91, 33, 0.1);
-        border-color: #EA5B21;
-        color: #EA5B21;
-    }
+	.group-buttons button:hover {
+		background-color: rgba(234, 91, 33, 0.1);
+		border-color: #ea5b21;
+		color: #ea5b21;
+	}
 
-    .group-buttons button.active {
-        background-color: #EA5B21;
-        color: white;
-        border-color: #EA5B21;
-        font-weight: bold;
-    }
+	.group-buttons button.active {
+		background-color: #ea5b21;
+		color: white;
+		border-color: #ea5b21;
+		font-weight: bold;
+	}
 
-    .group-buttons button.active:hover {
-        background-color: #d54e1a;
-        border-color: #d54e1a;
-    }
+	.group-buttons button.active:hover {
+		background-color: #d54e1a;
+		border-color: #d54e1a;
+	}
 
 	.search-container {
 		position: relative;

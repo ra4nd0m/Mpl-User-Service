@@ -45,5 +45,19 @@
 	"workdesk_price_tracking_table_head_price_average_quarterly": "Средняя за квартал",
 	"workdesk_price_tracking_table_head_price_average_yearly": "Средняя за год",
 	"workdesk_price_tracking_chart_view_chart": "Просмотреть график",
-	"workdesk_price_tracking_chart_price_history": "История цен"
+	"workdesk_price_tracking_chart_price_history": "История цен",
+	"materials_header": "Все материалы",
+	"materials_filter_by_group": "Фильтр по группе:",
+	"materials_group_all": "Все группы",
+	"materials_search_placeholder": "Поиск материалов...",
+	"materials_loading": "Загрузка материалов...",
+	"materials_table_material_name": "Название материала",
+	"materials_table_change": "Изменение",
+	"materials_table_price_last": "Последняя цена",
+	"materials_table_price_min": "Минимальная",
+	"materials_table_price_max": "Максимальная",
+	"materials_table_price_average": "Средняя",
+	"materials_table_last_updated": "Последнее обновление",
+	"materials_no_results": "Не найдено материалов",
+	"materials_not_available": "Материалы недоступны."
 }
