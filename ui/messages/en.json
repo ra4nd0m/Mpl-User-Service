@@ -1,0 +1,9 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"login_header": "Login",
+	"login_email": "Email",
+	"login_password": "Password",
+	"login_button": "Log In",
+	"login_remember_me": "Remember Me",
+	"login_process": "Logging in..."
+}
