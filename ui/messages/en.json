@@ -44,5 +44,6 @@
 	"workdesk_price_tracking_table_head_price_average_monthly": "Monthly Average",
 	"workdesk_price_tracking_table_head_price_average_quarterly": "Quarterly Average",
 	"workdesk_price_tracking_table_head_price_average_yearly": "Yearly Average",
-	"workdesk_price_tracking_chart_view_chart": "View Chart"
+	"workdesk_price_tracking_chart_view_chart": "View Chart",
+	"workdesk_price_tracking_chart_price_history": "Price History"
 }

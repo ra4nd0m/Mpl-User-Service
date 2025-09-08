@@ -44,5 +44,6 @@
 	"workdesk_price_tracking_table_head_price_average_monthly": "Средняя за месяц",
 	"workdesk_price_tracking_table_head_price_average_quarterly": "Средняя за квартал",
 	"workdesk_price_tracking_table_head_price_average_yearly": "Средняя за год",
-	"workdesk_price_tracking_chart_view_chart": "Просмотреть график"
+	"workdesk_price_tracking_chart_view_chart": "Просмотреть график",
+	"workdesk_price_tracking_chart_price_history": "История цен"
 }
