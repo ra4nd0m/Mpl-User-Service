@@ -26,7 +26,10 @@ dotnet publish MplDataReceiver.csproj \
     --runtime linux-x64 \
     --output "${BUILD_DIR}" \
     /p:PublishSingleFile=true \
-    /p:SelfContained=false
+    /p:SelfContained=false \
+    /p:DebugType=portable \
+    /p:Deterministic=true \
+    /p:ContinuousIntegrationBuild=true
 # Create zip file
 cd "${BUILD_DIR}/.."
 zip -r "${RELEASES_DIR}/${RELEASE_NAME}.zip" "${RELEASE_NAME}"
