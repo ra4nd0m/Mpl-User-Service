@@ -2,65 +2,64 @@ import pandas as pd
 import json
 import re
 import os
-import openpyxl
+import openpyxl  # (used by pandas for xlsx)
 import requests
 import pygsheets
 import glob
 from datetime import datetime
+from pathlib import Path
 
-CACHE_FILE = "cache.json"
+# --- Paths anchored to the script directory ---
+ROOT = Path(__file__).resolve().parent
+VAR = ROOT / "var"
+VAR.mkdir(exist_ok=True)
 
-wd = os.path.abspath(os.getcwd())
-credentials = os.path.join(wd, "auth.json")
+CACHE_FILE = VAR / "cache.json"
+CREDENTIALS = ROOT / "auth.json"
+BASE_NAME = "analytics"
 
-# Авторизация
-gc = pygsheets.authorize(service_file=credentials)
-spreadsheet = gc.open('analytics')
+# --- Auth ---
+gc = pygsheets.authorize(service_file=str(CREDENTIALS))
+spreadsheet = gc.open("analytics")
 
-# Базовое имя файла
-base_name = "analytics"
-out_dir = wd
-
-# Удаляем старые версии (xls/xlsx)
+# --- Clean old exports in VAR ---
 for ext in (".xls", ".xlsx", ".xlsx.xls", ".xls.xlsx"):
-    fp = os.path.join(out_dir, base_name + ext)
-    if os.path.exists(fp):
-        os.remove(fp)
+    fp = VAR / f"{BASE_NAME}{ext}"
+    if fp.exists():
+        fp.unlink()
 
-# Экспорт в XLS (в твоей версии есть только этот формат)
+# --- Export (XLS only in your setup) ---
 spreadsheet.export(
     file_format=pygsheets.ExportType.XLS,
-    path=out_dir,
-    filename=base_name  # без расширения!
+    path=str(VAR),
+    filename=BASE_NAME  # no extension
 )
 
-# Находим реально созданный файл (analytics.xls)
-candidates = glob.glob(os.path.join(out_dir, base_name) + "*")
+# --- Locate the created file (prefer xlsx/xls explicitly) ---
+candidates = sorted(
+    list(VAR.glob(f"{BASE_NAME}.xlsx")) + list(VAR.glob(f"{BASE_NAME}.xls"))
+)
 if not candidates:
-    raise FileNotFoundError("Экспорт не создал файл — проверь доступы")
-excel_path = candidates[0]
+    raise FileNotFoundError("Экспорт не создал файл — проверь доступы/права")
 
+excel_path = candidates[0]
 print(f"✅ Файл аналитики был успешно загружен: {excel_path}")
 
-# Читаем Excel напрямую
-sheets = pd.read_excel(excel_path, sheet_name=None, header=[0, 1])
-
+# --- Cache helpers ---
 def load_cache():
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r", encoding="utf-8") as f:
+    if CACHE_FILE.exists():
+        with CACHE_FILE.open("r", encoding="utf-8") as f:
             return json.load(f)
     return {}
 
-
 def save_cache(cache: dict):
-    with open(CACHE_FILE, "w", encoding="utf-8") as f:
+    with CACHE_FILE.open("w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
-# парсер для стандартных листов с 1-9
+# --- Parsers (unchanged) ---
 def parse_old(material: dict, sheets: dict) -> dict | None:
     if material.get("parserType") != "old":
         return None
-
     sheet_name = material["sheet"]
     df = sheets[sheet_name]
 
@@ -78,10 +77,8 @@ def parse_old(material: dict, sheets: dict) -> dict | None:
 
     last_row = df_filtered.iloc[-1]
     last_date = last_row[date_col]
-
     if isinstance(last_date, pd.Series):
         last_date = last_date.iloc[0]
-
     if hasattr(last_date, "strftime"):
         last_date = last_date.strftime(material["date"]["format"])
     else:
@@ -100,16 +97,9 @@ def parse_old(material: dict, sheets: dict) -> dict | None:
 
     return {
         "materialId": material_id,
-        "dateValues": [
-            {
-                "date": last_date,
-                "propertyValues": property_values
-            }
-        ]
+        "dateValues": [{"date": last_date, "propertyValues": property_values}]
     }
 
-
-# парсер для 10 листа
 def parse_new(material: dict, sheets: dict) -> dict | None:
     if material.get("parserType") != "new":
         return None
@@ -162,19 +152,11 @@ def parse_new(material: dict, sheets: dict) -> dict | None:
 
     return {
         "materialId": material["materialId"],
-        "dateValues": [
-            {
-                "date": last_date,
-                "propertyValues": props
-            }
-        ]
+        "dateValues": [{"date": last_date, "propertyValues": props}]
     }
 
-
-def parse_dataset(config: dict, cache: dict) -> dict:
-    excel_path = config["excel"]["path"]
-    sheets = pd.read_excel(excel_path, sheet_name=None, header=[0, 1])
-
+def parse_dataset(config: dict, excel_path: Path, cache: dict) -> dict:
+    sheets = pd.read_excel(str(excel_path), sheet_name=None, header=[0, 1])
     payload = {"data": []}
 
     for material in config["materials"]:
@@ -190,8 +172,7 @@ def parse_dataset(config: dict, cache: dict) -> dict:
             m_id = str(result["materialId"])
             m_date = result["dateValues"][0]["date"]
 
-            # debounce: сравниваем с кэшем
-            if cache.get(m_id) == m_date:
+            if cache.get(m_id) == m_date:  # debounce
                 print(f"[SKIP] Material {m_id} уже отправлен на {m_date}")
                 continue
 
@@ -200,39 +181,26 @@ def parse_dataset(config: dict, cache: dict) -> dict:
 
     return payload
 
-
 def send_payload(payload: dict, config: dict):
     server = os.getenv("SERVER_URL") or config["server"]["url"]
     route = os.getenv("SERVER_ROUTE") or config["server"]["route"]
-
     url = server.rstrip("/") + "/" + route.lstrip("/")
     print(f"[INFO] Отправка на {url}")
-
     response = requests.post(url, json=payload, timeout=10)
     print(f"[INFO] Ответ сервера: {response.status_code} {response.text}")
 
-
 if __name__ == "__main__":
-
-    CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "config.json"))
-
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+    CONFIG_PATH = ROOT / "config.json"
+    with CONFIG_PATH.open("r", encoding="utf-8") as f:
         config = json.load(f)
 
     cache = load_cache()
-    payload = parse_dataset(config, cache)
+
+    # Use the freshly exported file (ignore/override config path)
+    payload = parse_dataset(config, excel_path, cache)
 
     if payload["data"]:
         send_payload(payload, config)
         save_cache(cache)
     else:
         print("[INFO] Нет новых данных для отправки")
-
-
-    # if payload["data"]:
-    #     print(json.dumps(payload, ensure_ascii=False, indent=2))
-    #     save_cache(cache)
-    # else:
-    #     print("[INFO] Нет новых данных для вывода")
-
-
