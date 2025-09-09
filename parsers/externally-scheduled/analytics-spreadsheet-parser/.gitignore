@@ -1,0 +1,7 @@
+venv
+__pycache__
+src/auth.json
+src/config.json
+src/cache.json
+src/analytics.xls
+src/analytics.xlsx
