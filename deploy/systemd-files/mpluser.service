@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/mpluserservice
-ExecStart=/usr/bin/dotnet /opt/mpluserservice/MplUserService.dll
+ExecStart=/opt/mpluserservice/MplUserService
 User=
 Group=
 Restart=always

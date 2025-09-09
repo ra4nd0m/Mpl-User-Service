@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/mpldbapi
-ExecStart=/usr/bin/dotnet /opt/mpldbapi/MplDbApi.dll
+ExecStart=/opt/mpldbapi/MplDbApi
 User=
 Group=
 Restart=always
