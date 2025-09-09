@@ -4,24 +4,24 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/../.." &>/dev/null && pwd)"
-USERAPI_DIR="${PROJECT_DIR}/userapi"
-RELEASES_DIR="${PROJECT_DIR}/releases/userapi"
+DATA_RECEIVER_DIR="${PROJECT_DIR}/parsers/data-receiver/MplDataReceiver"
+RELEASES_DIR="${PROJECT_DIR}/releases/data-receiver"
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-RELEASE_NAME="mpl-user-api-${TIMESTAMP}"
+RELEASE_NAME="mpl-data-receiver-service-${TIMESTAMP}"
 BUILD_DIR="${RELEASES_DIR}/temp/${RELEASE_NAME}"
 
-echo "Building MplUserApi for Linux x64..."
+echo "Building MplDataReceiver for Linux x64..."
 
 # Create releases directory if it doesn't exist
 mkdir -p "${RELEASES_DIR}"
 mkdir -p "${BUILD_DIR}"
 
-# Navigate to userapi directory
-cd "${USERAPI_DIR}"
+# Navigate to data receiver directory
+cd "${DATA_RECEIVER_DIR}"
 
 # Clean and build the solution
-dotnet clean MplUserApi.sln --configuration Release
-dotnet publish src/MplUserService/MplUserService.csproj \
+dotnet clean MplDataReceiver.sln --configuration Release
+dotnet publish MplDataReceiver.csproj \
     --configuration Release \
     --runtime linux-x64 \
     --output "${BUILD_DIR}" \

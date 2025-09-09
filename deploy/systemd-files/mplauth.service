@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/mplauthservice
-ExecStart=/usr/bin/dotnet /opt/mplauthservice/MplAuthService.dll
+ExecStart=/opt/mplauthservice/MplAuthService
 User=
 Group=
 Restart=always

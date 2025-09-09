@@ -1,0 +1,5 @@
+venv
+__pycache__
+src/auth.json
+src/config.json
+src/var

@@ -1,15 +1,15 @@
 [Unit]
-Description=mpl database api
+Description=mpl data receiver api
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/mpldbapi
-ExecStart=/opt/mpldbapi/MplDbApi
+WorkingDirectory=/opt/mpl-data-receiver
+ExecStart=/opt/mpl-data-receiver/MplDataReceiver
 User=
 Group=
 Restart=always
 RestartSec=10
-SyslogIdentifier=mpl-db-api-service
+SyslogIdentifier=mpl-data-receiver-service
 
 # Environment variables for private configurations
 Environment=ASPNETCORE_ENVIRONMENT=Production
