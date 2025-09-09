@@ -1,0 +1,19 @@
+[Unit]
+Description=mpl data receiver api
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mpl-data-receiver
+ExecStart=/opt/mpl-data-receiver/MplDataReceiver
+User=
+Group=
+Restart=always
+RestartSec=10
+SyslogIdentifier=mpl-data-receiver-service
+
+# Environment variables for private configurations
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ConnectionStrings__DefaultConnection=Server=localhost;Database=MplAuth;User Id=dbuser;Password=SecurePassword123!;
+
+[Install]
+WantedBy=multi-user.target
