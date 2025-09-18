@@ -16,12 +16,17 @@
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
 
-	import { m } from '$lib/i18n';
+	import { m, locale } from '$lib/i18n';
 
 	const { materialId, dndEnabled = $bindable(false) } = $props<{
 		materialId: number;
 		dndEnabled: boolean;
 	}>();
+
+	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
+	let df = $derived(
+		Intl.DateTimeFormat($locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
+	);
 
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
@@ -152,16 +157,12 @@
 	}
 
 	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('ru-RU', {
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit'
-		});
+		return df.format(new Date(dateString));
 	}
 
 	function formatPrice(price: string | null): string {
 		if (!price) return '-';
-		return parseFloat(price).toFixed(2);
+		return nf.format(Number(price));
 	}
 
 	// Date range preset functions
