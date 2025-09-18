@@ -48,24 +48,11 @@ const ensureValidSettings = (settings: any): WidgetSettings => {
     return settings as WidgetSettings;
 }
 
-// Initialize store with data from localStorage or defaults
+// Initialize store
 const initializeStore = async (): Promise<WidgetSettings> => {
     const fetchedSettings = await getUserSettings();
     if (fetchedSettings) {
         return fetchedSettings;
-    }
-
-    if (typeof localStorage === 'undefined') {
-        return { priceTable: {} };
-    }
-
-    const storedSettings = localStorage.getItem('widgetSettings');
-    if (storedSettings) {
-        try {
-            return JSON.parse(storedSettings);
-        } catch (e) {
-            console.error('Error parsing widget settings from localStorage', e);
-        }
     }
 
     return { priceTable: {} };
@@ -75,20 +62,15 @@ const initializeStore = async (): Promise<WidgetSettings> => {
 const createWidgetSettingsStore = () => {
     const { subscribe, update, set } = writable<WidgetSettings>({ priceTable: {} });
 
-    // Initialize with data from localStorage
+    // Initialize with data 
     initialized = initializeStore().then(data => {
         const validSettings = ensureValidSettings(data);
         set(validSettings);
     });
 
-    // Persist settings to localStorage
+    // Persist settings 
     const persistSettings = async (settings: WidgetSettings) => {
         await updateUserSettings(settings);
-
-        // Also store in localStorage for quick access
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('widgetSettings', JSON.stringify(settings));
-        }
     };
 
     return {

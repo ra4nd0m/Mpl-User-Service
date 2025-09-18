@@ -79,6 +79,35 @@ namespace MplUserService.Routes
 
             }).RequireAuthorization();
 
+            app.MapPost("/favorites", async (IUserService userService, HttpContext context, UserContext dbContext, ILogger<Program> logger) =>
+            {
+                try
+                {
+                    var jsonDocument = await JsonDocument.ParseAsync(context.Request.Body);
+                    var favoriteIds = JsonSerializer.Deserialize<List<int>>(jsonDocument.RootElement.GetRawText());
+                    if (favoriteIds == null || favoriteIds.Count == 0)
+                    {
+                        return Results.BadRequest("Favorite IDs are required");
+                    }
+                    var user = await userService.GetOrCreateUserAsync(context.User);
+                    user.FavouriteIds.Clear();
+                    user.FavouriteIds.AddRange(favoriteIds);
+                    dbContext.Entry(user).State = EntityState.Modified;
+                    await dbContext.SaveChangesAsync();
+                    return Results.Ok(user.FavouriteIds);
+                }
+                catch (JsonException jsonEx)
+                {
+                    logger.LogError(jsonEx, "Invalid JSON format for favorite IDs");
+                    return Results.BadRequest("Invalid JSON format for favorite IDs");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to set user favorites");
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization();
+
             app.MapGet("/settings", async (IUserService userService, HttpContext context, UserContext dbContext, ILogger<Program> logger) =>
             {
                 try

@@ -1,5 +1,4 @@
-import { addFavorite, getFavorites, removeFavorite } from "$lib/api/userClient";
-import { ENABLE_MOCKS } from "$lib/mock";
+import { addFavorite, getFavorites, removeFavorite, setFavourites as setFavouritesApi } from "$lib/api/userClient";
 import { writable } from "svelte/store";
 
 export interface FavoritesState {
@@ -22,7 +21,7 @@ function createFavoritesStore() {
     const store = {
         subscribe,
         loadFavourites: async () => {
-            if(hasLoaded) return;
+            if (hasLoaded) return;
             update(state => ({ ...state, loading: true, error: null }));
             try {
                 const data = await getFavorites();
@@ -47,12 +46,12 @@ function createFavoritesStore() {
                     }
                     return { ...state, ids };
                 });
-                if (!ENABLE_MOCKS) {
-                    const updatedFavorites = await addFavorite(materialId);
-                    if (updatedFavorites) {
-                        update(state => ({ ...state, ids: updatedFavorites }));
-                    }
+
+                const updatedFavorites = await addFavorite(materialId);
+                if (updatedFavorites) {
+                    update(state => ({ ...state, ids: updatedFavorites }));
                 }
+
             } catch (err) {
                 console.error('Error adding to favorites:', err);
                 await store.loadFavourites();
@@ -69,12 +68,12 @@ function createFavoritesStore() {
                     }
                     return { ...state, ids };
                 });
-                if (!ENABLE_MOCKS) {
-                    const updatedFavorites = await removeFavorite(materialId);
-                    if (updatedFavorites) {
-                        update(state => ({ ...state, ids: updatedFavorites }));
-                    }
+
+                const updatedFavorites = await removeFavorite(materialId);
+                if (updatedFavorites) {
+                    update(state => ({ ...state, ids: updatedFavorites }));
                 }
+
             } catch (err) {
                 console.error('Error removing from favorites:', err);
                 await store.loadFavourites();
@@ -97,6 +96,19 @@ function createFavoritesStore() {
                 await store.addToFavorites(materialId);
             }
         },
+
+        setFavourites: async (ids: number[]) => {
+            update(state => ({ ...state, ids: [...ids] }));
+
+            const result = await setFavouritesApi(ids);
+
+            if (result === null) {
+                await store.loadFavourites();
+            } else {
+                update(state => ({ ...state, ids: result }));
+            }
+        },
+
         reset: () => set(initialState)
     };
     return store;

@@ -1,5 +1,7 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+    "universal_confirm_btn": "Подтвердить",
+    "universal_cancel_btn": "Отмена",
 	"login_header": "Вход",
 	"login_email": "Электронная почта",
 	"login_password": "Пароль",
@@ -15,6 +17,7 @@
 	"nav_subscription_type": "Тип",
 	"nav_subscription_expires": "Истекает:",
 	"workdesk_price_tracking": "Отслеживание цен",
+    "workdesk_price_tracking_reorder_tables_btn": "Изменить порядок таблиц",
 	"workdesk_price_tracking_description": "Отслеживайте изменения цен на ваши избранные материалы с течением времени.",
 	"workdesk_price_tracking_no_favorites": "У вас пока нет избранных материалов. Перейдите на страницу «Все материалы», чтобы добавить их.",
 	"workdesk_price_tracking_table_export": "Экспорт",
