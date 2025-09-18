@@ -33,6 +33,7 @@
 	let priceData = $state<MaterialDateMetricsResp[] | null>(null);
 	let materialInfo = $state<Material | null>(null);
 	let sortDirection = $state<'asc' | 'desc'>('desc');
+	let sortColumn = $state('date');
 	let aggregatesChosen = $state<string[]>([]);
 	let filteredData = $state<FilteredData[]>([]);
 	let filteredDataOrdered = $state<FilteredData[]>([]);
@@ -116,7 +117,7 @@
 			);
 			if (data) {
 				priceData = data;
-				sortByDate('desc'); // Default sort by date descending
+				sortData('date', 'desc'); // Default sort by date descending
 			} else {
 				error = 'No data available';
 			}
@@ -127,32 +128,55 @@
 		}
 	}
 
-	function sortByDate(direction: 'asc' | 'desc') {
+	function sortData(column: string, direction: 'asc' | 'desc') {
 		if (!priceData) return;
 
-		if (aggregatesChosen.length > 0) {
-			filteredDataOrdered = [...filteredDataOrdered].reverse();
-			sortDirection = direction;
-		}
-
-		const sortedData = [...priceData];
-
-		sortedData.sort((a, b) => {
-			const dateA = new Date(a.date).getTime();
-			const dateB = new Date(b.date).getTime();
-
-			return direction === 'asc' ? dateA - dateB : dateB - dateA;
-		});
-
-		priceData = sortedData;
+		sortColumn = column;
 		sortDirection = direction;
+
+		if (aggregatesChosen.length > 0) {
+			// Handle sorting for aggregated data
+			filteredDataOrdered = [...filteredData].sort((a, b) => {
+				if (column === 'date') {
+					// Sort by date ranges (using string comparison)
+					return direction === 'asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+				} else {
+					// Sort by value
+					const valA = a.value ? parseFloat(a.value) : -Infinity;
+					const valB = b.value ? parseFloat(b.value) : -Infinity;
+					return direction === 'asc' ? valA - valB : valB - valA;
+				}
+			});
+		} else {
+			// Handle sorting for regular data
+			priceData = [...priceData].sort((a, b) => {
+				if (column === 'date') {
+					const dateA = new Date(a.date).getTime();
+					const dateB = new Date(b.date).getTime();
+					return direction === 'asc' ? dateA - dateB : dateB - dateA;
+				} else {
+					// Get the correct property based on column name
+					const valA = getValueForColumn(a, column);
+					const valB = getValueForColumn(b, column);
+					return direction === 'asc' ? valA - valB : valB - valA;
+				}
+			});
+		}
 	}
 
-	function toggleSort() {
-		if (sortDirection === null || sortDirection === 'desc') {
-			sortByDate('asc');
+	// Helper function to get numeric value for a specific column
+	function getValueForColumn(item: MaterialDateMetricsResp, column: string): number {
+		const value = item[column as keyof MaterialDateMetricsResp];
+		return value && typeof value === 'string' ? parseFloat(value) : -Infinity;
+	}
+
+	function toggleSort(column: string) {
+		if (sortColumn === column) {
+			// Toggle direction if same column
+			sortData(column, sortDirection === 'asc' ? 'desc' : 'asc');
 		} else {
-			sortByDate('desc');
+			// Default to descending for new column
+			sortData(column, 'desc');
 		}
 	}
 
@@ -161,7 +185,7 @@
 	}
 
 	function formatPrice(price: string | null): string {
-		if (!price) return '-';
+		if (!price || price.length === 0) return '—';
 		return nf.format(Number(price));
 	}
 
@@ -488,9 +512,9 @@
 				<table class="price-table">
 					<thead>
 						<tr>
-							<th class="sortable" onclick={toggleSort}
+							<th class="sortable" onclick={() => toggleSort('date')}
 								>{m.workdesk_price_tracking_table_head_date()}
-								{#if sortDirection}
+								{#if sortColumn === 'date'}
 									<span class="sort-indicator">
 										{#if sortDirection === 'asc'}
 											<svg
@@ -526,47 +550,537 @@
 							>
 							{#if aggregatesChosen.length === 0}
 								{#if priceData[0].propsUsed.some((s) => s === 1)}
-									<th>{m.workdesk_price_tracking_table_head_price_average()}</th>
+									<th class="sortable" onclick={() => toggleSort('valueAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average()}
+										{#if sortColumn === 'valueAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 2)}
-									<th>{m.workdesk_price_tracking_table_head_price_min()}</th>
+									<th class="sortable" onclick={() => toggleSort('valueMin')}>
+										{m.workdesk_price_tracking_table_head_price_min()}
+										{#if sortColumn === 'valueMin'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 3)}
-									<th>{m.workdesk_price_tracking_table_head_price_max()}</th>
+									<th class="sortable" onclick={() => toggleSort('valueMax')}>
+										{m.workdesk_price_tracking_table_head_price_max()}
+										{#if sortColumn === 'valueMax'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 4)}
-									<th>{m.workdesk_price_tracking_table_head_price_forecast_weekly()}</th>
+									<th class="sortable" onclick={() => toggleSort('predWeekly')}>
+										{m.workdesk_price_tracking_table_head_price_forecast_weekly()}
+										{#if sortColumn === 'predWeekly'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 5)}
-									<th>{m.workdesk_price_tracking_table_head_price_forecast_monthly()}</th>
+									<th class="sortable" onclick={() => toggleSort('predMonthly')}>
+										{m.workdesk_price_tracking_table_head_price_forecast_monthly()}
+										{#if sortColumn === 'predMonthly'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === 6)}
-									<th>{m.workdesk_price_tracking_table_head_price_supply()}</th>
+									<th class="sortable" onclick={() => toggleSort('supply')}>
+										{m.workdesk_price_tracking_table_head_price_supply()}
+										{#if sortColumn === 'supply'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -1)}
-									<th>{m.workdesk_price_tracking_table_head_price_average_weekly()}</th>
+									<th class="sortable" onclick={() => toggleSort('weeklyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_weekly()}
+										{#if sortColumn === 'weeklyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -2)}
-									<th>{m.workdesk_price_tracking_table_head_price_average_monthly()}</th>
+									<th class="sortable" onclick={() => toggleSort('monthlyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_monthly()}
+										{#if sortColumn === 'monthlyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -3)}
-									<th>{m.workdesk_price_tracking_table_head_price_average_quarterly()}</th>
+									<th class="sortable" onclick={() => toggleSort('quarterlyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_quarterly()}
+										{#if sortColumn === 'quarterlyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if priceData[0].propsUsed.some((s) => s === -4)}
-									<th>{m.workdesk_price_tracking_table_head_price_average_yearly()}</th>
+									<th class="sortable" onclick={() => toggleSort('yearlyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_yearly()}
+										{#if sortColumn === 'yearlyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 							{:else}
 								{#if aggregatesChosen.includes('weekly')}
-									<th>{m.workdesk_price_tracking_table_head_price_average_weekly()}</th>
+									<th class="sortable" onclick={() => toggleSort('weeklyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_weekly()}
+										{#if sortColumn === 'weeklyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if aggregatesChosen.includes('monthly')}
-									<th>{m.workdesk_price_tracking_table_head_price_average_monthly()}</th>
+									<th class="sortable" onclick={() => toggleSort('monthlyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_monthly()}
+										{#if sortColumn === 'monthlyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if aggregatesChosen.includes('quarterly')}
-									<th>{m.workdesk_price_tracking_table_head_price_average_quarterly()}</th>
+									<th class="sortable" onclick={() => toggleSort('quarterlyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_quarterly()}
+										{#if sortColumn === 'quarterlyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 								{#if aggregatesChosen.includes('yearly')}
-									<th>{m.workdesk_price_tracking_table_head_price_average_yearly()}</th>
+									<th class="sortable" onclick={() => toggleSort('yearlyAvg')}>
+										{m.workdesk_price_tracking_table_head_price_average_yearly()}
+										{#if sortColumn === 'yearlyAvg'}
+											<span class="sort-indicator">
+												{#if sortDirection === 'asc'}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="18 15 12 9 6 15"></polyline>
+													</svg>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="12"
+														height="12"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<polyline points="6 9 12 15 18 9"></polyline>
+													</svg>
+												{/if}
+											</span>
+										{/if}
+									</th>
 								{/if}
 							{/if}
 						</tr>
