@@ -1,18 +1,59 @@
 import { authStore } from "$lib/stores/authStore";
 import config from "$lib/config";
 
-export async function fetchWithAuth(url: string, options: RequestInit = {}, useAuthService: boolean = false) {
-    let token = '';
-    authStore.subscribe(state => {
-        token = state.token || '';
-    })();
+// Queue for pending requests
+let pendingRequests: Array<{
+    resolve: (response: Response) => void;
+    reject: (error: Error) => void;
+    url: string;
+    options: RequestInit;
+    useAuthService: boolean;
+}> = [];
 
-    if (token) {
-        options.headers = {
-            ...options.headers,
-            Authorization: `Bearer ${token}`
-        };
+let isStoreReady = false;
+let currentToken = '';
+
+// Subscribe to authStore to keep track of token changes
+authStore.subscribe(state => {
+    currentToken = state.token || '';
+
+    // If we now have a token and there are pending requests, process them
+    if (currentToken && currentToken.length > 0) {
+        if (!isStoreReady) {
+            isStoreReady = true;
+        }
+        // Always process pending requests when we have a token
+        if (pendingRequests.length > 0) {
+            processPendingRequests();
+        }
+    } else if (!currentToken || currentToken.length === 0) {
+        isStoreReady = false;
     }
+
+});
+
+// Function to process pending requests
+async function processPendingRequests() {
+    const requestsToProcess = [...pendingRequests];
+    pendingRequests = []; // Clear the queue before processing
+    for (const req of requestsToProcess) {
+        try {
+            const resp = await executeRequest(req.url, req.options, req.useAuthService);
+            req.resolve(resp);
+        } catch (error) {
+            req.reject(error as Error);
+        }
+    }
+
+
+}
+
+async function executeRequest(url: string, options: RequestInit, useAuthService: boolean): Promise<Response> {
+    // Add auth header
+    options.headers = {
+        ...options.headers,
+        Authorization: `Bearer ${currentToken}`
+    };
 
     const normalizedUrl = url.startsWith('/') ? url.substring(1) : url;
     let finalUrl: string;
@@ -21,21 +62,51 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}, useA
     } else {
         finalUrl = `${config.apiBaseUrl}/${normalizedUrl}`;
     }
+
     let response = await fetch(finalUrl, options);
 
     if (response.status === 401 && response.headers.get('Token-Expired') === 'true') {
         const newToken = await refreshAccessToken();
         if (newToken) {
             authStore.setToken(newToken);
+            currentToken = newToken;
             options.headers = {
                 ...options.headers,
                 Authorization: `Bearer ${newToken}`
             };
             response = await fetch(finalUrl, options);
-        };
+        }
     }
     return response;
-};
+}
+
+export async function fetchWithAuth(url: string, options: RequestInit = {}, useAuthService: boolean = false): Promise<Response> {
+    return new Promise((resolve, reject) => {
+        // If store is ready and we have a token, execute immediately
+        if (isStoreReady && currentToken && currentToken.length > 0) {
+            executeRequest(url, options, useAuthService).then(resolve).catch(reject);
+        } else if (!currentToken || currentToken.length === 0) {
+            // If no token and store seems ready, this might be an unauthenticated state
+            if (isStoreReady) {
+                reject(new Error('No valid token available'));
+                return;
+            }
+
+            // Queue the request
+            pendingRequests.push({
+                resolve: (response: Response) => resolve(response),
+                reject,
+                url,
+                options,
+                useAuthService
+            });
+        } else {
+            // Token exists but store might not be fully initialized, execute anyway
+            executeRequest(url, options, useAuthService).then(resolve).catch(reject);
+        }
+    })
+}
+
 
 export async function refreshAccessToken(): Promise<string | null> {
     try {
