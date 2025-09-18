@@ -104,6 +104,8 @@ function createFavoritesStore() {
 
             if (result === null) {
                 await store.loadFavourites();
+            } else {
+                update(state => ({ ...state, ids: result }));
             }
         },
 

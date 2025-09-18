@@ -71,8 +71,8 @@ export async function removeFavorite(id: number): Promise<number[] | null> {
     }
 }
 
-export async function setFavourites(ids: number[]): Promise<void | null> {
-    try{
+export async function setFavourites(ids: number[]): Promise<number[] | null> {
+    try {
         const resp = await fetchWithAuth('/favorites', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -82,6 +82,7 @@ export async function setFavourites(ids: number[]): Promise<void | null> {
             console.error('Failed to set favorites:', resp.statusText);
             return null;
         }
+        return await resp.json();
     } catch (err) {
         console.error('Error during setFavourites:', err);
         return null;
