@@ -1,4 +1,4 @@
-import { addFavorite, getFavorites, removeFavorite } from "$lib/api/userClient";
+import { addFavorite, getFavorites, removeFavorite, setFavourites as setFavouritesApi } from "$lib/api/userClient";
 import { writable } from "svelte/store";
 
 export interface FavoritesState {
@@ -97,6 +97,15 @@ function createFavoritesStore() {
             }
         },
 
+        setFavourites: async (ids: number[]) => {
+            update(state => ({ ...state, ids: [...ids] }));
+
+            const result = await setFavouritesApi(ids);
+
+            if (result === null) {
+                await store.loadFavourites();
+            }
+        },
 
         reset: () => set(initialState)
     };
