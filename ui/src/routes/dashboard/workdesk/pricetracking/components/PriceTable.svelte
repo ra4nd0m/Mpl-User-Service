@@ -18,7 +18,9 @@
 
 	import { m } from '$lib/i18n';
 
-	const materialId = $props<number>();
+	const { materialId } = $props<{
+		materialId: number;
+	}>();
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let priceData = $state<MaterialDateMetricsResp[] | null>(null);
@@ -290,6 +292,7 @@
 	}
 
 	onMount(async () => {
+		if (typeof materialId !== 'number') return;
 		await loadSettings();
 		fetchData();
 	});
@@ -421,10 +424,18 @@
 			</div>
 			<div class="date-controls">
 				<div class="date-presets">
-					<button class="date-btn" onclick={setLastWeek}>{m.workdesk_price_tracking_table_selector_date_last_7_days()}</button>
-					<button class="date-btn" onclick={setLastMonth}>{m.workdesk_price_tracking_table_selector_date_last_30_days()}</button>
-					<button class="date-btn" onclick={setLast3Months}>{m.workdesk_price_tracking_table_selector_date_last_90_days()}</button>
-					<button class="date-btn reset-btn" onclick={resetDateSettings}>{m.workdesk_price_tracking_table_selector_date_reset()}</button>
+					<button class="date-btn" onclick={setLastWeek}
+						>{m.workdesk_price_tracking_table_selector_date_last_7_days()}</button
+					>
+					<button class="date-btn" onclick={setLastMonth}
+						>{m.workdesk_price_tracking_table_selector_date_last_30_days()}</button
+					>
+					<button class="date-btn" onclick={setLast3Months}
+						>{m.workdesk_price_tracking_table_selector_date_last_90_days()}</button
+					>
+					<button class="date-btn reset-btn" onclick={resetDateSettings}
+						>{m.workdesk_price_tracking_table_selector_date_reset()}</button
+					>
 				</div>
 
 				<div class="date-range-picker">
@@ -444,7 +455,9 @@
 						/>
 					</div>
 
-					<button class="apply-btn" onclick={applyDateRange}>{m.workdesk_price_tracking_table_selector_date_apply()}</button>
+					<button class="apply-btn" onclick={applyDateRange}
+						>{m.workdesk_price_tracking_table_selector_date_apply()}</button
+					>
 				</div>
 			</div>
 		{/if}
@@ -460,14 +473,17 @@
 			{:else if error}
 				<div class="error-message">
 					{error}
-					<button class="retry-button" onclick={fetchData}>{m.workdesk_price_tracking_table_retry()}</button>
+					<button class="retry-button" onclick={fetchData}
+						>{m.workdesk_price_tracking_table_retry()}</button
+					>
 				</div>
 			{:else if priceData && priceData.length > 0}
 				<table class="price-table">
 					<thead>
 						<tr>
 							<th class="sortable" onclick={toggleSort}
-								>{m.workdesk_price_tracking_table_head_date()} {#if sortDirection}
+								>{m.workdesk_price_tracking_table_head_date()}
+								{#if sortDirection}
 									<span class="sort-indicator">
 										{#if sortDirection === 'asc'}
 											<svg

@@ -58,11 +58,17 @@
 		{#if favoriteIds.length > 1}
 			<div class="dnd-controls">
 				{#if !dndEnabled}
-					<button class="btn-reorder" onclick={enableDnd}> {m.workdesk_price_tracking_reorder_tables_btn()} </button>
+					<button class="btn-reorder" onclick={enableDnd}>
+						{m.workdesk_price_tracking_reorder_tables_btn()}
+					</button>
 				{:else}
 					<div class="dnd-actions">
-						<button class="btn-confirm" onclick={confirmDndChanges}> {m.universal_confirm_btn()} </button>
-						<button class="btn-cancel" onclick={cancelDndChanges}> {m.universal_cancel_btn()} </button>
+						<button class="btn-confirm" onclick={confirmDndChanges}>
+							{m.universal_confirm_btn()}
+						</button>
+						<button class="btn-cancel" onclick={cancelDndChanges}>
+							{m.universal_cancel_btn()}
+						</button>
 					</div>
 				{/if}
 			</div>
