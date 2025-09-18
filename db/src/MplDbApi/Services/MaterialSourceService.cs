@@ -129,105 +129,106 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
 
     public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId, string role)
     {
-        string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
+                string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
         if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
         {
             return cachedMaterials;
         }
-        // If not cached, proceed with the database query
+
         var filter = await filterService.GetFilterByRole(role);
         int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
 
+        // Step 1: same pattern as GetAllMaterials (two latest distinct dates)
         var intermediateResults = await _context.MaterialSources
+            .AsSplitQuery()
             .Include(m => m.Material)
             .Include(m => m.Source)
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
-            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id)) // Exclude materials from filter
-            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId)) // Filter by groups
-            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId)) // Filter by sources
-            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId)) // Filter by units
+            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id))
+            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId))
+            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId))
+            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId))
             .Where(m => m.MaterialGroupId == groupId && m.Unit.Id != 5)
-            .Select(m => new // Project to find the latest date first
+            .Select(m => new
             {
                 MaterialSource = m,
                 LatestDate = _context.MaterialValues
                     .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
-                    .OrderByDescending(mv => mv.CreatedOn)
+                    .GroupBy(mv => mv.CreatedOn)
+                    .OrderByDescending(g => g.Key)
                     .Take(2)
+                    .Select(g => g.Key)
                     .ToList(),
                 AvailableProps = _context.MaterialProperties
                     .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
                     .Select(mp => mp.PropertyId)
-                    .ToList() // Materialize AvailableProps list
+                    .ToList()
             })
-            .Select(result => new // Project to get values for that latest date
+            .Select(result => new
             {
                 result.MaterialSource,
                 result.LatestDate,
                 result.AvailableProps,
-                LatestValues = result.LatestDate == null ?
-                    emptyValueList :
-                    _context.MaterialValues
-                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                                     mv.CreatedOn == result.LatestDate.Max(res => res.CreatedOn) &&
-                                     latestValuePropertyIds.Contains(mv.PropertyId))
-                        // Select into the named struct
+                LatestValues = result.LatestDate == null || result.LatestDate.Count == 0
+                    ? emptyValueList
+                    : _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id
+                                     && mv.CreatedOn == result.LatestDate.Max()
+                                     && latestValuePropertyIds.Contains(mv.PropertyId))
                         .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
-                        // Materialize the list of the struct
                         .ToList(),
-                PreviousValues = result.LatestDate == null ?
-                    emptyValueList :
-                    _context.MaterialValues
-                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
-                                    mv.CreatedOn == result.LatestDate.Min(mv => mv.CreatedOn) &&
-                                    latestValuePropertyIds.Contains(mv.PropertyId))
+                PreviousValues = result.LatestDate == null || result.LatestDate.Count < 2
+                    ? emptyValueList
+                    : _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id
+                                     && mv.CreatedOn == result.LatestDate.Min()
+                                     && latestValuePropertyIds.Contains(mv.PropertyId))
                         .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
                         .ToList()
-
             })
             .AsNoTracking()
-            .ToListAsync(); // Execute the database query
+            .ToListAsync();
 
-        // Step 2: Perform the final projection in memory
+        // Step 2: in-memory projection
         var materialsList = intermediateResults.Select(finalResult =>
         {
-            var latestAvgValue = finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal;
-            var previousAvgValue = finalResult.PreviousValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal;
+            var latestAvgValue = finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 1).ValueDecimal;
+            var previousAvgValue = finalResult.PreviousValues.FirstOrDefault(v => v.PropertyId == 1).ValueDecimal;
 
             string changePercent = "";
             if (latestAvgValue.HasValue && previousAvgValue.HasValue)
             {
                 changePercent = ValueChangeFormatter.FormatValueChange(previousAvgValue.Value, latestAvgValue.Value);
             }
+
             DateOnly? latestDate = finalResult.LatestDate != null && finalResult.LatestDate.Count != 0
-                ? finalResult.LatestDate.Max(mv => mv.CreatedOn)
+                ? finalResult.LatestDate.Max()
                 : null;
 
             return new MaterialSourceResponseDto(
-            finalResult.MaterialSource.Id,
-            finalResult.MaterialSource.Material.Name,
-            finalResult.MaterialSource.Source.Name,
-            finalResult.MaterialSource.DeliveryType.Name,
-            finalResult.MaterialSource.MaterialGroup.Name,
-            finalResult.MaterialSource.TargetMarket,
-            finalResult.MaterialSource.Unit.Name,
-            latestDate,
-            changePercent,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
-            finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
-            finalResult.AvailableProps
+                finalResult.MaterialSource.Id,
+                finalResult.MaterialSource.Material.Name,
+                finalResult.MaterialSource.Source.Name,
+                finalResult.MaterialSource.DeliveryType.Name,
+                finalResult.MaterialSource.MaterialGroup.Name,
+                finalResult.MaterialSource.TargetMarket,
+                finalResult.MaterialSource.Unit.Name,
+                latestDate,
+                changePercent,
+                finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 1).ValueDecimal,
+                finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 2).ValueDecimal,
+                finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 3).ValueDecimal,
+                finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 6).ValueDecimal,
+                finalResult.AvailableProps
             );
-        }).ToList(); // Create the final list of DTOs
+        }).ToList();
 
-        memoryCache.Set(cacheKey, materialsList, TimeSpan.FromHours(2)); // Cache the result for 2 hours
+        memoryCache.Set(cacheKey, materialsList, TimeSpan.FromHours(2));
         return materialsList;
-        //
     }
 
     public async Task<MaterialSourceResponseDto?> GetMaterialById(int id, string role)
@@ -237,68 +238,100 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
         {
             return cachedMaterial;
         }
-        // If not cached, proceed with the database query
-        int[] propertyIds = { 1, 2, 3, 6 };
+
+        var filter = await filterService.GetFilterByRole(role);
+        int[] latestValuePropertyIds = { 1, 2, 3, 6 };
         int[] availablePropertyIds = { 1, 2, 3, 4, 5, 6 };
         var emptyValueList = new List<PropertyValueInfo>();
 
-        // Step 1: Fetch the basic material information
-        var materialQuery = await _context.MaterialSources
+        // Query with same pattern as GetAllMaterials: fetch up to two latest distinct dates, then values for those dates
+        var intermediate = await _context.MaterialSources
+            .AsSplitQuery()
             .Include(m => m.Material)
             .Include(m => m.Source)
             .Include(m => m.DeliveryType)
             .Include(m => m.MaterialGroup)
             .Include(m => m.Unit)
-            .Where(m => m.Id == id && m.Unit.Id != 5)
+            .Where(m => m.Id == id)
+            .Where(m => filter.MaterialIds == null || !filter.MaterialIds.Contains(m.Id))
+            .Where(m => filter.Groups == null || !filter.Groups.Contains(m.MaterialGroupId))
+            .Where(m => filter.Sources == null || !filter.Sources.Contains(m.SourceId))
+            .Where(m => filter.Units == null || !filter.Units.Contains(m.UnitId))
             .Select(m => new
             {
                 MaterialSource = m,
                 LatestDate = _context.MaterialValues
-                    .Where(mv => mv.Uid == m.Id && propertyIds.Contains(mv.PropertyId))
-                    .Max(mv => (DateOnly?)mv.CreatedOn),
+                    .Where(mv => mv.Uid == m.Id && latestValuePropertyIds.Contains(mv.PropertyId))
+                    .GroupBy(mv => mv.CreatedOn)
+                    .OrderByDescending(g => g.Key)
+                    .Take(2)
+                    .Select(g => g.Key)
+                    .ToList(),
                 AvailableProps = _context.MaterialProperties
                     .Where(mp => mp.Uid == m.Id && availablePropertyIds.Contains(mp.PropertyId))
                     .Select(mp => mp.PropertyId)
                     .ToList()
             })
+            .Select(result => new
+            {
+                result.MaterialSource,
+                result.AvailableProps,
+                result.LatestDate,
+                LatestValues = result.LatestDate == null || result.LatestDate.Count == 0
+                    ? emptyValueList
+                    : _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
+                                     mv.CreatedOn == result.LatestDate.Max() &&
+                                     latestValuePropertyIds.Contains(mv.PropertyId))
+                        .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
+                        .ToList(),
+                PreviousValues = result.LatestDate == null || result.LatestDate.Count < 2
+                    ? emptyValueList
+                    : _context.MaterialValues
+                        .Where(mv => mv.Uid == result.MaterialSource.Id &&
+                                     mv.CreatedOn == result.LatestDate.Min() &&
+                                     latestValuePropertyIds.Contains(mv.PropertyId))
+                        .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
+                        .ToList()
+            })
             .AsNoTracking()
             .FirstOrDefaultAsync();
 
-        if (materialQuery == null)
+        if (intermediate == null)
             throw new KeyNotFoundException($"Material with id {id} not found.");
 
-        // Step 2: Fetch the latest values if we have a date
-        var latestValues = new List<PropertyValueInfo>();
-        if (materialQuery.LatestDate.HasValue)
+        var latestAvgValue = intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 1).ValueDecimal;
+        var previousAvgValue = intermediate.PreviousValues.FirstOrDefault(v => v.PropertyId == 1).ValueDecimal;
+
+        string changePercent = "";
+        if (latestAvgValue.HasValue && previousAvgValue.HasValue)
         {
-            latestValues = await _context.MaterialValues
-                .Where(mv => mv.Uid == materialQuery.MaterialSource.Id &&
-                          mv.CreatedOn == materialQuery.LatestDate.Value &&
-                          propertyIds.Contains(mv.PropertyId))
-                .Select(mv => new PropertyValueInfo(mv.PropertyId, mv.ValueDecimal))
-                .ToListAsync();
+            changePercent = ValueChangeFormatter.FormatValueChange(previousAvgValue.Value, latestAvgValue.Value);
         }
 
-        // Step 3: Create the DTO with in-memory operations
+        DateOnly? latestDate = intermediate.LatestDate != null && intermediate.LatestDate.Count != 0
+            ? intermediate.LatestDate.Max()
+            : null;
+
         var response = new MaterialSourceResponseDto(
-            materialQuery.MaterialSource.Id,
-            materialQuery.MaterialSource.Material.Name,
-            materialQuery.MaterialSource.Source.Name,
-            materialQuery.MaterialSource.DeliveryType.Name,
-            materialQuery.MaterialSource.MaterialGroup.Name,
-            materialQuery.MaterialSource.TargetMarket,
-            materialQuery.MaterialSource.Unit.Name,
-            materialQuery.LatestDate,
-            "",
-            latestValues.FirstOrDefault(mv => mv.PropertyId == 1).ValueDecimal,
-            latestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
-            latestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
-            latestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
-            materialQuery.AvailableProps
+            intermediate.MaterialSource.Id,
+            intermediate.MaterialSource.Material.Name,
+            intermediate.MaterialSource.Source.Name,
+            intermediate.MaterialSource.DeliveryType.Name,
+            intermediate.MaterialSource.MaterialGroup.Name,
+            intermediate.MaterialSource.TargetMarket,
+            intermediate.MaterialSource.Unit.Name,
+            latestDate,
+            changePercent,
+            intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 1).ValueDecimal,
+            intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 2).ValueDecimal,
+            intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 3).ValueDecimal,
+            intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 6).ValueDecimal,
+            intermediate.AvailableProps
         );
 
-        memoryCache.Set(cacheKey, response, TimeSpan.FromHours(2)); // Cache the result for 2 hours
-
+        memoryCache.Set(cacheKey, response, TimeSpan.FromHours(2));
         return response;
     }
 }
+
