@@ -94,7 +94,7 @@
 		class:dnd-active={isDragging}
 	>
 		{#each dndEnabled ? tempFavourites : favoriteIdsAsItems as { id } (id)}
-			<PriceTable materialId={id} />
+			<PriceTable materialId={id} bind:dndEnabled />
 		{/each}
 	</div>
 {/if}
