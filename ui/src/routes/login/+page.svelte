@@ -4,11 +4,16 @@
 	import { login } from '$lib/api/authClient';
 	import { locales, switchLocale, locale, m } from '$lib/i18n';
 
-	let email = '';
-	let password = '';
-	let rememberMe = false;
-	let error = '';
-	let loading = false;
+	let email = $state('');
+	let password = $state('');
+	let rememberMe = $state(false);
+	let error = $state('');
+	let loading = $state(false);
+	let showPassword = $state(false);
+
+	function togglePasswordVisibility() {
+		showPassword = !showPassword;
+	}
 
 	async function handleLogin(event: SubmitEvent) {
 		event.preventDefault();
@@ -106,7 +111,56 @@
 			</div>
 			<h2 class="form-title">{m.login_header()}</h2>
 			<input type="text" placeholder={m.login_email()} bind:value={email} required />
-			<input type="password" placeholder={m.login_password()} bind:value={password} required />
+			<div class="password-input-container">
+				<input
+					type={showPassword ? 'text' : 'password'}
+					placeholder={m.login_password()}
+					bind:value={password}
+					required
+				/>
+				<button
+					type="button"
+					class="password-toggle-button"
+					onclick={togglePasswordVisibility}
+					title={showPassword ? m.universal_hide_password() : m.universal_show_password()}
+					aria-label={showPassword ? m.universal_hide_password() : m.universal_show_password()}
+				>
+					{#if showPassword}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="m15 18-.722-3.25"></path>
+							<path d="M2 8a10.645 10.645 0 0 0 20 0"></path>
+							<path d="m20 15-1.726-2.05"></path>
+							<path d="m4 15 1.726-2.05"></path>
+							<path d="m9 18 .722-3.25"></path>
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+							<circle cx="12" cy="12" r="3"></circle>
+						</svg>
+					{/if}
+				</button>
+			</div>
 			<div class="remember-container">
 				<input type="checkbox" id="remember" bind:checked={rememberMe} />
 				<label for="remember">{m.login_remember_me()}</label>
@@ -122,143 +176,202 @@
 {/key}
 
 <style>
-	.login-container {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		min-height: 75vh;
-		position: relative;
-	}
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 75vh;
+        position: relative;
+    }
 
-	.language-toggle {
-		position: absolute;
-		top: 20px;
-		right: 20px;
-		z-index: 10;
-	}
+    .language-toggle {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+    }
 
-	.language-toggle select {
-		padding: 8px 12px;
-		border: 1px solid #ced4da;
-		border-radius: 4px;
-		background-color: white;
-		color: #727271;
-		font-size: 14px;
-		cursor: pointer;
-		transition: border-color 0.2s;
-	}
+    .language-toggle select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        background-color: white;
+        color: #727271;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
 
-	.language-toggle select:focus {
-		outline: none;
-		border-color: #ea5b21;
-		box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
-	}
+    .language-toggle select:focus {
+        outline: none;
+        border-color: #ea5b21;
+        box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
+    }
 
-	form {
-		display: flex;
-		justify-content: center;
-		flex-direction: column;
-		align-items: center;
-		width: 300px;
-		padding: 20px;
-		border-radius: 8px;
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-		background-color: white;
-	}
+    form {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        width: 300px;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        background-color: white;
+    }
 
-	.logo {
-		display: flex;
-		align-items: center;
-		margin-bottom: 20px;
-	}
+    .logo {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
 
-	.logo svg {
-		height: 30px;
-		width: auto;
-	}
+    .logo svg {
+        height: 30px;
+        width: auto;
+    }
 
-	.form-title {
-		margin-bottom: 20px;
-		color: #727271;
-		font-size: 1.5rem;
-	}
+    .form-title {
+        margin-bottom: 20px;
+        color: #727271;
+        font-size: 1.5rem;
+    }
 
-	input[type='text'],
-	input[type='password'] {
-		margin: 10px;
-		padding: 12px;
-		width: 200px;
-		border: 1px solid #ced4da;
-		border-radius: 4px;
-		font-size: 14px;
-		transition: border-color 0.2s;
-	}
+    input[type='text'],
+    input[type='password'] {
+        margin: 10px;
+        padding: 12px 16px;
+        width: 200px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #727271;
+        background-color: white;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+    }
 
-	input[type='text']:focus,
-	input[type='password']:focus {
-		outline: none;
-		border-color: #ea5b21;
-		box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
-	}
+    input[type='text']:focus,
+    input[type='password']:focus {
+        outline: none;
+        border-color: #ea5b21;
+        box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
+    }
 
-	.remember-container {
-		display: flex;
-		align-items: center;
-		width: 200px;
-		margin: 10px 0;
-	}
+    .password-input-container {
+        position: relative;
+        margin: 10px;
+        width: 200px;
+    }
 
-	.remember-container input[type='checkbox'] {
-		margin-right: 8px;
-	}
+    .password-input-container input[type='password'],
+    .password-input-container input[type='text'] {
+        margin: 0;
+        width: 100%;
+        padding: 12px 40px 12px 16px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #727271;
+        background-color: white;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+    }
 
-	.remember-container label {
-		color: #727271;
-		font-size: 14px;
-	}
+    .password-toggle-button {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        margin: 0;
+        width: 24px;
+        height: 24px;
+        color: #727271;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: color 0.2s, background-color 0.2s;
+    }
 
-	.error-message {
-		color: #e74c3c;
-		margin: 10px 0;
-		text-align: center;
-		width: 200px;
-		font-size: 14px;
-		background-color: rgba(231, 76, 60, 0.1);
-		padding: 8px;
-		border-radius: 4px;
-	}
+    .password-toggle-button:hover {
+        background-color: rgba(234, 91, 33, 0.1);
+        color: #ea5b21;
+    }
 
-	button {
-		margin: 10px;
-		padding: 12px 16px;
-		width: 200px;
-		background-color: #ea5b21;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: background-color 0.2s;
-		font-size: 14px;
-		font-weight: 500;
-	}
+    .password-toggle-button:focus {
+        outline: 2px solid #ea5b21;
+        outline-offset: 1px;
+    }
 
-	button:hover:not(:disabled) {
-		background-color: #d54e1a;
-	}
+    .password-toggle-button:disabled {
+        background-color: transparent;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
 
-	button:disabled {
-		background-color: rgba(234, 91, 33, 0.5);
-		cursor: not-allowed;
-	}
+    .remember-container {
+        display: flex;
+        align-items: center;
+        width: 200px;
+        margin: 10px 0;
+    }
 
-	@media (max-width: 600px) {
-		.logo svg {
-			height: 25px;
-		}
+    .remember-container input[type='checkbox'] {
+        margin-right: 8px;
+    }
 
-		form {
-			width: 90%;
-			max-width: 300px;
-		}
-	}
+    .remember-container label {
+        color: #727271;
+        font-size: 14px;
+    }
+
+    .error-message {
+        color: #e74c3c;
+        margin: 10px 0;
+        text-align: center;
+        width: 200px;
+        font-size: 14px;
+        background-color: rgba(231, 76, 60, 0.1);
+        padding: 8px;
+        border-radius: 4px;
+    }
+
+    button[type="submit"] {
+        margin: 10px;
+        padding: 12px 16px;
+        width: 200px;
+        background-color: #ea5b21;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    button[type="submit"]:hover:not(:disabled) {
+        background-color: #d54e1a;
+    }
+
+    button[type="submit"]:disabled {
+        background-color: rgba(234, 91, 33, 0.5);
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 600px) {
+        .logo svg {
+            height: 25px;
+        }
+
+        form {
+            width: 90%;
+            max-width: 300px;
+        }
+    }
 </style>
