@@ -11,8 +11,15 @@ namespace MplDbApi.Utils
 
             var percent = diff / oldValue * 100;
 
-            var percentStr = $"{percent:0.##;-0.##;0}".Replace('.', ',') + "%";
-            var diffStr = $"{diff:0.##;-0.##;0}".Replace('.', ',');
+            static string FormatSigned(decimal value, string suffix = "")
+            {
+                var absStr = Math.Abs(value).ToString("0.##").Replace('.', ',');
+                var sign = value > 0 ? "+" : "-";
+                return $"{sign}{absStr}{suffix}";
+            }
+
+            var percentStr = FormatSigned(percent, "%");
+            var diffStr = FormatSigned(diff);
 
             return $"{percentStr} ({diffStr})";
         }
