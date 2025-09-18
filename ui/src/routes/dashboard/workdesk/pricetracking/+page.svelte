@@ -3,8 +3,7 @@
 	import PriceTable from './components/PriceTable.svelte';
 	import { m } from '$lib/i18n';
 
-	const favoriteIds = $derived($favoritesStore.ids.sort((a, b) => a - b));
-	const widgetSettings = $derived($favoritesStore);
+	const favoriteIds = $derived($favoritesStore.ids);
 </script>
 
 <svelte:head>
@@ -25,7 +24,7 @@
 	</div>
 {:else}
 	<div class="price-tables-container">
-		{#each widgetSettings.ids as id}
+		{#each favoriteIds as id}
 			<PriceTable materialId={id} />
 		{/each}
 	</div>
