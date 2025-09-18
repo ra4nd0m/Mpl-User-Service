@@ -71,6 +71,23 @@ export async function removeFavorite(id: number): Promise<number[] | null> {
     }
 }
 
+export async function setFavourites(ids: number[]): Promise<void | null> {
+    try{
+        const resp = await fetchWithAuth('/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ids)
+        });
+        if (!resp.ok) {
+            console.error('Failed to set favorites:', resp.statusText);
+            return null;
+        }
+    } catch (err) {
+        console.error('Error during setFavourites:', err);
+        return null;
+    }
+}
+
 export async function getMaterials(): Promise<Material[] | null> {
     try {
         const resp = await fetchWithAuth('data/filtered/materials');
