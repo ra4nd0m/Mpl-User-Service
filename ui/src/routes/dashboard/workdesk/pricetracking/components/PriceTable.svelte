@@ -346,18 +346,59 @@
 					</svg>
 				</button>
 			{/if}
-			<h3>
+			<div class="material-info">
+				<h3>
+					{#if materialInfo}
+						{materialInfo.materialName}
+						<span class="material-details">
+							({materialInfo.unit}
+							{#if materialInfo.deliveryType}, {materialInfo.deliveryType}{/if}
+							{#if materialInfo.market}, {materialInfo.market}{/if})
+						</span>
+					{:else}
+						Price History
+					{/if}
+				</h3>
+
 				{#if materialInfo}
-					{materialInfo.materialName}
-					<span class="material-details">
-						({materialInfo.unit}
-						{#if materialInfo.deliveryType}, {materialInfo.deliveryType}{/if}
-						{#if materialInfo.market}, {materialInfo.market}{/if})
-					</span>
-				{:else}
-					Price History
+					<div class="latest-values">
+						{#if materialInfo.avalibleProps.some((s) => s === 1)}
+							<span class="latest-value">
+								<span class="value-label"
+									>{m.workdesk_price_tracking_table_head_price_average_latest()}:</span
+								>
+								<span class="value-amount"
+									>{formatPrice(materialInfo.latestAvgValue?.toString() ?? null)}</span
+								>
+								{#if materialInfo.unit}
+									<span class="value-unit"> {materialInfo.unit}</span>
+								{/if}
+							</span>
+						{/if}
+
+						{#if materialInfo.changePercent}
+							<span
+								class="change-percent"
+								class:positive={parseFloat(materialInfo.changePercent) > 0}
+								class:negative={parseFloat(materialInfo.changePercent) < 0}
+							>
+								{materialInfo.changePercent}
+							</span>
+						{/if}
+
+						{#if materialInfo.avalibleProps.some((s) => s === 6) && materialInfo.latestSupplyValue}
+							<span class="supply-value">
+								<span class="value-label"
+									>{m.workdesk_price_tracking_table_head_price_supply_latest()}:</span
+								>
+								<span class="value-amount"
+									>{formatPrice(materialInfo.latestSupplyValue?.toString() ?? null)}</span
+								>
+							</span>
+						{/if}
+					</div>
 				{/if}
-			</h3>
+			</div>
 		</div>
 
 		{#if !dndEnabled}
@@ -1489,6 +1530,75 @@
 	@media (max-width: 768px) {
 		.radio-group {
 			gap: 0.5rem;
+		}
+	}
+
+	.material-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.latest-values {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: center;
+		font-size: 0.875rem;
+	}
+
+	.latest-value,
+	.supply-value {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: #495057;
+	}
+
+	.value-label {
+		color: #6c757d;
+		font-weight: 500;
+	}
+
+	.value-amount {
+		font-weight: 600;
+		color: #212529;
+	}
+
+	.value-unit {
+		color: #6c757d;
+		font-size: 0.8em;
+	}
+
+	.change-percent {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		font-weight: 600;
+		padding: 0.2rem 0.4rem;
+		border-radius: 4px;
+		font-size: 0.8rem;
+	}
+
+	.change-percent.positive {
+		color: #198754;
+		background-color: #d1eddb;
+	}
+
+	.change-percent.negative {
+		color: #dc3545;
+		background-color: #f8d7da;
+	}
+
+	@media (max-width: 768px) {
+		.latest-values {
+			gap: 0.5rem;
+			font-size: 0.8rem;
+		}
+
+		.change-percent {
+			font-size: 0.75rem;
+			padding: 0.15rem 0.3rem;
 		}
 	}
 </style>
