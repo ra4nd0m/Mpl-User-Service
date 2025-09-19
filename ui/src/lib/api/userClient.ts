@@ -322,6 +322,7 @@ export interface Material {
     latestAvgValue?: number | null;
     latestMinValue?: number | null;
     latestMaxValue?: number | null;
+    latestSupplyValue?: number | null;
     avalibleProps: number[];
 
 }

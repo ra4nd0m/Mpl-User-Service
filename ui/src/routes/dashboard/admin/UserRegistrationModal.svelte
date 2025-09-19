@@ -178,11 +178,11 @@
 									class="password-toggle-button"
 									onclick={togglePasswordVisibility}
 									title={showPassword
-										? m.admin_create_user_hide_password()
-										: m.admin_create_user_show_password()}
+										? m.universal_hide_password()
+										: m.universal_show_password()}
 									aria-label={showPassword
-										? m.admin_create_user_hide_password()
-										: m.admin_create_user_show_password()}
+										? m.universal_hide_password()
+										: m.universal_show_password()}
 								>
 									{#if showPassword}
 										<svg
