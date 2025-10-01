@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dndzone } from 'svelte-dnd-action';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
-	import PriceTable from './components/PriceTable.svelte';
+	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
 	import { m } from '$lib/i18n';
 
 	const favoriteIds = $derived($favoritesStore.ids);
@@ -94,7 +94,7 @@
 		class:dnd-active={isDragging}
 	>
 		{#each dndEnabled ? tempFavourites : favoriteIdsAsItems as { id } (id)}
-			<PriceTable materialId={id} bind:dndEnabled />
+			<PriceTable materialId={id} bind:dndEnabled isFoldable={true} />
 		{/each}
 	</div>
 {/if}
