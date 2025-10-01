@@ -18,7 +18,11 @@
 
 	import { m, locale } from '$lib/i18n';
 
-	const { materialId, dndEnabled = $bindable(false), isFoldable = true } = $props<{
+	const {
+		materialId,
+		dndEnabled = $bindable(false),
+		isFoldable = true
+	} = $props<{
 		materialId: number;
 		dndEnabled: boolean;
 		isFoldable: boolean;
@@ -326,7 +330,7 @@
 	});
 </script>
 
-<div class="price-table-container">
+<div class="price-table-container" class:full-height={!isFoldable}>
 	<div class="table-header">
 		<div class="header-left">
 			{#if !dndEnabled && isFoldable}
@@ -1192,6 +1196,21 @@
 		overflow: hidden;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 		transition: all 0.3s ease;
+	}
+
+	.price-table-container.full-height {
+		height: 100%;
+		margin-bottom: 0;
+		display: flex;
+		flex-direction: column;
+		border: none;
+		box-shadow: none;
+	}
+	
+	.price-table-container.full-height .table-content {
+		flex: 1;
+		max-height: none;
+		overflow-y: visible;
 	}
 
 	.price-table-container:hover {

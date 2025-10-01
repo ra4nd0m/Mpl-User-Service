@@ -74,7 +74,9 @@
 					</svg>
 				</button>
 			</div>
-			<Component {...componentProps} />
+			<div class="modal-body">
+				<Component {...componentProps} />
+			</div>
 		</div>
 	</div>
 {/if}
@@ -112,6 +114,12 @@
 		margin: 0;
 		font-size: 1.25rem;
 		color: #343a40;
+	}
+
+	.modal-body {
+		flex: 1;
+		overflow: auto;
+		padding: 5px;
 	}
 
 	.close-button {
