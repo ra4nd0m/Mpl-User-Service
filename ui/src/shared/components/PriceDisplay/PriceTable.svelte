@@ -18,9 +18,10 @@
 
 	import { m, locale } from '$lib/i18n';
 
-	const { materialId, dndEnabled = $bindable(false) } = $props<{
+	const { materialId, dndEnabled = $bindable(false), isFoldable = true } = $props<{
 		materialId: number;
 		dndEnabled: boolean;
+		isFoldable: boolean;
 	}>();
 
 	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
@@ -328,7 +329,7 @@
 <div class="price-table-container">
 	<div class="table-header">
 		<div class="header-left">
-			{#if !dndEnabled}
+			{#if !dndEnabled && isFoldable}
 				<button class="toggle-button" onclick={toggleExpand} aria-label="Toggle table visibility">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
