@@ -15,12 +15,18 @@
 	import { onMount } from 'svelte';
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
+	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 
 	import { m, locale } from '$lib/i18n';
 
-	const { materialId, dndEnabled = $bindable(false) } = $props<{
+	const {
+		materialId,
+		dndEnabled = $bindable(false),
+		isFoldable = true
+	} = $props<{
 		materialId: number;
 		dndEnabled: boolean;
+		isFoldable: boolean;
 	}>();
 
 	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
@@ -37,6 +43,8 @@
 	let aggregatesChosen = $state<string[]>([]);
 	let filteredData = $state<FilteredData[]>([]);
 	let filteredDataOrdered = $state<FilteredData[]>([]);
+
+	let isChartModalShown = $state(false);
 
 	type FilteredData = {
 		date: string;
@@ -318,6 +326,10 @@
 		}
 	}
 
+	function openChartModal() {
+		isChartModalShown = true;
+	}
+
 	onMount(async () => {
 		if (typeof materialId !== 'number') return;
 		await loadSettings();
@@ -325,10 +337,10 @@
 	});
 </script>
 
-<div class="price-table-container">
+<div class="price-table-container" class:full-height={!isFoldable}>
 	<div class="table-header">
 		<div class="header-left">
-			{#if !dndEnabled}
+			{#if !dndEnabled && isFoldable}
 				<button class="toggle-button" onclick={toggleExpand} aria-label="Toggle table visibility">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -356,7 +368,7 @@
 							{#if materialInfo.market}, {materialInfo.market}{/if})
 						</span>
 					{:else}
-						Price History
+						{m.workdesk_price_tracking_chart_price_history()}
 					{/if}
 				</h3>
 
@@ -422,7 +434,24 @@
 						</svg>
 						<span>{m.workdesk_price_tracking_table_export()}</span>
 					</button>
-					<ChartModal {priceData} {materialInfo} {filteredData} {aggregatesChosen} />
+					<button class="chart-btn" onclick={openChartModal} aria-label="View chart">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<line x1="18" y1="20" x2="18" y2="10"></line>
+							<line x1="12" y1="20" x2="12" y2="4"></line>
+							<line x1="6" y1="20" x2="6" y2="14"></line>
+						</svg>
+						{m.workdesk_price_tracking_chart_view_chart()}
+					</button>
 				</div>
 			</div>
 		{/if}
@@ -1182,6 +1211,15 @@
 	{/if}
 </div>
 
+<ModalBase
+	title={materialInfo
+		? `${m.workdesk_price_tracking_chart_price_history()}: ${materialInfo.materialName}`
+		: m.workdesk_price_tracking_chart_price_history()}
+	Component={ChartModal}
+	componentProps={{ priceData, materialInfo, filteredData, aggregatesChosen }}
+	bind:showModal={isChartModalShown}
+/>
+
 <style>
 	.price-table-container {
 		width: 100%;
@@ -1193,8 +1231,40 @@
 		transition: all 0.3s ease;
 	}
 
+	.price-table-container.full-height {
+		height: 100%;
+		margin-bottom: 0;
+		display: flex;
+		flex-direction: column;
+		border: none;
+		box-shadow: none;
+	}
+
+	.price-table-container.full-height .table-content {
+		flex: 1;
+		max-height: none;
+		overflow-y: visible;
+	}
+
 	.price-table-container:hover {
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.chart-btn {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		background-color: #f0f2f5;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		padding: 6px 12px;
+		font-size: 14px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.chart-btn:hover {
+		background-color: #e9ecef;
 	}
 
 	.table-header {

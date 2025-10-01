@@ -10,6 +10,12 @@
 
 	import { m, locale } from '$lib/i18n';
 
+	import ModalBase from '$components/ModalBase/ModalBase.svelte';
+	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
+
+	let isModalShown = $state(false);
+	let selectedMaterialId = $state<number | null>(null);
+
 	let materialGroups: { id: number; name: string }[] = $state([]);
 	let selectedGroupId: number | null = $state(null);
 	let materialList: Material[] = $state([]);
@@ -105,6 +111,11 @@
 		return '';
 	}
 
+	function showPriceModal(materialId: number) {
+		selectedMaterialId = materialId;
+		isModalShown = true;
+	}
+
 	onMount(async () => {
 		await loadGroups();
 		await loadMaterials();
@@ -163,6 +174,7 @@
 					<th rowspan="2">{m.materials_table_change()}</th>
 					<th colspan="3">{m.materials_table_price_last()}</th>
 					<th rowspan="2">{m.materials_table_last_updated()}</th>
+					<th rowspan="2"></th>
 				</tr>
 				<tr>
 					<th>{m.materials_table_price_average()}</th>
@@ -228,18 +240,49 @@
 								material.market}</td
 						>
 						<td class={getChangeClass(material.changePercent)}>{material.changePercent}</td>
-						<td>{material.latestAvgValue !== null && material.latestAvgValue !== undefined ? nf.format(material.latestAvgValue) : '-'}</td>
+						<td
+							>{material.latestAvgValue !== null && material.latestAvgValue !== undefined
+								? nf.format(material.latestAvgValue)
+								: '-'}</td
+						>
 						{#if material.latestMinValue === null}
 							<td>—</td>
 						{:else}
-							<td>{material.latestMinValue !== undefined ? nf.format(material.latestMinValue) : '—'}</td>
+							<td
+								>{material.latestMinValue !== undefined
+									? nf.format(material.latestMinValue)
+									: '—'}</td
+							>
 						{/if}
 						{#if material.latestMaxValue === null}
 							<td>—</td>
 						{:else}
-							<td>{material.latestMaxValue !== undefined ? nf.format(material.latestMaxValue) : '—'}</td>
+							<td
+								>{material.latestMaxValue !== undefined
+									? nf.format(material.latestMaxValue)
+									: '—'}</td
+							>
 						{/if}
-						<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
+						<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td
+						>
+						<td
+							><button class="show-modal" onclick={() => showPriceModal(material.id)} aria-label={m.workdesk_price_tracking_chart_price_history()} title={m.workdesk_price_tracking_chart_price_history()}>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<line x1="12" y1="5" x2="12" y2="19"></line>
+									<line x1="5" y1="12" x2="19" y2="12"></line>
+								</svg></button
+							></td
+						>
 					</tr>
 				{:else}
 					<tr>
@@ -252,6 +295,16 @@
 		</table>
 	{/if}
 </section>
+
+{#if isModalShown && selectedMaterialId !== null}
+	<ModalBase
+		bind:showModal={isModalShown}
+		title={m.workdesk_price_tracking_chart_price_history()}
+		Component={PriceTable}
+		componentProps={{ materialId: selectedMaterialId, dndEnabled: false, isFoldable: false }}
+		size={{ width: '1280px', height: '80vh' }}
+	/>
+{/if}
 
 <style>
 	.group-buttons {
@@ -433,5 +486,19 @@
 
 	.favorite-button:not(.is-favorite) svg {
 		color: #e74c3c;
+	}
+
+	.show-modal {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #6c757d;
+		padding: 0.25rem;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	.show-modal:hover {
+		background-color: #f8f9fa;
 	}
 </style>
