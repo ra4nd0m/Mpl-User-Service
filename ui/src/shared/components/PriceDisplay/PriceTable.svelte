@@ -361,7 +361,7 @@
 							{#if materialInfo.market}, {materialInfo.market}{/if})
 						</span>
 					{:else}
-						Price History
+						{m.workdesk_price_tracking_chart_price_history()}
 					{/if}
 				</h3>
 
