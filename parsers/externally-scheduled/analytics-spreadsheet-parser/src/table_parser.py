@@ -155,8 +155,117 @@ def parse_new(material: dict, sheets: dict) -> dict | None:
         "dateValues": [{"date": last_date, "propertyValues": props}]
     }
 
+
+def parse_excel_formulas(material: dict, excel_path: str, wb_formulas=None, wb_values=None) -> dict | None:
+    parser_type = material.get("parserType")
+    if parser_type not in ("formula", "value"):
+        print(f"Пропущен материал '{material.get('materialName')}' — неизвестный parserType: {parser_type}")
+        return None
+
+    properties = material.get("properties", [])
+    if not properties:
+        print(f"Пропущен материал '{material.get('materialName')}' — нет свойств.")
+        return None
+
+    close_books = False
+    if wb_formulas is None or wb_values is None:
+        wb_formulas = openpyxl.load_workbook(excel_path, data_only=False)
+        wb_values = openpyxl.load_workbook(excel_path, data_only=True)
+        close_books = True
+
+    sheet_name = material.get("sheet")
+
+    if sheet_name not in wb_values.sheetnames:
+        print(f"Лист '{sheet_name}' не найден для '{material.get('materialName')}'.")
+        if close_books:
+            wb_formulas.close()
+            wb_values.close()
+        return None
+
+    ws_v = wb_values[sheet_name]
+    ws_f = wb_formulas[sheet_name]
+
+    ref_col = next((p["colLetter"] for p in properties if p.get("name") == "med"), properties[0]["colLetter"])
+    last_row = None
+    for row in range(ws_v.max_row, 0, -1):
+        cell = ws_v[f"{ref_col}{row}"]
+        if cell.value not in (None, ""):
+            last_row = row
+            break
+
+    if last_row is None:
+        print(f"Нет данных для '{material.get('materialName')}'.")
+        if close_books:
+            wb_formulas.close()
+            wb_values.close()
+        return None
+
+    date_val = ws_v[f"A{last_row}"].value
+    property_values = []
+
+    if parser_type == "formula":
+        med_prop = next((p for p in properties if p.get("name") == "med"), None)
+        if not med_prop:
+            print(f"'{material.get('materialName')}' — нет поля med.")
+            if close_books:
+                wb_formulas.close()
+                wb_values.close()
+            return None
+
+        cell_addr = f"{med_prop['colLetter']}{last_row}"
+        cell_formula = ws_f[cell_addr].value
+        cell_val = ws_v[cell_addr].value
+
+        min_val = max_val = None
+        if isinstance(cell_formula, str) and cell_formula.startswith("="):
+            numbers = re.findall(r"\d+(?:\.\d+)?", cell_formula)
+            if len(numbers) >= 2:
+                min_val, max_val = float(numbers[0]), float(numbers[1])
+
+        if isinstance(cell_val, (int, float)):
+            cell_val = float(cell_val)
+
+        for prop in properties:
+            if prop["name"] == "min":
+                val = min_val
+            elif prop["name"] == "max":
+                val = max_val
+            elif prop["name"] == "med":
+                val = cell_val
+            else:
+                val = None
+
+            property_values.append({
+                "propertyId": prop["propertyId"],
+                "value": val
+            })
+
+    else:  # parserType == "value"
+        for prop in properties:
+            col = prop["colLetter"]
+            val = ws_v[f"{col}{last_row}"].value
+            if isinstance(val, (int, float)):
+                val = float(val)
+            property_values.append({
+                "propertyId": prop["propertyId"],
+                "value": val
+            })
+
+    return {
+        "materialId": material["materialId"],
+        "dateValues": [
+            {
+                "date": date_val.strftime("%Y-%m-%d") if hasattr(date_val, "strftime") else str(date_val) if date_val else None,
+                "propertyValues": property_values
+            }
+        ]
+    }
+
+
 def parse_dataset(config: dict, excel_path: Path, cache: dict) -> dict:
     sheets = pd.read_excel(str(excel_path), sheet_name=None, header=[0, 1])
+    wb_formulas = openpyxl.load_workbook(excel_path, data_only=False)
+    wb_values = openpyxl.load_workbook(excel_path, data_only=True)
     payload = {"data": []}
 
     for material in config["materials"]:
@@ -165,6 +274,8 @@ def parse_dataset(config: dict, excel_path: Path, cache: dict) -> dict:
             result = parse_old(material, sheets)
         elif ptype == "new":
             result = parse_new(material, sheets)
+        elif ptype in ("formula", "value"):
+            result = parse_excel_formulas(material, excel_path, wb_formulas, wb_values)
         else:
             raise ValueError(f"Неизвестный parserType: {ptype}")
 
@@ -180,6 +291,8 @@ def parse_dataset(config: dict, excel_path: Path, cache: dict) -> dict:
             payload["data"].append(result)
 
     return payload
+
+
 
 def send_payload(payload: dict, config: dict):
     server = os.getenv("SERVER_URL") or config["server"]["url"]
