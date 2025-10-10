@@ -237,21 +237,29 @@ def parse_excel_formulas(material: dict, excel_path: str, wb_formulas=None, wb_v
                 val = cell_val
             else:
                 val = None
+            
+            value_str = str(val) if val is not None else None
 
             property_values.append({
                 "propertyId": prop["propertyId"],
-                "value": val
+                "value": value_str
             })
 
     else:  # parserType == "value"
         for prop in properties:
             col = prop["colLetter"]
-            val = ws_v[f"{col}{last_row}"].value
-            if isinstance(val, (int, float)):
-                val = float(val)
+            raw_val = ws_v[f"{col}{last_row}"].value
+            if isinstance(raw_val, (int, float)):
+                value_str = str(float(raw_val))
+            elif raw_val is None:
+                value_str = None
+            elif hasattr(raw_val, "strftime"):
+                value_str = raw_val.strftime("%Y-%m-%d")
+            else:
+                value_str = str(raw_val)
             property_values.append({
                 "propertyId": prop["propertyId"],
-                "value": val
+                "value": value_str
             })
 
     return {
