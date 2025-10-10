@@ -8,8 +8,11 @@ import pygsheets
 import glob
 from datetime import datetime
 from pathlib import Path
+from openpyxl import load_workbook
+import openpyxl.utils
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 
-# --- Paths anchored to the script directory ---
 ROOT = Path(__file__).resolve().parent
 VAR = ROOT / "var"
 VAR.mkdir(exist_ok=True)
@@ -18,32 +21,32 @@ CACHE_FILE = VAR / "cache.json"
 CREDENTIALS = ROOT / "auth.json"
 BASE_NAME = "analytics"
 
-# --- Auth ---
-gc = pygsheets.authorize(service_file=str(CREDENTIALS))
-spreadsheet = gc.open("analytics")
-
 # --- Clean old exports in VAR ---
 for ext in (".xls", ".xlsx", ".xlsx.xls", ".xls.xlsx"):
     fp = VAR / f"{BASE_NAME}{ext}"
     if fp.exists():
         fp.unlink()
 
-# --- Export (XLS only in your setup) ---
-spreadsheet.export(
-    file_format=pygsheets.ExportType.XLS,
-    path=str(VAR),
-    filename=BASE_NAME  # no extension
-)
+# --- Auth (Drive + Sheets) ---
+SERVICE_ACCOUNT_FILE = str(CREDENTIALS)
+SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
-# --- Locate the created file (prefer xlsx/xls explicitly) ---
-candidates = sorted(
-    list(VAR.glob(f"{BASE_NAME}.xlsx")) + list(VAR.glob(f"{BASE_NAME}.xls"))
-)
-if not candidates:
-    raise FileNotFoundError("Экспорт не создал файл — проверь доступы/права")
+creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+drive = build("drive", "v3", credentials=creds)
 
-excel_path = candidates[0]
-print(f"✅ Файл аналитики был успешно загружен: {excel_path}")
+gc = pygsheets.authorize(service_file=SERVICE_ACCOUNT_FILE)
+spreadsheet_id = gc.open(BASE_NAME).id
+
+# --- Export XLSX через Drive API ---
+excel_path = VAR / f"{BASE_NAME}.xlsx"
+request = drive.files().export_media(
+    fileId=spreadsheet_id,
+    mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+with open(excel_path, "wb") as f:
+    f.write(request.execute())
+
+print(f"✅ Файл аналитики был успешно выгружен: {excel_path}")
 
 # --- Cache helpers ---
 def load_cache():
