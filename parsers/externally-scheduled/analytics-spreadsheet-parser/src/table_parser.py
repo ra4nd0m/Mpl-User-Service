@@ -266,7 +266,7 @@ def parse_excel_formulas(material: dict, excel_path: str, wb_formulas=None, wb_v
         "materialId": material["materialId"],
         "dateValues": [
             {
-                "date": date_val.strftime("%Y-%m-%d") if hasattr(date_val, "strftime") else str(date_val) if date_val else None,
+                "date": date_val.strftime("%d.%m.%Y") if hasattr(date_val, "strftime") else str(date_val) if date_val else None,
                 "propertyValues": property_values
             }
         ]
