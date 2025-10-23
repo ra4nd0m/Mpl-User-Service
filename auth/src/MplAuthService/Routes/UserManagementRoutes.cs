@@ -36,6 +36,26 @@ namespace MplAuthService.Routes
                 }
             }).RequireAuthorization("AdminOnly");
 
+            app.MapPatch("/users/{email}", async (string email, UpdateUserDto updateUser, IUserService userService, ILogger<Program> logger) =>
+            {
+                try
+                {
+                    var user = await userService.GetUserByEmail(email);
+                    if (user == null)
+                    {
+                        return Results.NotFound();
+                    }
+                    await userService.UpdateUser(user, updateUser);
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to update user with email {Email}", email);
+                    return Results.BadRequest();
+                }
+
+            }).RequireAuthorization("AdminOnly");
+
             app.MapGet("/users", async (IUserService userService) =>
             {
                 var users = await userService.GetUsers();
