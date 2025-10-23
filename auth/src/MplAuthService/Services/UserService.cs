@@ -70,6 +70,113 @@ namespace MplAuthService.Services
                 throw;
             }
         }
+
+        public async Task<User> UpdateUser(User user, UpdateUserDto updateUser)
+        {
+            logger.LogInformation("Updating user with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
+            using var transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                // Update email (with uniqueness check and normalization)
+                if (!string.IsNullOrEmpty(updateUser.NewEmail) && !string.Equals(user.Email, updateUser.NewEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    var existing = await userManager.FindByEmailAsync(updateUser.NewEmail);
+                    if (existing != null && existing.Id != user.Id)
+                    {
+                        throw new InvalidOperationException("A user with the specified email already exists");
+                    }
+
+                    var setEmailResult = await userManager.SetEmailAsync(user, updateUser.NewEmail);
+                    if (!setEmailResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to update email: {string.Join(", ", setEmailResult.Errors.Select(e => e.Description))}");
+                    }
+
+                    var setUserNameResult = await userManager.SetUserNameAsync(user, updateUser.NewEmail);
+                    if (!setUserNameResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to update username: {string.Join(", ", setUserNameResult.Errors.Select(e => e.Description))}");
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(updateUser.Password))
+                {
+                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                    var result = await userManager.ResetPasswordAsync(user, token, updateUser.Password);
+                    if (!result.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to update password: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                    }
+                }
+
+                // Update organization (reuse by INN if exists, otherwise create)
+                if (updateUser.Organization != null)
+                {
+                    var desiredInn = updateUser.Organization.Inn;
+
+                    // Try reuse existing org by INN
+                    var existingOrg = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == desiredInn);
+
+                    Organization orgToUse;
+                    if (existingOrg != null)
+                    {
+                        orgToUse = existingOrg;
+                    }
+                    else
+                    {
+                        orgToUse = new Organization
+                        {
+                            Name = updateUser.Organization.Name,
+                            Inn = updateUser.Organization.Inn,
+                            SubscriptionType = updateUser.Organization.SubscriptionType,
+                            SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionStartDate, DateTimeKind.Utc),
+                            SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionEndDate, DateTimeKind.Utc)
+                        };
+                        await context.Organizations.AddAsync(orgToUse);
+                        // Persist new organization so FK is valid
+                        await context.SaveChangesAsync();
+                    }
+
+                    // If we created a new org we already set dates above,
+                    // if we reused an org, update its fields to match the request.
+                    if (existingOrg != null)
+                    {
+                        orgToUse.Name = updateUser.Organization.Name;
+                        orgToUse.SubscriptionType = updateUser.Organization.SubscriptionType;
+                        orgToUse.SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionStartDate, DateTimeKind.Utc);
+                        orgToUse.SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionEndDate, DateTimeKind.Utc);
+                    }
+
+                    user.Organization = orgToUse;
+                }
+
+                // Persist user changes (Identity + FK/navigations)
+                var updateResult = await userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"Failed to update user: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+                }
+
+                // Ensure any remaining tracked changes are saved
+                await context.SaveChangesAsync();
+
+                // Reload with Organization to return fully populated entity
+                var updatedUser = await context.Users
+                    .Include(u => u.Organization)
+                    .FirstAsync(u => u.Id == user.Id);
+
+                await transaction.CommitAsync();
+                logger.LogInformation("User updated with email {Email}", EmailObfuscator.ObfuscateEmail(updatedUser.Email));
+
+                return updatedUser;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                logger.LogError(ex, "Failed to update user with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
+                throw;
+            }
+        }
         public async Task<User> CreateAdmin(string email, string password)
         {
             logger.LogInformation("Creating admin with email {Email}", EmailObfuscator.ObfuscateEmail(email));
@@ -114,7 +221,37 @@ namespace MplAuthService.Services
         }
         public async Task<User> GetUserByEmail(string email)
         {
-            throw new NotImplementedException();
+            try
+            {
+                logger.LogInformation("Fetching user by email {Email}", EmailObfuscator.ObfuscateEmail(email));
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    throw new ArgumentException("Email must be provided", nameof(email));
+                }
+
+                var identityUser = await userManager.FindByEmailAsync(email);
+                if (identityUser == null)
+                {
+                    throw new InvalidOperationException("User not found");
+                }
+
+                var userWithOrg = await context.Users
+                    .Include(u => u.Organization)
+                    .FirstOrDefaultAsync(u => u.Id == identityUser.Id);
+
+                if (userWithOrg == null)
+                {
+                    throw new InvalidOperationException("User not found");
+                }
+
+                return userWithOrg;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to fetch user by email {Email}", EmailObfuscator.ObfuscateEmail(email));
+                throw;
+            }
         }
         public async Task<List<User>> GetUsers()
         {
@@ -162,7 +299,7 @@ namespace MplAuthService.Services
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex,"Error calling external api");
+                    logger.LogError(ex, "Error calling external api");
                 }
                 var result = await userManager.DeleteAsync(user);
                 if (!result.Succeeded)

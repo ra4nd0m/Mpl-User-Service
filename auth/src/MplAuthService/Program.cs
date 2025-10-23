@@ -50,7 +50,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequiredLength = 8;
 })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AuthContext>();
+    .AddEntityFrameworkStores<AuthContext>()
+    .AddTokenProvider<DataProtectorTokenProvider<User>>(TokenOptions.DefaultProvider);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -113,7 +114,7 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://127.0.0.1:5173", "http://localhost:5173"])
-                .WithMethods("GET", "POST", "OPTIONS", "DELETE")
+                .WithMethods("GET", "POST", "PUT", "OPTIONS", "DELETE")
                 .AllowAnyHeader()
                 .AllowCredentials()
                 .WithExposedHeaders("Token-Expired");

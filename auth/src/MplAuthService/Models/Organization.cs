@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MplAuthService.Models.Enums;
 
 namespace MplAuthService.Models
@@ -10,6 +11,8 @@ namespace MplAuthService.Models
         public required SubscriptionType SubscriptionType { get; set; }
         public DateTime SubscriptionStartDate { get; set; }
         public DateTime SubscriptionEndDate { get; set; }
+
+        [JsonIgnore]
         public ICollection<User> Users { get; set; } = [];
     }
 }

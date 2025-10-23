@@ -4,13 +4,17 @@
 	import UserRegistrationModal from './UserRegistrationModal.svelte';
 	import { goto } from '$app/navigation';
 
-	import {m} from '$lib/i18n';
+	import { m } from '$lib/i18n';
+	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 
 	let userList: UserResponse[] = $state([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let showUserModal = $state(false);
 	let successMessage = $state<string | null>(null);
+
+	let modalMode: 'create' | 'edit' = $state('create');
+	let selectedUser: UserResponse | null = $state(null);
 
 	function goToLegacy() {
 		goto('/legacy/index.html#/login');
@@ -41,8 +45,25 @@
 	}
 
 	function handleUserAdded() {
-		successMessage = 'Пользователь успешно добавлен';
+		showUserModal = false;
+		successMessage =
+			modalMode === 'edit' ? 'Пользователь успешно обновлен' : 'Пользователь успешно добавлен';
 		loadUsers();
+
+		modalMode = 'create';
+		selectedUser = null;
+	}
+
+	function handleEditUser(user: UserResponse) {
+		selectedUser = user;
+		modalMode = 'edit';
+		showUserModal = true;
+	}
+
+	function handleAddUser() {
+		modalMode = 'create';
+		selectedUser = null;
+		showUserModal = true;
 	}
 
 	async function loadUsers() {
@@ -131,7 +152,7 @@
 				</svg>
 				Legacy System
 			</button>
-			<button class="add-user-button" onclick={() => (showUserModal = true)}>
+			<button class="add-user-button" onclick={handleAddUser}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="16"
@@ -206,7 +227,12 @@
 							<td>{formatDate(user.org?.subscriptionStartDate)}</td>
 							<td>{formatDate(user.org?.subscriptionEndDate)}</td>
 							<td class="actions-cell">
-								<button class="action-button edit-button" title="Edit User" aria-label="Edit User">
+								<button
+									class="action-button edit-button"
+									title="Edit User"
+									aria-label="Edit User"
+									onclick={() => handleEditUser(user)}
+								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										width="16"
@@ -252,7 +278,12 @@
 			</table>
 		</div>
 	{/if}
-	<UserRegistrationModal bind:showModal={showUserModal} onUserAdded={handleUserAdded} />
+	<ModalBase
+		bind:showModal={showUserModal}
+		title={modalMode === 'edit' ? 'Редактировать пользователя' : m.admin_create_user_header()}
+		Component={UserRegistrationModal}
+		componentProps={{ onUserAdded: handleUserAdded, mode: modalMode, existingUser: selectedUser }}
+	/>
 </section>
 
 <style>

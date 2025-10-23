@@ -7,14 +7,23 @@
 		showModal = $bindable()
 	}: ModalBaseProps = $props();
 
+	let mouseDownOnBackdrop = false;
+
 	function closeModal() {
 		showModal = false;
 	}
 
-	function handleBackdropClick(event: MouseEvent) {
+	function handleBackdropMouseDown(event: MouseEvent) {
 		if (event.target === event.currentTarget) {
+			mouseDownOnBackdrop = true;
+		}
+	}
+
+	function handleBackdropMouseUp(event: MouseEvent) {
+		if (event.target === event.currentTarget && mouseDownOnBackdrop) {
 			closeModal();
 		}
+		mouseDownOnBackdrop = false;
 	}
 
 	function handleEscKey(event: KeyboardEvent) {
@@ -47,7 +56,7 @@
 </script>
 
 {#if showModal}
-	<div class="modal-backdrop" onclick={handleBackdropClick} role="presentation">
+	<div class="modal-backdrop" onmousedown={handleBackdropMouseDown} onmouseup={handleBackdropMouseUp} role="presentation">
 		<div
 			class="modal-container"
 			role="dialog"

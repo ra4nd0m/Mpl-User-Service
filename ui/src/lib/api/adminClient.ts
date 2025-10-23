@@ -54,6 +54,27 @@ export async function registerUser(user: NewUser): Promise<UserResponse | null> 
     }
 }
 
+export async function updateUser(email: string, updatedData: UpdatedUser): Promise<UserResponse | null> {
+    try {
+        const response = await fetchWithAuth(`users/${email}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedData)
+        }, true);
+
+        if (!response.ok) {
+            console.error('Failed to update user:', await response.json().catch(() => response.statusText));
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error during updateUser:', error);
+        return null;
+    }
+}
+
 export async function getUserByEmail(email: string): Promise<UserResponse | null> {
     try {
         const response = await fetchWithAuth(`users/${email}`, {}, true);
@@ -117,7 +138,7 @@ export async function getFilters(): Promise<DataFilter[] | null> {
 }
 
 export async function pushFilter(filter: DataFilter): Promise<void> {
-    try{
+    try {
         const response = await fetchWithAuth('data/filtered/filter-config/filter', {
             method: 'POST',
             headers: {
@@ -159,6 +180,12 @@ export interface NewUser {
     email: string;
     password: string;
     organization: OrgResponse | null;
+}
+
+export interface UpdatedUser {
+    newEmail?: string;
+    password?: string;
+    organization?: OrgResponse | null;
 }
 
 export interface DataFilter {
