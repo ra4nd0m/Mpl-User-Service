@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 
 	import {m} from '$lib/i18n';
+	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 
 	let userList: UserResponse[] = $state([]);
 	let loading = $state(true);
@@ -252,7 +253,7 @@
 			</table>
 		</div>
 	{/if}
-	<UserRegistrationModal bind:showModal={showUserModal} onUserAdded={handleUserAdded} />
+	<ModalBase bind:showModal={showUserModal} title={m.admin_create_user_header()} Component={UserRegistrationModal} componentProps={{ onUserAdded: handleUserAdded }} />
 </section>
 
 <style>
