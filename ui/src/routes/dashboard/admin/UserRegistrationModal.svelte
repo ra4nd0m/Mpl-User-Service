@@ -3,7 +3,7 @@
 
 	import { m } from '$lib/i18n';
 
-	let { showModal = $bindable(), onUserAdded = $bindable() } = $props();
+	let { onUserAdded } = $props();
 
 	let newUser: NewUser = $state({
 		email: '',
@@ -55,17 +55,6 @@
 		showPassword = !showPassword;
 	}
 
-	function closeModal() {
-		showModal = false;
-		resetForm();
-	}
-
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === e.currentTarget) {
-			closeModal();
-		}
-	}
-
 	function resetForm() {
 		newUser = {
 			email: '',
@@ -110,7 +99,7 @@
 
 			if (result) {
 				formSuccess = `User ${result.email} registered successfully`;
-				closeModal();
+				resetForm();
 				if (onUserAdded) onUserAdded();
 			} else {
 				formError = 'Failed to register user';
@@ -282,8 +271,8 @@
 		</div>
 
 		<div class="form-actions">
-			<button type="button" class="cancel-button" onclick={closeModal}
-				>{m.admin_create_user_cancel_button()}</button
+			<button type="button" class="cancel-button" onclick={resetForm}
+				>{m.admin_create_user_reset_button()}</button
 			>
 			<button type="submit" class="submit-button" disabled={formSubmitting}>
 				{formSubmitting ? m.admin_create_user_registering() : m.admin_create_user_register_button()}

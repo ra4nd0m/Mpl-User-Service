@@ -42,6 +42,7 @@
 	}
 
 	function handleUserAdded() {
+		showUserModal = false;
 		successMessage = 'Пользователь успешно добавлен';
 		loadUsers();
 	}
