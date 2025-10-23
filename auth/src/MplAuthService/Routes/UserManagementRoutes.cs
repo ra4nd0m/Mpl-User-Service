@@ -36,7 +36,7 @@ namespace MplAuthService.Routes
                 }
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPatch("/users/{email}", async (string email, UpdateUserDto updateUser, IUserService userService, ILogger<Program> logger) =>
+            app.MapPut("/users/{email}", async (string email, UpdateUserDto updateUser, IUserService userService, ILogger<Program> logger) =>
             {
                 try
                 {
