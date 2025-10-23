@@ -102,6 +102,7 @@
 	"admin_create_user_subscription_start_date": "Start Date",
 	"admin_create_user_subscription_end_date": "End Date",
 	"admin_create_user_cancel_button": "Cancel",
+	"admin_create_user_reset_button": "Reset",
 	"admin_create_user_register_button": "Register",
 	"admin_create_user_registering": "Registering...",
 	"workdesk_price_tracking_chart_period": ""

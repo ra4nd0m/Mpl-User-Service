@@ -102,6 +102,7 @@
 	"admin_create_user_subscription_start_date": "Дата начала",
 	"admin_create_user_subscription_end_date": "Дата окончания",
 	"admin_create_user_cancel_button": "Отмена",
+	"admin_create_user_reset_button": "Сбросить",
 	"admin_create_user_register_button": "Зарегистрировать",
 	"admin_create_user_registering": "Регистрация..."
 }
