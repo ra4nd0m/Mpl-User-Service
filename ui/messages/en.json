@@ -105,5 +105,10 @@
 	"admin_create_user_reset_button": "Reset",
 	"admin_create_user_register_button": "Register",
 	"admin_create_user_registering": "Registering...",
+	"admin_create_user_error_password_too_short": "Password must be at least 8 characters long",
+	"admin_create_user_error_password_no_uppercase": "Password must contain at least one uppercase letter",
+	"admin_create_user_error_password_no_lowercase": "Password must contain at least one lowercase letter",
+	"admin_create_user_error_password_no_number": "Password must contain at least one number",
+	"admin_create_user_error_password_no_special": "Password must contain at least one special character",
 	"workdesk_price_tracking_chart_period": ""
 }

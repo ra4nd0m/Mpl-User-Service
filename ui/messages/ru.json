@@ -104,5 +104,10 @@
 	"admin_create_user_cancel_button": "Отмена",
 	"admin_create_user_reset_button": "Сбросить",
 	"admin_create_user_register_button": "Зарегистрировать",
+	"admin_create_user_error_password_too_short": "Пароль должен содержать не менее 8 символов",
+	"admin_create_user_error_password_no_uppercase": "Пароль должен содержать как минимум одну заглавную букву",
+	"admin_create_user_error_password_no_lowercase": "Пароль должен содержать как минимум одну строчную букву",
+	"admin_create_user_error_password_no_number": "Пароль должен содержать как минимум одну цифру",
+	"admin_create_user_error_password_no_special": "Пароль должен содержать как минимум один специальный символ",
 	"admin_create_user_registering": "Регистрация..."
 }

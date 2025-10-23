@@ -45,6 +45,32 @@
 		return password;
 	}
 
+	function validatePassword(password: string): { valid: boolean; error?: string } {
+		if (!password || password.length < 8) {
+			return { valid: false, error: m.admin_create_user_error_password_too_short() };
+		}
+
+		const hasLowercase = /[a-z]/.test(password);
+		const hasUppercase = /[A-Z]/.test(password);
+		const hasDigit = /[0-9]/.test(password);
+		const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+
+		if (!hasLowercase) {
+			return { valid: false, error: m.admin_create_user_error_password_no_lowercase() };
+		}
+		if (!hasUppercase) {
+			return { valid: false, error: m.admin_create_user_error_password_no_uppercase() };
+		}
+		if (!hasDigit) {
+			return { valid: false, error: m.admin_create_user_error_password_no_number() };
+		}
+		if (!hasSpecialChar) {
+			return { valid: false, error: m.admin_create_user_error_password_no_special() };
+		}
+
+		return { valid: true };
+	}
+
 	function handleGeneratePassword() {
 		const generatedPassword = generateSecurePassword(12);
 		newUser.password = generatedPassword;
@@ -84,10 +110,19 @@
 			formError = 'Email and password are required';
 			return;
 		}
+
+		// Validate password strength
+		const passwordValidation = validatePassword(newUser.password);
+		if (!passwordValidation.valid) {
+			formError = passwordValidation.error || 'Invalid password';
+			return;
+		}
+
 		if (newUser.password !== confirmPassword) {
 			formError = 'Passwords do not match';
 			return;
 		}
+
 		if (!newUser.organization || !newUser.organization.name || !newUser.organization.inn) {
 			formError = 'Organization name and INN are required';
 			return;
