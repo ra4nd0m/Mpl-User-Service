@@ -9,7 +9,7 @@ namespace MplAuthService.Interfaces
         Task<List<User>> GetUsers();
         Task<User> CreateUser(string email, string password, OrganizationDto organization);
         Task<User> CreateAdmin(string email, string password);
-        Task UpdateUser(User user, UpdateUserDto updateUser);
+        Task<User> UpdateUser(User user, UpdateUserDto updateUser);
         Task DeleteUser(User user);
     }
 }

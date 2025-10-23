@@ -45,8 +45,8 @@ namespace MplAuthService.Routes
                     {
                         return Results.NotFound();
                     }
-                    await userService.UpdateUser(user, updateUser);
-                    return Results.Ok();
+                    var result = await userService.UpdateUser(user, updateUser);
+                    return Results.Ok(result);
                 }
                 catch (Exception ex)
                 {

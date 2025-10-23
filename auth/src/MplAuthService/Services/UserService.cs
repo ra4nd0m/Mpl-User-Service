@@ -71,7 +71,7 @@ namespace MplAuthService.Services
             }
         }
 
-        public async Task UpdateUser(User user, UpdateUserDto updateUser)
+        public async Task<User> UpdateUser(User user, UpdateUserDto updateUser)
         {
             logger.LogInformation("Updating user with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
             using var transaction = await context.Database.BeginTransactionAsync();
@@ -160,8 +160,15 @@ namespace MplAuthService.Services
                 // Ensure any remaining tracked changes are saved
                 await context.SaveChangesAsync();
 
+                // Reload with Organization to return fully populated entity
+                var updatedUser = await context.Users
+                    .Include(u => u.Organization)
+                    .FirstAsync(u => u.Id == user.Id);
+
                 await transaction.CommitAsync();
-                logger.LogInformation("User updated with email {Email}", EmailObfuscator.ObfuscateEmail(user.Email));
+                logger.LogInformation("User updated with email {Email}", EmailObfuscator.ObfuscateEmail(updatedUser.Email));
+
+                return updatedUser;
             }
             catch (Exception ex)
             {
@@ -214,7 +221,37 @@ namespace MplAuthService.Services
         }
         public async Task<User> GetUserByEmail(string email)
         {
-            throw new NotImplementedException();
+            try
+            {
+                logger.LogInformation("Fetching user by email {Email}", EmailObfuscator.ObfuscateEmail(email));
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    throw new ArgumentException("Email must be provided", nameof(email));
+                }
+
+                var identityUser = await userManager.FindByEmailAsync(email);
+                if (identityUser == null)
+                {
+                    throw new InvalidOperationException("User not found");
+                }
+
+                var userWithOrg = await context.Users
+                    .Include(u => u.Organization)
+                    .FirstOrDefaultAsync(u => u.Id == identityUser.Id);
+
+                if (userWithOrg == null)
+                {
+                    throw new InvalidOperationException("User not found");
+                }
+
+                return userWithOrg;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to fetch user by email {Email}", EmailObfuscator.ObfuscateEmail(email));
+                throw;
+            }
         }
         public async Task<List<User>> GetUsers()
         {
