@@ -1,23 +1,62 @@
 <script lang="ts">
-	import { registerUser, SubscriptionType, type NewUser } from '$lib/api/adminClient';
+	import {
+		registerUser,
+		SubscriptionType,
+		updateUser,
+		type NewUser,
+		type UpdatedUser,
+		type UserResponse
+	} from '$lib/api/adminClient';
 
 	import { m } from '$lib/i18n';
 
-	let { onUserAdded } = $props();
+	let {
+		onUserAdded,
+		mode = 'create',
+		existingUser = null
+	}: {
+		onUserAdded: () => void;
+		mode?: 'create' | 'edit';
+		existingUser?: UserResponse | null;
+	} = $props();
 
-	let newUser: NewUser = $state({
-		email: '',
-		password: '',
-		organization: {
-			name: '',
-			inn: '',
-			subscriptionType: SubscriptionType.Free,
-			subscriptionStartDate: new Date().toISOString().split('T')[0],
-			subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-				.toISOString()
-				.split('T')[0]
-		}
-	});
+	let newUser: NewUser = $state(
+		existingUser
+			? {
+					email: existingUser.email,
+					password: '', // Don't populate password for edit mode
+					organization: existingUser.org
+						? {
+								name: existingUser.org.name,
+								inn: existingUser.org.inn,
+								subscriptionType: existingUser.org.subscriptionType,
+								subscriptionStartDate: existingUser.org.subscriptionStartDate,
+								subscriptionEndDate: existingUser.org.subscriptionEndDate
+							}
+						: {
+								name: '',
+								inn: '',
+								subscriptionType: SubscriptionType.Free,
+								subscriptionStartDate: new Date().toISOString().split('T')[0],
+								subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+									.toISOString()
+									.split('T')[0]
+							}
+				}
+			: {
+					email: '',
+					password: '',
+					organization: {
+						name: '',
+						inn: '',
+						subscriptionType: SubscriptionType.Free,
+						subscriptionStartDate: new Date().toISOString().split('T')[0],
+						subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+							.toISOString()
+							.split('T')[0]
+					}
+				}
+	);
 
 	let confirmPassword = $state('');
 	let formError: string | null = $state(null);
@@ -106,21 +145,28 @@
 		formError = null;
 		formSuccess = null;
 
-		if (!newUser.email || !newUser.password) {
-			formError = 'Email and password are required';
+		if (!newUser.email) {
+			formError = 'Email is required';
 			return;
 		}
 
-		// Validate password strength
-		const passwordValidation = validatePassword(newUser.password);
-		if (!passwordValidation.valid) {
-			formError = passwordValidation.error || 'Invalid password';
-			return;
-		}
+		// Only validate password for create mode or if password is being changed
+		if (mode === 'create' || newUser.password) {
+			if (!newUser.password) {
+				formError = 'Password is required';
+				return;
+			}
 
-		if (newUser.password !== confirmPassword) {
-			formError = 'Passwords do not match';
-			return;
+			const passwordValidation = validatePassword(newUser.password);
+			if (!passwordValidation.valid) {
+				formError = passwordValidation.error || 'Invalid password';
+				return;
+			}
+
+			if (newUser.password !== confirmPassword) {
+				formError = 'Passwords do not match';
+				return;
+			}
 		}
 
 		if (!newUser.organization || !newUser.organization.name || !newUser.organization.inn) {
@@ -130,18 +176,43 @@
 
 		try {
 			formSubmitting = true;
-			const result = await registerUser(newUser);
 
-			if (result) {
-				formSuccess = `User ${result.email} registered successfully`;
-				resetForm();
-				if (onUserAdded) onUserAdded();
+			if (mode === 'edit' && existingUser) {
+				// Prepare UpdatedUser data
+				const updateData: UpdatedUser = {
+					// Only include newEmail if email has changed
+					newEmail: newUser.email !== existingUser.email ? newUser.email : undefined,
+					// Only include password if it's being changed
+					password: newUser.password || undefined,
+					// Always include organization
+					organization: newUser.organization
+				};
+
+				// Call update API - use EXISTING email to identify the user
+				const result = await updateUser(existingUser.email, updateData);
+
+				if (result) {
+					formSuccess = `User ${existingUser.email} updated successfully`;
+					resetForm();
+					if (onUserAdded) onUserAdded();
+				} else {
+					formError = 'Failed to update user';
+				}
 			} else {
-				formError = 'Failed to register user';
+				// Call register API - NewUser expects "password" and "organization"
+				const result = await registerUser(newUser);
+
+				if (result) {
+					formSuccess = `User ${result.email} registered successfully`;
+					resetForm();
+					if (onUserAdded) onUserAdded();
+				} else {
+					formError = 'Failed to register user';
+				}
 			}
 		} catch (err) {
-			console.error('Failed to register user', err);
-			formError = 'Failed to register user';
+			console.error(mode === 'edit' ? 'Failed to update user' : 'Failed to register user', err);
+			formError = mode === 'edit' ? 'Failed to update user' : 'Failed to register user';
 		} finally {
 			formSubmitting = false;
 		}
@@ -163,16 +234,24 @@
 			<div class="form-group">
 				<label for="email">{m.admin_create_user_email()}</label>
 				<input type="email" id="email" bind:value={newUser.email} required />
+				{#if mode === 'edit'}
+					<small class="password-requirements">
+						Original email: {existingUser?.email}
+					</small>
+				{/if}
 			</div>
 
 			<div class="form-group">
-				<label for="password">{m.admin_create_user_password()}</label>
+				<label for="password">
+					{mode === 'edit' ? 'New Password (optional)' : m.admin_create_user_password()}
+				</label>
 				<div class="password-input-group">
 					<input
 						type={showPassword ? 'text' : 'password'}
 						id="password"
 						bind:value={newUser.password}
-						required
+						required={mode === 'create'}
+						placeholder={mode === 'edit' ? 'Leave blank to keep current password' : ''}
 					/>
 					<button
 						type="button"
@@ -246,19 +325,24 @@
 					</button>
 				</div>
 				<small class="password-requirements">
-					{m.admin_create_user_password_requirements()}
+					{mode === 'edit'
+						? 'Leave blank to keep current password. If changing: ' +
+							m.admin_create_user_password_requirements()
+						: m.admin_create_user_password_requirements()}
 				</small>
 			</div>
 
-			<div class="form-group">
-				<label for="confirm-password">{m.admin_create_user_confirm_password()}</label>
-				<input
-					type={showPassword ? 'text' : 'password'}
-					id="confirm-password"
-					bind:value={confirmPassword}
-					required
-				/>
-			</div>
+			{#if mode === 'create' || newUser.password}
+				<div class="form-group">
+					<label for="confirm-password">{m.admin_create_user_confirm_password()}</label>
+					<input
+						type={showPassword ? 'text' : 'password'}
+						id="confirm-password"
+						bind:value={confirmPassword}
+						required={mode === 'create' || !!newUser.password}
+					/>
+				</div>
+			{/if}
 		</div>
 
 		<div class="form-section">
@@ -310,7 +394,13 @@
 				>{m.admin_create_user_reset_button()}</button
 			>
 			<button type="submit" class="submit-button" disabled={formSubmitting}>
-				{formSubmitting ? m.admin_create_user_registering() : m.admin_create_user_register_button()}
+				{formSubmitting
+					? mode === 'edit'
+						? 'Updating...'
+						: m.admin_create_user_registering()
+					: mode === 'edit'
+						? 'Update User'
+						: m.admin_create_user_register_button()}
 			</button>
 		</div>
 	</form>
