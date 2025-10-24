@@ -40,6 +40,20 @@ namespace MplAuthService.Routes
                 ));
             }).RequireAuthorization("AdminOnly");
 
+            app.MapGet("/organizations/{orgId}/users", async (IOrgService orgService, int orgId) =>
+            {
+                try
+                {
+                    var users = await orgService.GetUsersByOrganization(orgId);
+                    return Results.Ok(users);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to get users for organization with id {OrgId}", orgId);
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization("AdminOnly");
+
             app.MapPut("/organizations/{id}", async (IOrgService orgService, int id, OrganizationDto orgDto) =>
             {
                 try
@@ -96,6 +110,7 @@ namespace MplAuthService.Routes
                     return Results.BadRequest();
                 }
             }).RequireAuthorization("AdminOnly");
+
 
         }
     }

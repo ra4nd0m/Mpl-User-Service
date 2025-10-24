@@ -70,5 +70,43 @@ namespace MplAuthService.Services
                 organization.SubscriptionEndDate);
             return result;
         }
+        public async Task<bool> DeleteOrganization(int id)
+        {
+            logger.LogInformation("Deleting organization with id {Id}", id);
+
+            var organization = await context.Organizations.FirstOrDefaultAsync(o => o.Id == id);
+            if (organization == null)
+            {
+                logger.LogWarning("Organization with id {Id} not found", id);
+                return false;
+            }
+
+            context.Organizations.Remove(organization);
+            await context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<List<UserResponseDto>> GetUsersByOrganization(int orgId)
+        {
+            logger.LogInformation("Getting users for organization with id {OrgId}", orgId);
+
+            var users = await context.Users
+                .Where(u => u.OrganizationId == orgId)
+                .Include(u => u.Organization)
+                .Select(u => new UserResponseDto(
+                    u.Id,
+                    u.Email!,
+                    u.Organization != null ? new OrganizationDto(
+                        u.Organization.Name,
+                        u.Organization.Inn,
+                        u.Organization.SubscriptionType,
+                        u.Organization.SubscriptionStartDate,
+                        u.Organization.SubscriptionEndDate,
+                        u.Organization.Id
+                    ) : null
+                ))
+                .ToListAsync();
+
+            return users;
+        }
     }
 }
