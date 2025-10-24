@@ -27,7 +27,7 @@
 				goto('/dashboard');
 			}
 			if (result.error) {
-				throw new Error(result.error);
+				error = result.error;
 			}
 		} catch (err) {
 			console.error(err);
@@ -176,202 +176,208 @@
 {/key}
 
 <style>
-    .login-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 75vh;
-        position: relative;
-    }
+	.login-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 75vh;
+		position: relative;
+	}
 
-    .language-toggle {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        z-index: 10;
-    }
+	.language-toggle {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+		z-index: 10;
+	}
 
-    .language-toggle select {
-        padding: 8px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        background-color: white;
-        color: #727271;
-        font-size: 14px;
-        cursor: pointer;
-        transition: border-color 0.2s;
-    }
+	.language-toggle select {
+		padding: 8px 12px;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		background-color: white;
+		color: #727271;
+		font-size: 14px;
+		cursor: pointer;
+		transition: border-color 0.2s;
+	}
 
-    .language-toggle select:focus {
-        outline: none;
-        border-color: #ea5b21;
-        box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
-    }
+	.language-toggle select:focus {
+		outline: none;
+		border-color: #ea5b21;
+		box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
+	}
 
-    form {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        align-items: center;
-        width: 300px;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        background-color: white;
-    }
+	form {
+		display: flex;
+		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+		width: 300px;
+		padding: 20px;
+		border-radius: 8px;
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+		background-color: white;
+	}
 
-    .logo {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
+	.logo {
+		display: flex;
+		align-items: center;
+		margin-bottom: 20px;
+	}
 
-    .logo svg {
-        height: 30px;
-        width: auto;
-    }
+	.logo svg {
+		height: 30px;
+		width: auto;
+	}
 
-    .form-title {
-        margin-bottom: 20px;
-        color: #727271;
-        font-size: 1.5rem;
-    }
+	.form-title {
+		margin-bottom: 20px;
+		color: #727271;
+		font-size: 1.5rem;
+	}
 
-    input[type='text'],
-    input[type='password'] {
-        margin: 10px;
-        padding: 12px 16px;
-        width: 200px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 14px;
-        color: #727271;
-        background-color: white;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        box-sizing: border-box;
-    }
+	input[type='text'],
+	input[type='password'] {
+		margin: 10px;
+		padding: 12px 16px;
+		width: 200px;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		font-size: 14px;
+		color: #727271;
+		background-color: white;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
+		box-sizing: border-box;
+	}
 
-    input[type='text']:focus,
-    input[type='password']:focus {
-        outline: none;
-        border-color: #ea5b21;
-        box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
-    }
+	input[type='text']:focus,
+	input[type='password']:focus {
+		outline: none;
+		border-color: #ea5b21;
+		box-shadow: 0 0 0 3px rgba(234, 91, 33, 0.1);
+	}
 
-    .password-input-container {
-        position: relative;
-        margin: 10px;
-        width: 200px;
-    }
+	.password-input-container {
+		position: relative;
+		margin: 10px;
+		width: 200px;
+	}
 
-    .password-input-container input[type='password'],
-    .password-input-container input[type='text'] {
-        margin: 0;
-        width: 100%;
-        padding: 12px 40px 12px 16px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 14px;
-        color: #727271;
-        background-color: white;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        box-sizing: border-box;
-    }
+	.password-input-container input[type='password'],
+	.password-input-container input[type='text'] {
+		margin: 0;
+		width: 100%;
+		padding: 12px 40px 12px 16px;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		font-size: 14px;
+		color: #727271;
+		background-color: white;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
+		box-sizing: border-box;
+	}
 
-    .password-toggle-button {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        margin: 0;
-        width: 24px;
-        height: 24px;
-        color: #727271;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 4px;
-        transition: color 0.2s, background-color 0.2s;
-    }
+	.password-toggle-button {
+		position: absolute;
+		right: 12px;
+		top: 50%;
+		transform: translateY(-50%);
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 4px;
+		margin: 0;
+		width: 24px;
+		height: 24px;
+		color: #727271;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 4px;
+		transition:
+			color 0.2s,
+			background-color 0.2s;
+	}
 
-    .password-toggle-button:hover {
-        background-color: rgba(234, 91, 33, 0.1);
-        color: #ea5b21;
-    }
+	.password-toggle-button:hover {
+		background-color: rgba(234, 91, 33, 0.1);
+		color: #ea5b21;
+	}
 
-    .password-toggle-button:focus {
-        outline: 2px solid #ea5b21;
-        outline-offset: 1px;
-    }
+	.password-toggle-button:focus {
+		outline: 2px solid #ea5b21;
+		outline-offset: 1px;
+	}
 
-    .password-toggle-button:disabled {
-        background-color: transparent;
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
+	.password-toggle-button:disabled {
+		background-color: transparent;
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
 
-    .remember-container {
-        display: flex;
-        align-items: center;
-        width: 200px;
-        margin: 10px 0;
-    }
+	.remember-container {
+		display: flex;
+		align-items: center;
+		width: 200px;
+		margin: 10px 0;
+	}
 
-    .remember-container input[type='checkbox'] {
-        margin-right: 8px;
-    }
+	.remember-container input[type='checkbox'] {
+		margin-right: 8px;
+	}
 
-    .remember-container label {
-        color: #727271;
-        font-size: 14px;
-    }
+	.remember-container label {
+		color: #727271;
+		font-size: 14px;
+	}
 
-    .error-message {
-        color: #e74c3c;
-        margin: 10px 0;
-        text-align: center;
-        width: 200px;
-        font-size: 14px;
-        background-color: rgba(231, 76, 60, 0.1);
-        padding: 8px;
-        border-radius: 4px;
-    }
+	.error-message {
+		color: #e74c3c;
+		margin: 10px 0;
+		text-align: center;
+		width: 200px;
+		font-size: 14px;
+		background-color: rgba(231, 76, 60, 0.1);
+		padding: 8px;
+		border-radius: 4px;
+	}
 
-    button[type="submit"] {
-        margin: 10px;
-        padding: 12px 16px;
-        width: 200px;
-        background-color: #ea5b21;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 14px;
-        font-weight: 500;
-    }
+	button[type='submit'] {
+		margin: 10px;
+		padding: 12px 16px;
+		width: 200px;
+		background-color: #ea5b21;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+		font-size: 14px;
+		font-weight: 500;
+	}
 
-    button[type="submit"]:hover:not(:disabled) {
-        background-color: #d54e1a;
-    }
+	button[type='submit']:hover:not(:disabled) {
+		background-color: #d54e1a;
+	}
 
-    button[type="submit"]:disabled {
-        background-color: rgba(234, 91, 33, 0.5);
-        cursor: not-allowed;
-    }
+	button[type='submit']:disabled {
+		background-color: rgba(234, 91, 33, 0.5);
+		cursor: not-allowed;
+	}
 
-    @media (max-width: 600px) {
-        .logo svg {
-            height: 25px;
-        }
+	@media (max-width: 600px) {
+		.logo svg {
+			height: 25px;
+		}
 
-        form {
-            width: 90%;
-            max-width: 300px;
-        }
-    }
+		form {
+			width: 90%;
+			max-width: 300px;
+		}
+	}
 </style>

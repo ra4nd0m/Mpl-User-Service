@@ -146,8 +146,10 @@ export async function login(email: string, password: string, rememberMe: boolean
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            return { success: false, error: errorData.message || 'Failed to login' };
+            const errorData = await response.json().catch(() => null);
+            // Try to extract the most specific error message available
+            const errorMessage = errorData?.detail || errorData?.title || errorData?.message || 'Failed to login';
+            return { success: false, error: errorMessage };
         };
 
         const data = await response.json();
