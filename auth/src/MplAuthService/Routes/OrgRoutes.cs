@@ -7,6 +7,9 @@ namespace MplAuthService.Routes
     {
         public static void MapOrgRoutes(this WebApplication app)
         {
+            var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("OrgRoutes");
+
             app.MapGet("/organizations", async (IOrgService orgService) =>
             {
                 var orgs = await orgService.GetOrganizations();
@@ -37,7 +40,7 @@ namespace MplAuthService.Routes
                 ));
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPut("/organizations/{id}", async (IOrgService orgService, int id, OrganizationDto orgDto, ILogger<Program> logger) =>
+            app.MapPut("/organizations/{id}", async (IOrgService orgService, int id, OrganizationDto orgDto) =>
             {
                 try
                 {
@@ -55,7 +58,7 @@ namespace MplAuthService.Routes
                 }
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPost("/organizations", async (IOrgService orgService, OrganizationDto orgDto, ILogger<Program> logger) =>
+            app.MapPost("/organizations", async (IOrgService orgService, OrganizationDto orgDto) =>
             {
                 try
                 {
@@ -72,6 +75,24 @@ namespace MplAuthService.Routes
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to create organization with name {Name}", orgDto.Name);
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization("AdminOnly");
+
+            app.MapDelete("/organizations/{id}", async (IOrgService orgService, int id) =>
+            {
+                try
+                {
+                    var success = await orgService.DeleteOrganization(id);
+                    if (!success)
+                    {
+                        return Results.NotFound();
+                    }
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to delete organization with id {Id}", id);
                     return Results.BadRequest();
                 }
             }).RequireAuthorization("AdminOnly");

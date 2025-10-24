@@ -9,7 +9,10 @@ namespace MplAuthService.Routes
     {
         public static void MapUserManagementRoutes(this WebApplication app)
         {
-            app.MapPost("/register", async (IUserService userService, CreateUserDto userDto, ILogger<Program> logger) =>
+            var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("UserManagementRoutes");
+
+            app.MapPost("/register", async (IUserService userService, CreateUserDto userDto) =>
             {
                 try
                 {
@@ -36,7 +39,7 @@ namespace MplAuthService.Routes
                 }
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPut("/users/{email}", async (string email, UpdateUserDto updateUser, IUserService userService, ILogger<Program> logger) =>
+            app.MapPut("/users/{email}", async (string email, UpdateUserDto updateUser, IUserService userService) =>
             {
                 try
                 {
@@ -100,7 +103,7 @@ namespace MplAuthService.Routes
             }).RequireAuthorization("AdminOnly");
 
             app.MapDelete("/users/{email}", async (IUserService service, UserManager<User> manager,
-                string email, ILogger<Program> logger) =>
+                string email) =>
             {
                 try
                 {
