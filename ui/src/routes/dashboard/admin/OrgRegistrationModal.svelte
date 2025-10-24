@@ -1,26 +1,53 @@
 <script lang="ts">
-	import { createOrg, SubscriptionType, type OrgResponse } from '$lib/api/adminClient';
+	import { createOrg, SubscriptionType, updateOrg, type OrgResponse } from '$lib/api/adminClient';
 	import { m } from '$lib/i18n';
 
 	let formError: string | null = $state(null);
 	let formSuccess: string | null = $state(null);
 	let formSubmitting = $state(false);
 
-	let { onOrgAdded } = $props<{
+	function formatDateForInput(isoString: string): string {
+		const date = new Date(isoString);
+		// Get the date components in UTC to avoid timezone shifts
+		const year = date.getUTCFullYear();
+		const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+		const day = String(date.getUTCDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	let {
+		onOrgAdded,
+		mode = 'create',
+		existingOrg
+	} = $props<{
 		onOrgAdded: () => void;
+		mode?: 'create' | 'edit';
+		existingOrg?: OrgResponse;
 	}>();
 
-	let newOrg: OrgResponse = $state({
-		id: '',
-		name: '',
-		inn: '',
-		subscriptionType: SubscriptionType.Free,
-		subscriptionStartDate: '',
-		subscriptionEndDate: ''
-	});
+	let newOrg: OrgResponse = $state(
+		existingOrg && mode === 'edit'
+			? {
+					id: existingOrg.id,
+					name: existingOrg.name,
+					inn: existingOrg.inn,
+					subscriptionType: existingOrg.subscriptionType,
+					subscriptionStartDate: formatDateForInput(existingOrg.subscriptionStartDate),
+					subscriptionEndDate: formatDateForInput(existingOrg.subscriptionEndDate)
+				}
+			: {
+					id: 0,
+					name: '',
+					inn: '',
+					subscriptionType: SubscriptionType.Free,
+					subscriptionStartDate: '',
+					subscriptionEndDate: ''
+				}
+	);
 
 	function resetForm() {
 		newOrg = {
+            id: 0,
 			name: '',
 			inn: '',
 			subscriptionType: SubscriptionType.Free,
@@ -47,21 +74,40 @@
 
 		try {
 			formSubmitting = true;
-			const res = await createOrg({
-				name: newOrg.name,
-				inn: newOrg.inn,
-				subscriptionType: newOrg.subscriptionType,
-				subscriptionStartDate: newOrg.subscriptionStartDate,
-				subscriptionEndDate: newOrg.subscriptionEndDate
-			});
-			if (res) {
-				formSuccess = `Organization "${res.name}" created successfully.`;
-				resetForm();
-				if (onOrgAdded) {
-					onOrgAdded();
+			if (mode === 'edit' && existingOrg) {
+				const res = await updateOrg(existingOrg.id, {
+					name: newOrg.name,
+					inn: newOrg.inn,
+					subscriptionType: newOrg.subscriptionType,
+					subscriptionStartDate: newOrg.subscriptionStartDate,
+					subscriptionEndDate: newOrg.subscriptionEndDate
+				});
+				if (res) {
+					formSuccess = `Organization "${res.name}" updated successfully.`;
+					resetForm();
+					if (onOrgAdded) {
+						onOrgAdded();
+					}
+				} else {
+					formError = 'Failed to create organization.';
 				}
 			} else {
-				formError = 'Failed to create organization.';
+				const res = await createOrg({
+					name: newOrg.name,
+					inn: newOrg.inn,
+					subscriptionType: newOrg.subscriptionType,
+					subscriptionStartDate: newOrg.subscriptionStartDate,
+					subscriptionEndDate: newOrg.subscriptionEndDate
+				});
+				if (res) {
+					formSuccess = `Organization "${res.name}" created successfully.`;
+					resetForm();
+					if (onOrgAdded) {
+						onOrgAdded();
+					}
+				} else {
+					formError = 'Failed to create organization.';
+				}
 			}
 		} catch (error) {
 			console.error('Failed to create organization:', error);
@@ -126,7 +172,9 @@
 			<button type="button" class="reset-button" onclick={resetForm}
 				>{m.admin_create_user_reset_button()}</button
 			>
-			<button type="submit" class="submit-button" disabled={formSubmitting}> Create </button>
+			<button type="submit" class="submit-button" disabled={formSubmitting}>
+				{mode === 'create' ? 'Create' : 'Update'}
+			</button>
 		</div>
 	</form>
 </div>

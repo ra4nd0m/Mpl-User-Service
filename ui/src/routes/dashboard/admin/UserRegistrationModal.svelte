@@ -19,11 +19,13 @@
 	let {
 		onUserAdded,
 		mode = 'create',
-		existingUser = null
+		existingUser = null,
+		requestUsersRefresh
 	}: {
 		onUserAdded: () => void;
 		mode?: 'create' | 'edit';
 		existingUser?: UserResponse | null;
+		requestUsersRefresh?: () => void;
 	} = $props();
 
 	let newUser: NewUser = $state(
@@ -37,7 +39,8 @@
 								inn: existingUser.org.inn,
 								subscriptionType: existingUser.org.subscriptionType,
 								subscriptionStartDate: existingUser.org.subscriptionStartDate,
-								subscriptionEndDate: existingUser.org.subscriptionEndDate
+								subscriptionEndDate: existingUser.org.subscriptionEndDate,
+								id: existingUser.org.id
 							}
 						: {
 								name: '',
@@ -46,7 +49,8 @@
 								subscriptionStartDate: new Date().toISOString().split('T')[0],
 								subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
 									.toISOString()
-									.split('T')[0]
+									.split('T')[0],
+								id: 0
 							}
 				}
 			: {
@@ -59,7 +63,8 @@
 						subscriptionStartDate: new Date().toISOString().split('T')[0],
 						subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
 							.toISOString()
-							.split('T')[0]
+							.split('T')[0],
+						id: 0
 					}
 				}
 	);
@@ -75,17 +80,38 @@
 	let loadingOrgs = $state(false);
 
 	let isCreateOrgModalOpen = $state(false);
+	let orgModalMode: 'create' | 'edit' = $state('create');
 
 	onMount(async () => {
 		await loadOrgs();
 	});
 
-	async function handleOrgAdded() {
+	async function handleOrgsChanged() {
 		isCreateOrgModalOpen = false;
 		await loadOrgs();
+		if (selectedOrgId) {
+			const selectedOrg = organizations.find((org) => org.id === Number(selectedOrgId));
+			if (selectedOrg) {
+				newUser.organization = {
+					name: selectedOrg.name,
+					inn: selectedOrg.inn,
+					subscriptionType: selectedOrg.subscriptionType,
+					subscriptionStartDate: selectedOrg.subscriptionStartDate,
+					subscriptionEndDate: selectedOrg.subscriptionEndDate,
+					id: selectedOrg.id
+				};
+			}
+		}
+		requestUsersRefresh?.();
 	}
 
 	function handleCreateOrgModal() {
+		orgModalMode = 'create';
+		isCreateOrgModalOpen = true;
+	}
+
+	function handleEditOrgModal() {
+		orgModalMode = 'edit';
 		isCreateOrgModalOpen = true;
 	}
 
@@ -97,9 +123,9 @@
 
 			// If editing and user has an org, pre-select it
 			if (mode === 'edit' && existingUser?.org) {
-				const matchingOrg = organizations.find((org) => org.inn === existingUser.org?.inn);
+				const matchingOrg = organizations.find((org) => org.id === existingUser.org?.id);
 				if (matchingOrg) {
-					selectedOrgId = matchingOrg.inn;
+					selectedOrgId = String(matchingOrg.id);
 				}
 			}
 		} catch (err) {
@@ -128,14 +154,15 @@
 		const orgId = select.value;
 		selectedOrgId = orgId;
 
-		const selectedOrg = organizations.find((org) => org.inn === orgId);
+		const selectedOrg = organizations.find((org) => org.id === Number(orgId));
 		if (selectedOrg) {
 			newUser.organization = {
 				name: selectedOrg.name,
 				inn: selectedOrg.inn,
 				subscriptionType: selectedOrg.subscriptionType,
 				subscriptionStartDate: selectedOrg.subscriptionStartDate,
-				subscriptionEndDate: selectedOrg.subscriptionEndDate
+				subscriptionEndDate: selectedOrg.subscriptionEndDate,
+				id: selectedOrg.id
 			};
 		}
 	}
@@ -207,7 +234,8 @@
 				subscriptionStartDate: new Date().toISOString().split('T')[0],
 				subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
 					.toISOString()
-					.split('T')[0]
+					.split('T')[0],
+				id: 0
 			}
 		};
 		confirmPassword = '';
@@ -270,7 +298,10 @@
 				if (result) {
 					formSuccess = `User ${existingUser.email} updated successfully`;
 					resetForm();
-					if (onUserAdded) onUserAdded();
+					if (onUserAdded) {
+						requestUsersRefresh?.();
+						onUserAdded();
+					}
 				} else {
 					formError = 'Failed to update user';
 				}
@@ -281,7 +312,10 @@
 				if (result) {
 					formSuccess = `User ${result.email} registered successfully`;
 					resetForm();
-					if (onUserAdded) onUserAdded();
+					if (onUserAdded) {
+						requestUsersRefresh?.();
+						onUserAdded();
+					}
 				} else {
 					formError = 'Failed to register user';
 				}
@@ -429,7 +463,7 @@
 				<select id="org-select" bind:value={selectedOrgId} onchange={handleOrgSelection} required>
 					<option value="">-- Select an organization --</option>
 					{#each organizations as org}
-						<option value={org.inn}>
+						<option value={String(org.id)}>
 							{org.name} (INN: {org.inn})
 						</option>
 					{/each}
@@ -468,6 +502,23 @@
 							new Date(newUser.organization.subscriptionEndDate)
 						)}
 					</p>
+					<button type="button" class="create-org-button" onclick={handleEditOrgModal}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+							<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+						</svg>
+						Edit
+					</button>
 				</div>
 			{/if}
 		</div>
@@ -493,7 +544,11 @@
 	bind:showModal={isCreateOrgModalOpen}
 	title="Create Organization"
 	Component={OrgRegistrationModal}
-	componentProps={{ onOrgAdded: handleOrgAdded }}
+	componentProps={{
+		onOrgAdded: handleOrgsChanged,
+		mode: orgModalMode,
+		existingOrg: newUser.organization
+	}}
 />
 
 <style>
@@ -673,6 +728,10 @@
 
 	.create-org-button svg {
 		flex-shrink: 0;
+	}
+
+	.org-details p:last-of-type {
+		margin-bottom: 0.25rem;
 	}
 
 	.form-error {

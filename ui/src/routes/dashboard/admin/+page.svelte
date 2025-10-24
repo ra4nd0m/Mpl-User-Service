@@ -15,6 +15,7 @@
 
 	let modalMode: 'create' | 'edit' = $state('create');
 	let selectedUser: UserResponse | null = $state(null);
+	let isRefreshPending = $state(false);
 
 	function goToLegacy() {
 		goto('/legacy/index.html#/login');
@@ -48,11 +49,17 @@
 		showUserModal = false;
 		successMessage =
 			modalMode === 'edit' ? 'Пользователь успешно обновлен' : 'Пользователь успешно добавлен';
-		loadUsers();
 
 		modalMode = 'create';
 		selectedUser = null;
 	}
+
+	$effect(() => {
+		if (!showUserModal && isRefreshPending) {
+			loadUsers();
+			isRefreshPending = false;
+		}
+	});
 
 	function handleEditUser(user: UserResponse) {
 		selectedUser = user;
@@ -280,7 +287,14 @@
 		bind:showModal={showUserModal}
 		title={modalMode === 'edit' ? 'Редактировать пользователя' : m.admin_create_user_header()}
 		Component={UserRegistrationModal}
-		componentProps={{ onUserAdded: handleUserAdded, mode: modalMode, existingUser: selectedUser }}
+		componentProps={{
+			onUserAdded: handleUserAdded,
+			mode: modalMode,
+			existingUser: selectedUser,
+			requestUsersRefresh: () => {
+				isRefreshPending = true;
+			}
+		}}
 	/>
 </section>
 

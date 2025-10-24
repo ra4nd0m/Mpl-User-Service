@@ -31,7 +31,7 @@ export async function getOrg(id: number): Promise<OrgResponse | null> {
 
 }
 
-export async function createOrg(org: OrgResponse): Promise<OrgResponse | null> {
+export async function createOrg(org: OrgCreateRequest): Promise<OrgResponse | null> {
     try {
         const response = await fetchWithAuth('organizations', {
             method: 'POST',
@@ -49,6 +49,27 @@ export async function createOrg(org: OrgResponse): Promise<OrgResponse | null> {
         return await response.json();
     } catch (error) {
         console.error('Error during createOrg:', error);
+        return null;
+    }
+}
+
+export async function updateOrg(id: number, updatedData: OrgCreateRequest): Promise<OrgResponse | null> {
+    try {
+        const response = await fetchWithAuth(`organizations/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedData)
+        }, true);
+
+        if (!response.ok) {
+            console.error('Failed to update org:', await response.json().catch(() => response.statusText));
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error during updateOrg:', error);
         return null;
     }
 }
@@ -190,7 +211,16 @@ export interface UserResponse {
     org: OrgResponse | null;
 }
 
+export interface OrgCreateRequest {
+    name: string;
+    inn: string;
+    subscriptionType: SubscriptionType;
+    subscriptionStartDate: string; // ISO date string format
+    subscriptionEndDate: string;   // ISO date string format
+}
+
 export interface OrgResponse {
+    id: number;
     name: string;
     inn: string;
     subscriptionType: SubscriptionType;
