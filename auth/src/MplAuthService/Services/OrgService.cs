@@ -42,5 +42,32 @@ namespace MplAuthService.Services
             await context.SaveChangesAsync();
             return organization;
         }
+
+        public async Task<OrganizationDto?> UpdateOrganization(string inn, OrganizationDto orgDto)
+        {
+            logger.LogInformation("Updating organization with INN {Inn}", inn);
+
+            var organization = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == inn);
+            if (organization == null)
+            {
+                logger.LogWarning("Organization with INN {Inn} not found", inn);
+                return null;
+            }
+
+            organization.Name = orgDto.Name;
+            organization.SubscriptionType = orgDto.SubscriptionType;
+            organization.SubscriptionStartDate = orgDto.SubscriptionStartDate.ToUniversalTime();
+            organization.SubscriptionEndDate = orgDto.SubscriptionEndDate.ToUniversalTime();
+
+            context.Organizations.Update(organization);
+            await context.SaveChangesAsync();
+            var result = new OrganizationDto(
+                organization.Name,
+                organization.Inn,
+                organization.SubscriptionType,
+                organization.SubscriptionStartDate,
+                organization.SubscriptionEndDate);
+            return result;
+        }
     }
 }

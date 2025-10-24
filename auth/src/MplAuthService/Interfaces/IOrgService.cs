@@ -8,5 +8,6 @@ namespace MplAuthService.Interfaces
         Task<Organization?> GetOrganization(string inn);
         Task<List<Organization>> GetOrganizations();
         Task<Organization> CreateOrganization(OrganizationDto orgDto);
+        Task<OrganizationDto?> UpdateOrganization(string inn, OrganizationDto orgDto);
     }
 }

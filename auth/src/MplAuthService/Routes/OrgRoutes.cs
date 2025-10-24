@@ -35,6 +35,24 @@ namespace MplAuthService.Routes
                 ));
             }).RequireAuthorization("AdminOnly");
 
+            app.MapPut("/organizations/{inn}", async (IOrgService orgService, string inn, OrganizationDto orgDto, ILogger<Program> logger) =>
+            {
+                try
+                {
+                    var result = await orgService.UpdateOrganization(inn, orgDto);
+                    if (result == null)
+                    {
+                        return Results.NotFound();
+                    }
+                    return Results.Ok(result);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to update organization with INN {Inn}", inn);
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization("AdminOnly");
+
             app.MapPost("/organizations", async (IOrgService orgService, OrganizationDto orgDto, ILogger<Program> logger) =>
             {
                 try
