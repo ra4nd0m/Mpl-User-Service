@@ -31,6 +31,28 @@ export async function getOrg(id: number): Promise<OrgResponse | null> {
 
 }
 
+export async function createOrg(org: OrgResponse): Promise<OrgResponse | null> {
+    try {
+        const response = await fetchWithAuth('organizations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(org)
+        }, true);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Failed to create org:', errorData || response.statusText);
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error during createOrg:', error);
+        return null;
+    }
+}
+
 export async function registerUser(user: NewUser): Promise<UserResponse | null> {
     try {
         const response = await fetchWithAuth('register', {

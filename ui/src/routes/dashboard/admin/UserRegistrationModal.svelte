@@ -1,14 +1,20 @@
 <script lang="ts">
+	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import {
 		registerUser,
 		SubscriptionType,
 		updateUser,
+		getOrgs,
 		type NewUser,
 		type UpdatedUser,
 		type UserResponse
 	} from '$lib/api/adminClient';
 
-	import { m } from '$lib/i18n';
+	import type { OrgResponse } from '$lib/api/adminClient';
+
+	import { m, locale } from '$lib/i18n';
+	import { onMount } from 'svelte';
+	import OrgRegistrationModal from './OrgRegistrationModal.svelte';
 
 	let {
 		onUserAdded,
@@ -63,6 +69,76 @@
 	let formSuccess: string | null = $state(null);
 	let formSubmitting = $state(false);
 	let showPassword = $state(false);
+
+	let organizations = $state<OrgResponse[]>([]);
+	let selectedOrgId = $state<string | null>(null);
+	let loadingOrgs = $state(false);
+
+	let isCreateOrgModalOpen = $state(false);
+
+	onMount(async () => {
+		await loadOrgs();
+	});
+
+	async function handleOrgAdded() {
+		isCreateOrgModalOpen = false;
+		await loadOrgs();
+	}
+
+	function handleCreateOrgModal() {
+		isCreateOrgModalOpen = true;
+	}
+
+	async function loadOrgs() {
+		try {
+			loadingOrgs = true;
+			const orgs = await getOrgs();
+			organizations = orgs || [];
+
+			// If editing and user has an org, pre-select it
+			if (mode === 'edit' && existingUser?.org) {
+				const matchingOrg = organizations.find((org) => org.inn === existingUser.org?.inn);
+				if (matchingOrg) {
+					selectedOrgId = matchingOrg.inn;
+				}
+			}
+		} catch (err) {
+			console.error('Failed to load organizations', err);
+			formError = 'Failed to load organizations';
+		} finally {
+			loadingOrgs = false;
+		}
+	}
+
+	function getSubscriptionTypeName(type: SubscriptionType): string {
+		switch (type) {
+			case SubscriptionType.Free:
+				return m.admin_create_user_subscription_type_free();
+			case SubscriptionType.Basic:
+				return m.admin_create_user_subscription_type_basic();
+			case SubscriptionType.Premium:
+				return m.admin_create_user_subscription_type_premium();
+			default:
+				return 'Unknown';
+		}
+	}
+
+	function handleOrgSelection(e: Event) {
+		const select = e.target as HTMLSelectElement;
+		const orgId = select.value;
+		selectedOrgId = orgId;
+
+		const selectedOrg = organizations.find((org) => org.inn === orgId);
+		if (selectedOrg) {
+			newUser.organization = {
+				name: selectedOrg.name,
+				inn: selectedOrg.inn,
+				subscriptionType: selectedOrg.subscriptionType,
+				subscriptionStartDate: selectedOrg.subscriptionStartDate,
+				subscriptionEndDate: selectedOrg.subscriptionEndDate
+			};
+		}
+	}
 
 	function generateSecurePassword(length: number = 12): string {
 		const lowercase = 'abcdefghijklmnopqrstuvwxyz';
@@ -169,8 +245,8 @@
 			}
 		}
 
-		if (!newUser.organization || !newUser.organization.name || !newUser.organization.inn) {
-			formError = 'Organization name and INN are required';
+		if (!selectedOrgId) {
+			formError = 'Organization selection is required';
 			return;
 		}
 
@@ -345,48 +421,55 @@
 			{/if}
 		</div>
 
-		<div class="form-section">
-			<h4>{m.admin_create_user_organization_details()}</h4>
-			<div class="form-group">
-				<label for="org-name">{m.admin_create_user_organization_name()}</label>
-				<input type="text" id="org-name" bind:value={newUser.organization!.name} required />
-			</div>
-
-			<div class="form-group">
-				<label for="inn">{m.admin_create_user_organization_inn()}</label>
-				<input type="text" id="inn" bind:value={newUser.organization!.inn} required />
-			</div>
-
-			<div class="form-group">
-				<label for="subscription-type">{m.admin_create_user_subscription_type()}</label>
-				<select id="subscription-type" bind:value={newUser.organization!.subscriptionType}>
-					<option value={SubscriptionType.Free}
-						>{m.admin_create_user_subscription_type_free()}</option
-					>
-					<option value={SubscriptionType.Basic}
-						>{m.admin_create_user_subscription_type_basic()}</option
-					>
-					<option value={SubscriptionType.Premium}
-						>{m.admin_create_user_subscription_type_premium()}</option
-					>
+		<div class="form-group">
+			<label for="org-select">Select Organization</label>
+			{#if loadingOrgs}
+				<p>Loading organizations...</p>
+			{:else}
+				<select id="org-select" bind:value={selectedOrgId} onchange={handleOrgSelection} required>
+					<option value="">-- Select an organization --</option>
+					{#each organizations as org}
+						<option value={org.inn}>
+							{org.name} (INN: {org.inn})
+						</option>
+					{/each}
 				</select>
-			</div>
-
-			<div class="form-row">
-				<div class="form-group half">
-					<label for="start-date">{m.admin_create_user_subscription_start_date()}</label>
-					<input
-						type="date"
-						id="start-date"
-						bind:value={newUser.organization!.subscriptionStartDate}
-					/>
+				<button type="button" class="create-org-button" onclick={handleCreateOrgModal}>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M5 12h14"></path>
+						<path d="M12 5v14"></path>
+					</svg>
+					Create Organisation
+				</button>
+			{/if}
+			{#if selectedOrgId && newUser.organization}
+				<div class="org-details">
+					<p><strong>Organization Name:</strong> {newUser.organization.name}</p>
+					<p><strong>INN:</strong> {newUser.organization.inn}</p>
+					<p>
+						<strong>Subscription Type:</strong>
+						{getSubscriptionTypeName(newUser.organization.subscriptionType)}
+					</p>
+					<p>
+						<strong>Subscription Period:</strong>
+						{new Intl.DateTimeFormat($locale).format(
+							new Date(newUser.organization.subscriptionStartDate)
+						)} to {new Intl.DateTimeFormat($locale).format(
+							new Date(newUser.organization.subscriptionEndDate)
+						)}
+					</p>
 				</div>
-
-				<div class="form-group half">
-					<label for="end-date">{m.admin_create_user_subscription_end_date()}</label>
-					<input type="date" id="end-date" bind:value={newUser.organization!.subscriptionEndDate} />
-				</div>
-			</div>
+			{/if}
 		</div>
 
 		<div class="form-actions">
@@ -405,6 +488,13 @@
 		</div>
 	</form>
 </div>
+
+<ModalBase
+	bind:showModal={isCreateOrgModalOpen}
+	title="Create Organization"
+	Component={OrgRegistrationModal}
+	componentProps={{ onOrgAdded: handleOrgAdded }}
+/>
 
 <style>
 	.modal-body {
@@ -425,15 +515,6 @@
 
 	.form-group {
 		margin-bottom: 1rem;
-	}
-
-	.form-row {
-		display: flex;
-		gap: 1rem;
-	}
-
-	.form-group.half {
-		flex: 1;
 	}
 
 	label {
@@ -572,6 +653,28 @@
 		cursor: not-allowed;
 	}
 
+	.create-org-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 0.5rem;
+		padding: 0.25rem 0.5rem;
+		background: none;
+		border: none;
+		color: #228be6;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: color 0.2s;
+	}
+
+	.create-org-button:hover {
+		color: #1c7ed6;
+	}
+
+	.create-org-button svg {
+		flex-shrink: 0;
+	}
+
 	.form-error {
 		background-color: rgba(220, 53, 69, 0.1);
 		color: #dc3545;
@@ -586,12 +689,5 @@
 		padding: 0.75rem;
 		border-radius: 4px;
 		margin-bottom: 1rem;
-	}
-
-	@media (max-width: 768px) {
-		.form-row {
-			flex-direction: column;
-			gap: 0;
-		}
 	}
 </style>
