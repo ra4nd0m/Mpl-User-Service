@@ -66,7 +66,7 @@ namespace MplAuthService.Routes
                     {
                         var organizationDto = new OrganizationDto(u.Organization.Name, u.Organization.Inn,
                             u.Organization.SubscriptionType, u.Organization.SubscriptionStartDate,
-                            u.Organization.SubscriptionEndDate);
+                            u.Organization.SubscriptionEndDate, u.Organization.Id);
                         result = new UserResponseDto(u.Id, u.Email!, organizationDto);
                     }
                     else
@@ -89,7 +89,7 @@ namespace MplAuthService.Routes
                 {
                     var organizationDto = new OrganizationDto(user.Organization.Name, user.Organization.Inn,
                         user.Organization.SubscriptionType, user.Organization.SubscriptionStartDate,
-                        user.Organization.SubscriptionEndDate);
+                        user.Organization.SubscriptionEndDate, user.Organization.Id);
                     result = new UserResponseDto(user.Id, user.Email!, organizationDto);
                 }
                 else
