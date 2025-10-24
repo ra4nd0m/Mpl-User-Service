@@ -113,8 +113,6 @@ namespace MplAuthService.Services
                 if (updateUser.Organization != null)
                 {
                     var desiredInn = updateUser.Organization.Inn;
-
-                    // Try reuse existing org by INN
                     var existingOrg = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == desiredInn);
 
                     Organization orgToUse;
@@ -133,18 +131,7 @@ namespace MplAuthService.Services
                             SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionEndDate, DateTimeKind.Utc)
                         };
                         await context.Organizations.AddAsync(orgToUse);
-                        // Persist new organization so FK is valid
                         await context.SaveChangesAsync();
-                    }
-
-                    // If we created a new org we already set dates above,
-                    // if we reused an org, update its fields to match the request.
-                    if (existingOrg != null)
-                    {
-                        orgToUse.Name = updateUser.Organization.Name;
-                        orgToUse.SubscriptionType = updateUser.Organization.SubscriptionType;
-                        orgToUse.SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionStartDate, DateTimeKind.Utc);
-                        orgToUse.SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionEndDate, DateTimeKind.Utc);
                     }
 
                     user.Organization = orgToUse;
