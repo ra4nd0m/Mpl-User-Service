@@ -7,6 +7,7 @@ namespace MplAuthService.Models.Dtos
         string Inn,
         SubscriptionType SubscriptionType,
         DateTime SubscriptionStartDate,
-        DateTime SubscriptionEndDate
+        DateTime SubscriptionEndDate,
+        int? Id = null
     );
 }

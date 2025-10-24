@@ -43,14 +43,14 @@ namespace MplAuthService.Services
             return organization;
         }
 
-        public async Task<OrganizationDto?> UpdateOrganization(string inn, OrganizationDto orgDto)
+        public async Task<OrganizationDto?> UpdateOrganization(int id, OrganizationDto orgDto)
         {
-            logger.LogInformation("Updating organization with INN {Inn}", inn);
+            logger.LogInformation("Updating organization with id {Id}", id);
 
-            var organization = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == inn);
+            var organization = await context.Organizations.FirstOrDefaultAsync(o => o.Id == id);
             if (organization == null)
             {
-                logger.LogWarning("Organization with INN {Inn} not found", inn);
+                logger.LogWarning("Organization with id {Id} not found", id);
                 return null;
             }
 

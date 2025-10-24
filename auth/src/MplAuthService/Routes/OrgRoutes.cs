@@ -15,7 +15,8 @@ namespace MplAuthService.Routes
                     o.Inn,
                     o.SubscriptionType,
                     o.SubscriptionStartDate,
-                    o.SubscriptionEndDate
+                    o.SubscriptionEndDate,
+                    o.Id
                 )));
             }).RequireAuthorization("AdminOnly");
 
@@ -31,15 +32,16 @@ namespace MplAuthService.Routes
                     org.Inn,
                     org.SubscriptionType,
                     org.SubscriptionStartDate,
-                    org.SubscriptionEndDate
+                    org.SubscriptionEndDate,
+                    org.Id
                 ));
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPut("/organizations/{inn}", async (IOrgService orgService, string inn, OrganizationDto orgDto, ILogger<Program> logger) =>
+            app.MapPut("/organizations/{id}", async (IOrgService orgService, int id, OrganizationDto orgDto, ILogger<Program> logger) =>
             {
                 try
                 {
-                    var result = await orgService.UpdateOrganization(inn, orgDto);
+                    var result = await orgService.UpdateOrganization(id, orgDto);
                     if (result == null)
                     {
                         return Results.NotFound();
@@ -48,7 +50,7 @@ namespace MplAuthService.Routes
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to update organization with INN {Inn}", inn);
+                    logger.LogError(ex, "Failed to update organization with id {Id}", id);
                     return Results.BadRequest();
                 }
             }).RequireAuthorization("AdminOnly");
@@ -63,7 +65,8 @@ namespace MplAuthService.Routes
                         result.Inn,
                         result.SubscriptionType,
                         result.SubscriptionStartDate,
-                        result.SubscriptionEndDate
+                        result.SubscriptionEndDate,
+                        result.Id
                     ));
                 }
                 catch (Exception ex)
