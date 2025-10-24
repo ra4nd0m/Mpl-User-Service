@@ -194,7 +194,6 @@
 			<table class="users-table">
 				<thead>
 					<tr>
-						<th>ID</th>
 						<th>{m.admin_user_table_email()}</th>
 						<th>{m.admin_user_table_organization()}</th>
 						<th>{m.admin_user_table_inn()}</th>
@@ -207,7 +206,6 @@
 				<tbody>
 					{#each userList as user}
 						<tr>
-							<td>{user.id}</td>
 							<td>{user.email}</td>
 							<td>{user.org?.name || 'N/A'}</td>
 							<td>{user.org?.inn || 'N/A'}</td>
