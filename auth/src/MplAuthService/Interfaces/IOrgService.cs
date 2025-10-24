@@ -9,5 +9,7 @@ namespace MplAuthService.Interfaces
         Task<List<Organization>> GetOrganizations();
         Task<Organization> CreateOrganization(OrganizationDto orgDto);
         Task<OrganizationDto?> UpdateOrganization(int id, OrganizationDto orgDto);
+        Task<bool> DeleteOrganization(int id);
+        Task<List<UserResponseDto>> GetUsersByOrganization(int orgId);
     }
 }

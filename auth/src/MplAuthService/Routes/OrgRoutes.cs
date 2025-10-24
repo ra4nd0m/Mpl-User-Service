@@ -7,6 +7,9 @@ namespace MplAuthService.Routes
     {
         public static void MapOrgRoutes(this WebApplication app)
         {
+            var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("OrgRoutes");
+
             app.MapGet("/organizations", async (IOrgService orgService) =>
             {
                 var orgs = await orgService.GetOrganizations();
@@ -37,7 +40,21 @@ namespace MplAuthService.Routes
                 ));
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPut("/organizations/{id}", async (IOrgService orgService, int id, OrganizationDto orgDto, ILogger<Program> logger) =>
+            app.MapGet("/organizations/{orgId}/users", async (IOrgService orgService, int orgId) =>
+            {
+                try
+                {
+                    var users = await orgService.GetUsersByOrganization(orgId);
+                    return Results.Ok(users);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to get users for organization with id {OrgId}", orgId);
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization("AdminOnly");
+
+            app.MapPut("/organizations/{id}", async (IOrgService orgService, int id, OrganizationDto orgDto) =>
             {
                 try
                 {
@@ -55,7 +72,7 @@ namespace MplAuthService.Routes
                 }
             }).RequireAuthorization("AdminOnly");
 
-            app.MapPost("/organizations", async (IOrgService orgService, OrganizationDto orgDto, ILogger<Program> logger) =>
+            app.MapPost("/organizations", async (IOrgService orgService, OrganizationDto orgDto) =>
             {
                 try
                 {
@@ -75,6 +92,25 @@ namespace MplAuthService.Routes
                     return Results.BadRequest();
                 }
             }).RequireAuthorization("AdminOnly");
+
+            app.MapDelete("/organizations/{id}", async (IOrgService orgService, int id) =>
+            {
+                try
+                {
+                    var success = await orgService.DeleteOrganization(id);
+                    if (!success)
+                    {
+                        return Results.NotFound();
+                    }
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to delete organization with id {Id}", id);
+                    return Results.BadRequest();
+                }
+            }).RequireAuthorization("AdminOnly");
+
 
         }
     }

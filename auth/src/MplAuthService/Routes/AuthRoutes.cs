@@ -12,8 +12,11 @@ namespace MplAuthService.Routes
     {
         public static void MapAuthRoutes(this WebApplication app)
         {
+            var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("AuthRoutes");
+
             app.MapPost("/login", async (IJwtService jwtService, IRefreshTokenService refreshTokenService,
-            UserManager<User> userManager, LoginDto loginDto, HttpContext context, ILogger<Program> logger, AuthContext dbContext) =>
+            UserManager<User> userManager, LoginDto loginDto, HttpContext context, AuthContext dbContext) =>
             {
                 try
                 {
@@ -62,7 +65,7 @@ namespace MplAuthService.Routes
             });
 
             app.MapPost("/refresh", async (IJwtService jwtService, IRefreshTokenService refreshTokenService,
-            UserManager<User> userManager, HttpContext context, AuthContext authContext, ILogger<Program> logger) =>
+            UserManager<User> userManager, HttpContext context, AuthContext authContext) =>
             {
                 try
                 {
@@ -109,7 +112,7 @@ namespace MplAuthService.Routes
                 }
             });
 
-            app.MapPost("/logout", async (IRefreshTokenService refreshTokenService, HttpContext context, ILogger<Program> logger) =>
+            app.MapPost("/logout", async (IRefreshTokenService refreshTokenService, HttpContext context) =>
             {
                 try
                 {
