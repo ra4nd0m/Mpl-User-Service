@@ -8,10 +8,10 @@ namespace MplAuthService.Services
 {
     public class OrgService(AuthContext context, ILogger<OrgService> logger) : IOrgService
     {
-        public async Task<Organization?> GetOrganization(int id)
+        public async Task<Organization?> GetOrganization(string inn)
         {
-            logger.LogInformation("Getting organization with id {Id}", id);
-            return await context.Organizations.FindAsync(id);
+            logger.LogInformation("Getting organization with INN {Inn}", inn);
+            return await context.Organizations.FirstOrDefaultAsync(o => o.Inn == inn);
         }
 
         public async Task<List<Organization>> GetOrganizations()
@@ -29,7 +29,7 @@ namespace MplAuthService.Services
             {
                 throw new InvalidOperationException($"Organization with INN {orgDto.Inn} already exists");
             }
-            
+
             var organization = new Organization
             {
                 Name = orgDto.Name,

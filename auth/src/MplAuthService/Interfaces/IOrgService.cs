@@ -5,7 +5,7 @@ namespace MplAuthService.Interfaces
 {
     public interface IOrgService
     {
-        Task<Organization?> GetOrganization(int id);
+        Task<Organization?> GetOrganization(string inn);
         Task<List<Organization>> GetOrganizations();
         Task<Organization> CreateOrganization(OrganizationDto orgDto);
     }

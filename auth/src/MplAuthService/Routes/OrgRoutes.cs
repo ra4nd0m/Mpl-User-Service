@@ -19,9 +19,9 @@ namespace MplAuthService.Routes
                 )));
             }).RequireAuthorization("AdminOnly");
 
-            app.MapGet("/organizations/{id}", async (IOrgService orgService, int id) =>
+            app.MapGet("/organizations/{inn}", async (IOrgService orgService, string inn) =>
             {
-                var org = await orgService.GetOrganization(id);
+                var org = await orgService.GetOrganization(inn);
                 if (org == null)
                 {
                     return Results.NotFound();

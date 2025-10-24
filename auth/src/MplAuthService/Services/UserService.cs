@@ -23,7 +23,7 @@ namespace MplAuthService.Services
             using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
-                var existingOrg = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == organization.Inn);
+                var existingOrg = await orgService.GetOrganization(organization.Inn);
                 Organization org;
                 if (existingOrg == null)
                 {
@@ -104,7 +104,7 @@ namespace MplAuthService.Services
                 if (updateUser.Organization != null)
                 {
                     var desiredInn = updateUser.Organization.Inn;
-                    var existingOrg = await context.Organizations.FirstOrDefaultAsync(o => o.Inn == desiredInn);
+                    var existingOrg = await orgService.GetOrganization(desiredInn);
 
                     Organization orgToUse;
                     if (existingOrg != null)
