@@ -10,7 +10,7 @@ using MplAuthService.Utils;
 namespace MplAuthService.Services
 {
     public class UserService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
-        AuthContext context, ILogger<UserService> logger, IJwtService jwtService, IHttpClientFactory httpClientFactory) : IUserService
+        AuthContext context, ILogger<UserService> logger, IJwtService jwtService, IHttpClientFactory httpClientFactory, IOrgService orgService) : IUserService
     {
         public async Task<User> CreateUser(string email, string password, OrganizationDto organization)
         {
@@ -27,16 +27,7 @@ namespace MplAuthService.Services
                 Organization org;
                 if (existingOrg == null)
                 {
-                    org = new Organization
-                    {
-                        Name = organization.Name,
-                        Inn = organization.Inn,
-                        SubscriptionType = organization.SubscriptionType,
-                        SubscriptionStartDate = DateTime.SpecifyKind(organization.SubscriptionStartDate, DateTimeKind.Utc),
-                        SubscriptionEndDate = DateTime.SpecifyKind(organization.SubscriptionEndDate, DateTimeKind.Utc)
-                    };
-                    await context.Organizations.AddAsync(org);
-                    await context.SaveChangesAsync();
+                    org = await orgService.CreateOrganization(organization);
                 }
                 else
                 {
@@ -122,16 +113,7 @@ namespace MplAuthService.Services
                     }
                     else
                     {
-                        orgToUse = new Organization
-                        {
-                            Name = updateUser.Organization.Name,
-                            Inn = updateUser.Organization.Inn,
-                            SubscriptionType = updateUser.Organization.SubscriptionType,
-                            SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionStartDate, DateTimeKind.Utc),
-                            SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Organization.SubscriptionEndDate, DateTimeKind.Utc)
-                        };
-                        await context.Organizations.AddAsync(orgToUse);
-                        await context.SaveChangesAsync();
+                        orgToUse = await orgService.CreateOrganization(updateUser.Organization);
                     }
 
                     user.Organization = orgToUse;
