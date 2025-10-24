@@ -35,8 +35,8 @@ namespace MplAuthService.Services
                 Name = orgDto.Name,
                 Inn = orgDto.Inn,
                 SubscriptionType = orgDto.SubscriptionType,
-                SubscriptionStartDate = orgDto.SubscriptionStartDate.ToUniversalTime(),
-                SubscriptionEndDate = orgDto.SubscriptionEndDate.ToUniversalTime()
+                SubscriptionStartDate = DateTime.SpecifyKind(orgDto.SubscriptionStartDate, DateTimeKind.Utc),
+                SubscriptionEndDate = DateTime.SpecifyKind(orgDto.SubscriptionEndDate, DateTimeKind.Utc)
             };
             context.Organizations.Add(organization);
             await context.SaveChangesAsync();
@@ -55,9 +55,10 @@ namespace MplAuthService.Services
             }
 
             organization.Name = orgDto.Name;
+            organization.Inn = orgDto.Inn;
             organization.SubscriptionType = orgDto.SubscriptionType;
-            organization.SubscriptionStartDate = orgDto.SubscriptionStartDate.ToUniversalTime();
-            organization.SubscriptionEndDate = orgDto.SubscriptionEndDate.ToUniversalTime();
+            organization.SubscriptionStartDate = DateTime.SpecifyKind(orgDto.SubscriptionStartDate, DateTimeKind.Utc);
+            organization.SubscriptionEndDate = DateTime.SpecifyKind(orgDto.SubscriptionEndDate, DateTimeKind.Utc);
 
             context.Organizations.Update(organization);
             await context.SaveChangesAsync();
