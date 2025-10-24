@@ -29,6 +29,19 @@ namespace MplAuthService.Routes
                         .Include(u => u.Organization)
                         .FirstOrDefaultAsync(u => u.Id == user.Id);
 
+                    var roles = await userManager.GetRolesAsync(user!);
+                    if (!roles.Contains("Admin") && user!.Organization != null)
+                    {
+                        if (user.Organization.SubscriptionEndDate < DateTime.UtcNow)
+                        {
+                            logger.LogWarning("User {Email} organization subscription has expired", EmailObfuscator.ObfuscateEmail(loginDto.Email));
+                            return Results.Problem(
+                            detail: "Your subscription has expired. Please contact support to renew.",
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Subscription Expired");
+                        }
+                    }
+
                     logger.LogInformation("User {Email} logged in", EmailObfuscator.ObfuscateEmail(loginDto.Email));
                     string token = await jwtService.GenerateJwtToken(user!);
                     RefreshToken refreshToken = await refreshTokenService.GenerateRefreshToken(user!);
@@ -65,6 +78,19 @@ namespace MplAuthService.Routes
                                 user = await authContext.Users
                                     .Include(u => u.Organization)
                                     .FirstOrDefaultAsync(u => u.Id == user.Id);
+
+                                var roles = await userManager.GetRolesAsync(user!);
+                                if (!roles.Contains("Admin") && user!.Organization != null)
+                                {
+                                    if (user.Organization.SubscriptionEndDate < DateTime.UtcNow)
+                                    {
+                                        logger.LogWarning("User {Email} organization subscription has expired during token refresh", EmailObfuscator.ObfuscateEmail(user.Email!));
+                                        return Results.Problem(
+                                        detail: "Your subscription has expired. Please contact support to renew.",
+                                        statusCode: StatusCodes.Status403Forbidden,
+                                        title: "Subscription Expired");
+                                    }
+                                }
                                 string newToken = await jwtService.GenerateJwtToken(user!);
                                 return Results.Ok(new { Token = newToken });
                             }
