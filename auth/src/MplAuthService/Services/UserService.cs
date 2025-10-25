@@ -64,8 +64,8 @@ namespace MplAuthService.Services
                     user.IndividualSubscription = new IndividualSubscription
                     {
                         SubscriptionType = subscription.SubscriptionType,
-                        SubscriptionStartDate = subscription.SubscriptionStartDate,
-                        SubscriptionEndDate = subscription.SubscriptionEndDate,
+                        SubscriptionStartDate = DateTime.SpecifyKind(subscription.SubscriptionStartDate, DateTimeKind.Utc),
+                        SubscriptionEndDate = DateTime.SpecifyKind(subscription.SubscriptionEndDate, DateTimeKind.Utc),
                         User = user
                     };
                 }
@@ -154,16 +154,16 @@ namespace MplAuthService.Services
                     if(user.IndividualSubscription != null)
                     {
                         user.IndividualSubscription.SubscriptionType = updateUser.SubscriptionData.SubscriptionType;
-                        user.IndividualSubscription.SubscriptionStartDate = updateUser.SubscriptionData.SubscriptionStartDate;
-                        user.IndividualSubscription.SubscriptionEndDate = updateUser.SubscriptionData.SubscriptionEndDate;
+                        user.IndividualSubscription.SubscriptionStartDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionStartDate, DateTimeKind.Utc);
+                        user.IndividualSubscription.SubscriptionEndDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionEndDate, DateTimeKind.Utc);
                     }
                     else
                     {
                         user.IndividualSubscription = new IndividualSubscription
                         {
                             SubscriptionType = updateUser.SubscriptionData.SubscriptionType,
-                            SubscriptionStartDate = updateUser.SubscriptionData.SubscriptionStartDate,
-                            SubscriptionEndDate = updateUser.SubscriptionData.SubscriptionEndDate,
+                            SubscriptionStartDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionStartDate, DateTimeKind.Utc),
+                            SubscriptionEndDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionEndDate, DateTimeKind.Utc),
                             User = user
                         };
                     }
