@@ -25,33 +25,43 @@ namespace MplAuthService.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    SubscriptionType = table.Column<string>(type: "text", nullable: false),
+                    SubscriptionType = table.Column<int>(type: "integer", nullable: false),
                     SubscriptionStartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     SubscriptionEndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_IndividualSubscriptions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_IndividualSubscriptions_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_IndividualSubscriptions_UserId",
-                table: "IndividualSubscriptions",
-                column: "UserId",
+                name: "IX_AspNetUsers_IndividualSubscriptionId",
+                table: "AspNetUsers",
+                column: "IndividualSubscriptionId",
                 unique: true);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUsers_IndividualSubscriptions_IndividualSubscriptionId",
+                table: "AspNetUsers",
+                column: "IndividualSubscriptionId",
+                principalTable: "IndividualSubscriptions",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_AspNetUsers_IndividualSubscriptions_IndividualSubscriptionId",
+                table: "AspNetUsers");
+
             migrationBuilder.DropTable(
                 name: "IndividualSubscriptions");
+
+            migrationBuilder.DropIndex(
+                name: "IX_AspNetUsers_IndividualSubscriptionId",
+                table: "AspNetUsers");
 
             migrationBuilder.DropColumn(
                 name: "IndividualSubscriptionId",

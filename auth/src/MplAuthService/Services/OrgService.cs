@@ -92,21 +92,23 @@ namespace MplAuthService.Services
             var users = await context.Users
                 .Where(u => u.OrganizationId == orgId)
                 .Include(u => u.Organization)
+                .ToListAsync();
+            var result = users
                 .Select(u => new UserResponseDto(
-                    u.Id,
-                    u.Email!,
-                    u.Organization != null ? new OrganizationDto(
+                u.Id,
+                u.Email!,
+                u.Organization != null
+                    ? new OrganizationDto(
                         u.Organization.Name,
                         u.Organization.Inn,
                         u.Organization.SubscriptionType,
                         u.Organization.SubscriptionStartDate,
                         u.Organization.SubscriptionEndDate,
-                        u.Organization.Id
-                    ) : null
-                ))
-                .ToListAsync();
+                        u.Organization.Id)
+                    : null
+                )).ToList();
 
-            return users;
+            return result;
         }
     }
 }

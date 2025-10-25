@@ -25,14 +25,26 @@ namespace MplAuthService.Services
 
             };
 
-            if (!roles.Contains("Admin") && user.Organization != null)
+            if (!roles.Contains("Admin"))
             {
-                claims.AddRange(
-                [
-                    new("OrganizationId", user.Organization?.Id.ToString() ?? String.Empty),
-                    new("SubscriptionType", user.Organization?.SubscriptionType.ToString() ?? throw new InvalidOperationException("Subscription type is not set")),
-                    new("SubscriptionEnd", user.Organization?.SubscriptionEndDate.ToString("O") ?? throw new InvalidOperationException("Subscription end date is not set"))
-                ]);
+                if (user.Organization != null)
+                {
+                    claims.AddRange(
+                    [
+                        new("OrganizationId", user.Organization?.Id.ToString() ?? String.Empty),
+                        new("SubscriptionType", user.Organization?.SubscriptionType.ToString() ?? throw new InvalidOperationException("Subscription type is not set")),
+                        new("SubscriptionEnd", user.Organization?.SubscriptionEndDate.ToString("O") ?? throw new InvalidOperationException("Subscription end date is not set"))
+                    ]);
+                }
+                else if (user.IndividualSubscription != null)
+                {
+                    claims.AddRange(
+                    [
+                        new("SubscriptionType", user.IndividualSubscription.SubscriptionType.ToString() ?? throw new InvalidOperationException("Subscription type is not set")),
+                        new("SubscriptionEnd", user.IndividualSubscription.SubscriptionEndDate.ToString("O") ?? throw new InvalidOperationException("Subscription end date is not set"))
+                    ]);
+                }
+
             }
 
             foreach (var role in roles)

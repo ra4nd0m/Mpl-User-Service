@@ -35,6 +35,13 @@ namespace MplAuthService.Data
                 .WithOne(u => u.IndividualSubscription)
                 .HasForeignKey<IndividualSubscription>(isub => isub.UserId);
 
+            builder.Entity<User>()
+                .HasOne(u => u.IndividualSubscription)
+                .WithOne(isub => isub.User)
+                .HasForeignKey<User>(u => u.IndividualSubscriptionId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

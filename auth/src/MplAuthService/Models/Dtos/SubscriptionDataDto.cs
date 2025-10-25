@@ -1,4 +1,6 @@
-namespace MplAuthService.Models.Enums
+using MplAuthService.Models.Enums;
+
+namespace MplAuthService.Models.Dtos
 {
     public record SubscriptionDataDto(
         SubscriptionType SubscriptionType,

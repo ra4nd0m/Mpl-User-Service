@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MplAuthService.Migrations
 {
     [DbContext(typeof(AuthContext))]
-    [Migration("20251024235803_IndividualSubscriptionSupport")]
+    [Migration("20251025005806_IndividualSubscriptionSupport")]
     partial class IndividualSubscriptionSupport
     {
         /// <inheritdoc />
@@ -190,18 +190,14 @@ namespace MplAuthService.Migrations
                     b.Property<DateTime>("SubscriptionStartDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("SubscriptionType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("SubscriptionType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
 
                     b.ToTable("IndividualSubscriptions");
                 });
@@ -325,6 +321,9 @@ namespace MplAuthService.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IndividualSubscriptionId")
+                        .IsUnique();
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -388,17 +387,6 @@ namespace MplAuthService.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MplAuthService.Models.IndividualSubscription", b =>
-                {
-                    b.HasOne("MplAuthService.Models.User", "User")
-                        .WithOne("IndividualSubscription")
-                        .HasForeignKey("MplAuthService.Models.IndividualSubscription", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("MplAuthService.Models.RefreshToken", b =>
                 {
                     b.HasOne("MplAuthService.Models.User", "User")
@@ -412,12 +400,25 @@ namespace MplAuthService.Migrations
 
             modelBuilder.Entity("MplAuthService.Models.User", b =>
                 {
+                    b.HasOne("MplAuthService.Models.IndividualSubscription", "IndividualSubscription")
+                        .WithOne("User")
+                        .HasForeignKey("MplAuthService.Models.User", "IndividualSubscriptionId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("MplAuthService.Models.Organization", "Organization")
                         .WithMany("Users")
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.Navigation("IndividualSubscription");
+
                     b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("MplAuthService.Models.IndividualSubscription", b =>
+                {
+                    b.Navigation("User")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MplAuthService.Models.Organization", b =>
@@ -427,8 +428,6 @@ namespace MplAuthService.Migrations
 
             modelBuilder.Entity("MplAuthService.Models.User", b =>
                 {
-                    b.Navigation("IndividualSubscription");
-
                     b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618

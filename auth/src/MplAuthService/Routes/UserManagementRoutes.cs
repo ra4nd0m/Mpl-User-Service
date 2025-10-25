@@ -17,7 +17,7 @@ namespace MplAuthService.Routes
                 try
                 {
                     logger.LogInformation("Creating user with email {Email}", userDto.Email);
-                    var user = await userService.CreateUser(userDto.Email, userDto.Password, userDto.Organization);
+                    var user = await userService.CreateUser(userDto);
                     UserResponseDto result;
                     if (user.Organization != null)
                     {
@@ -74,7 +74,17 @@ namespace MplAuthService.Routes
                     }
                     else
                     {
-                        result = new UserResponseDto(u.Id, u.Email!, null);
+                        if (u.IndividualSubscription != null)
+                        {
+                            var subscriptionDto = new SubscriptionDataDto(
+                                u.IndividualSubscription.SubscriptionType,
+                                u.IndividualSubscription.SubscriptionStartDate,
+                                u.IndividualSubscription.SubscriptionEndDate
+                            );
+                            result = new UserResponseDto(u.Id, u.Email!, null, subscriptionDto);
+                        }
+                        else
+                            result = new UserResponseDto(u.Id, u.Email!, null);
                     }
                     return result;
                 }));

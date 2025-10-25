@@ -30,12 +30,23 @@ namespace MplAuthService.Routes
 
                     user = await dbContext.Users
                         .Include(u => u.Organization)
+                        .Include(u => u.IndividualSubscription)
                         .FirstOrDefaultAsync(u => u.Id == user.Id);
 
                     var roles = await userManager.GetRolesAsync(user!);
-                    if (!roles.Contains("Admin") && user!.Organization != null)
+                    if (!roles.Contains("Admin"))
                     {
-                        if (user.Organization.SubscriptionEndDate < DateTime.UtcNow)
+                        DateTime? subscriptionEnd = null;
+
+                        if (user!.Organization != null)
+                        {
+                            subscriptionEnd = user.Organization.SubscriptionEndDate;
+                        } 
+                        else if (user.IndividualSubscription != null)
+                        {
+                            subscriptionEnd = user.IndividualSubscription.SubscriptionEndDate;
+                        }
+                        if (subscriptionEnd.HasValue && subscriptionEnd.Value < DateTime.UtcNow)
                         {
                             logger.LogWarning("User {Email} organization subscription has expired", EmailObfuscator.ObfuscateEmail(loginDto.Email));
                             return Results.Problem(
@@ -80,12 +91,22 @@ namespace MplAuthService.Routes
                             {
                                 user = await authContext.Users
                                     .Include(u => u.Organization)
+                                    .Include(u => u.IndividualSubscription)
                                     .FirstOrDefaultAsync(u => u.Id == user.Id);
 
                                 var roles = await userManager.GetRolesAsync(user!);
-                                if (!roles.Contains("Admin") && user!.Organization != null)
+                                if (!roles.Contains("Admin"))
                                 {
-                                    if (user.Organization.SubscriptionEndDate < DateTime.UtcNow)
+                                    DateTime? subscriptionEnd = null;
+                                    if (user!.Organization != null)
+                                    {
+                                        subscriptionEnd = user.Organization.SubscriptionEndDate;
+                                    }
+                                    else if (user.IndividualSubscription != null)
+                                    {
+                                        subscriptionEnd = user.IndividualSubscription.SubscriptionEndDate;
+                                    }
+                                    if (subscriptionEnd.HasValue && subscriptionEnd.Value < DateTime.UtcNow)
                                     {
                                         logger.LogWarning("User {Email} organization subscription has expired during token refresh", EmailObfuscator.ObfuscateEmail(user.Email!));
                                         return Results.Problem(
