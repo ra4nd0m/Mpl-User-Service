@@ -137,7 +137,8 @@ namespace MplAuthService.Services
                 // Switching from individual to organization
                 if (switchingToOrg && user.IndividualSubscription != null)
                 {
-                    // Remove individual subscription
+                    // Delete the individual subscription from database
+                    context.IndividualSubscriptions.Remove(user.IndividualSubscription);
                     user.IndividualSubscription = null;
                     user.IndividualSubscriptionId = null;
                 }
@@ -145,7 +146,7 @@ namespace MplAuthService.Services
                 // Switching from organization to individual
                 if (switchingToIndividual && user.Organization != null)
                 {
-                    // Remove organization
+                    // Remove organization reference (org itself stays in DB for other users)
                     user.Organization = null;
                     user.OrganizationId = null;
                 }
