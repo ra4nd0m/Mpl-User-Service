@@ -10,7 +10,7 @@
 		type UserResponse
 	} from '$lib/api/adminClient';
 
-	import type { OrgResponse } from '$lib/api/adminClient';
+	import type { OrgResponse, SubscriptionDataDto } from '$lib/api/adminClient';
 
 	import { m, locale } from '$lib/i18n';
 	import { onMount } from 'svelte';
@@ -28,6 +28,34 @@
 		requestUsersRefresh?: () => void;
 	} = $props();
 
+	const emptyOrg: OrgResponse = {
+		name: '',
+		inn: '',
+		subscriptionType: SubscriptionType.Free,
+		subscriptionStartDate: new Date().toISOString().split('T')[0],
+		subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+			.toISOString()
+			.split('T')[0],
+		id: 0
+	};
+
+	const emptySub: SubscriptionDataDto = {
+		subscriptionType: SubscriptionType.Free,
+		subscriptionStartDate: new Date().toISOString().split('T')[0],
+		subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+			.toISOString()
+			.split('T')[0]
+	};
+
+	function formatDateForInput(isoString: string): string {
+		const date = new Date(isoString);
+		// Get the date components in UTC to avoid timezone shifts
+		const year = date.getUTCFullYear();
+		const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+		const day = String(date.getUTCDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
 	let newUser: NewUser = $state(
 		existingUser
 			? {
@@ -42,30 +70,21 @@
 								subscriptionEndDate: existingUser.org.subscriptionEndDate,
 								id: existingUser.org.id
 							}
-						: {
-								name: '',
-								inn: '',
-								subscriptionType: SubscriptionType.Free,
-								subscriptionStartDate: new Date().toISOString().split('T')[0],
-								subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-									.toISOString()
-									.split('T')[0],
-								id: 0
+						: null,
+
+					sub: existingUser.sub
+						? {
+								subscriptionType: existingUser.sub.subscriptionType,
+								subscriptionStartDate: formatDateForInput(existingUser.sub.subscriptionStartDate),
+								subscriptionEndDate: formatDateForInput(existingUser.sub.subscriptionEndDate)
 							}
+						: null
 				}
 			: {
 					email: '',
 					password: '',
-					organization: {
-						name: '',
-						inn: '',
-						subscriptionType: SubscriptionType.Free,
-						subscriptionStartDate: new Date().toISOString().split('T')[0],
-						subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-							.toISOString()
-							.split('T')[0],
-						id: 0
-					}
+					organization: null,
+					sub: null
 				}
 	);
 
@@ -75,6 +94,10 @@
 	let formSubmitting = $state(false);
 	let showPassword = $state(false);
 
+	let subscriptionMode = $state<'individual' | 'organization'>(
+		existingUser?.sub ? 'individual' : 'organization'
+	);
+
 	let organizations = $state<OrgResponse[]>([]);
 	let selectedOrgId = $state<string | null>(null);
 	let loadingOrgs = $state(false);
@@ -82,8 +105,15 @@
 	let isCreateOrgModalOpen = $state(false);
 	let orgModalMode: 'create' | 'edit' = $state('create');
 
+	//let previousOrg: OrgResponse | null = null;
+	let previousSub: SubscriptionDataDto | null = null;
+
 	onMount(async () => {
 		await loadOrgs();
+
+		if (subscriptionMode === 'individual' && !newUser.sub) {
+			newUser.sub = { ...emptySub };
+		}
 	});
 
 	async function handleOrgsChanged() {
@@ -243,6 +273,33 @@
 		formSuccess = null;
 	}
 
+	function handleSubscrTypeSwitch() {
+		if (subscriptionMode === 'individual') {
+			subscriptionMode = 'organization';
+			newUser.organization = {
+				name: '',
+				inn: '',
+				subscriptionType: SubscriptionType.Free,
+				subscriptionStartDate: new Date().toISOString().split('T')[0],
+				subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+					.toISOString()
+					.split('T')[0],
+				id: 0
+			};
+			newUser.sub = null;
+		} else {
+			subscriptionMode = 'individual';
+			newUser.sub = {
+				subscriptionType: SubscriptionType.Free,
+				subscriptionStartDate: new Date().toISOString().split('T')[0],
+				subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+					.toISOString()
+					.split('T')[0]
+			};
+			newUser.organization = null;
+		}
+	}
+
 	async function handleRegisterSubmit(e: SubmitEvent) {
 		e.preventDefault();
 
@@ -273,9 +330,22 @@
 			}
 		}
 
-		if (!selectedOrgId) {
-			formError = 'Organization selection is required';
-			return;
+		// Validate subscription mode
+		if (subscriptionMode === 'organization') {
+			if (!selectedOrgId) {
+				formError = 'Organization selection is required';
+				return;
+			}
+		} else {
+			// Individual mode validation
+			if (!newUser.sub) {
+				formError = 'Individual subscription data is required';
+				return;
+			}
+			if (!newUser.sub.subscriptionStartDate || !newUser.sub.subscriptionEndDate) {
+				formError = 'Subscription dates are required';
+				return;
+			}
 		}
 
 		try {
@@ -288,8 +358,9 @@
 					newEmail: newUser.email !== existingUser.email ? newUser.email : undefined,
 					// Only include password if it's being changed
 					password: newUser.password || undefined,
-					// Always include organization
-					organization: newUser.organization
+					// Either org or sub
+					organization: subscriptionMode === 'organization' ? newUser.organization! : null,
+					sub: subscriptionMode === 'individual' ? newUser.sub! : null
 				};
 
 				// Call update API - use EXISTING email to identify the user
@@ -306,8 +377,14 @@
 					formError = 'Failed to update user';
 				}
 			} else {
-				// Call register API - NewUser expects "password" and "organization"
-				const result = await registerUser(newUser);
+				// Call register API - NewUser expects "password" and either "organization" or "sub"
+				const newUserReq: NewUser = {
+					email: newUser.email,
+					password: newUser.password,
+					organization: subscriptionMode === 'organization' ? newUser.organization! : null,
+					sub: subscriptionMode === 'individual' ? newUser.sub! : null
+				};
+				const result = await registerUser(newUserReq);
 
 				if (result) {
 					formSuccess = `User ${result.email} registered successfully`;
@@ -455,24 +532,19 @@
 			{/if}
 		</div>
 
-		<div class="form-group">
-			<label for="org-select">Select Organization</label>
-			{#if loadingOrgs}
-				<p>Loading organizations...</p>
-			{:else}
-				<select id="org-select" bind:value={selectedOrgId} onchange={handleOrgSelection} required>
-					<option value="">-- Select an organization --</option>
-					{#each organizations as org}
-						<option value={String(org.id)}>
-							{org.name} (INN: {org.inn})
-						</option>
-					{/each}
-				</select>
-				<button type="button" class="create-org-button" onclick={handleCreateOrgModal}>
+		<div class="form-section">
+			<h4>Subscription Type</h4>
+			<div class="subscription-toggle">
+				<button
+					type="button"
+					class="toggle-button"
+					class:active={subscriptionMode === 'organization'}
+					onclick={handleSubscrTypeSwitch}
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						width="14"
-						height="14"
+						width="16"
+						height="16"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
@@ -480,33 +552,58 @@
 						stroke-linecap="round"
 						stroke-linejoin="round"
 					>
-						<path d="M5 12h14"></path>
-						<path d="M12 5v14"></path>
+						<path d="M3 21h18"></path>
+						<path d="M3 10h18"></path>
+						<path d="M5 6h14"></path>
+						<path d="M4 14h16"></path>
+						<path d="M6 18h12"></path>
 					</svg>
-					Create Organisation
+					Organization
 				</button>
-			{/if}
-			{#if selectedOrgId && newUser.organization}
-				<div class="org-details">
-					<p><strong>Organization Name:</strong> {newUser.organization.name}</p>
-					<p><strong>INN:</strong> {newUser.organization.inn}</p>
-					<p>
-						<strong>Subscription Type:</strong>
-						{getSubscriptionTypeName(newUser.organization.subscriptionType)}
-					</p>
-					<p>
-						<strong>Subscription Period:</strong>
-						{new Intl.DateTimeFormat($locale).format(
-							new Date(newUser.organization.subscriptionStartDate)
-						)} to {new Intl.DateTimeFormat($locale).format(
-							new Date(newUser.organization.subscriptionEndDate)
-						)}
-					</p>
-					<button type="button" class="create-org-button" onclick={handleEditOrgModal}>
+				<button
+					type="button"
+					class="toggle-button"
+					class:active={subscriptionMode === 'individual'}
+					onclick={handleSubscrTypeSwitch}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+						<circle cx="12" cy="7" r="4"></circle>
+					</svg>
+					Individual
+				</button>
+			</div>
+		</div>
+
+		{#if subscriptionMode === 'organization'}
+			<div class="form-group">
+				<label for="org-select">Select Organization</label>
+				{#if loadingOrgs}
+					<p>Loading organizations...</p>
+				{:else}
+					<select id="org-select" bind:value={selectedOrgId} onchange={handleOrgSelection} required>
+						<option value="">-- Select an organization --</option>
+						{#each organizations as org}
+							<option value={String(org.id)}>
+								{org.name} (INN: {org.inn})
+							</option>
+						{/each}
+					</select>
+					<button type="button" class="create-org-button" onclick={handleCreateOrgModal}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							width="16"
-							height="16"
+							width="14"
+							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
@@ -514,14 +611,91 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 						>
-							<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-							<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+							<path d="M5 12h14"></path>
+							<path d="M12 5v14"></path>
 						</svg>
-						Edit
+						Create Organisation
 					</button>
+				{/if}
+				{#if selectedOrgId && newUser.organization}
+					<div class="org-details">
+						<p><strong>Organization Name:</strong> {newUser.organization.name}</p>
+						<p><strong>INN:</strong> {newUser.organization.inn}</p>
+						<p>
+							<strong>Subscription Type:</strong>
+							{getSubscriptionTypeName(newUser.organization.subscriptionType)}
+						</p>
+						<p>
+							<strong>Subscription Period:</strong>
+							{new Intl.DateTimeFormat($locale).format(
+								new Date(newUser.organization.subscriptionStartDate)
+							)} to {new Intl.DateTimeFormat($locale).format(
+								new Date(newUser.organization.subscriptionEndDate)
+							)}
+						</p>
+						<button type="button" class="create-org-button" onclick={handleEditOrgModal}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+							</svg>
+							Edit
+						</button>
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<div class="form-section">
+				<h4>Individual Subscription</h4>
+				<div class="form-group">
+					<label for="sub-type">{m.admin_create_user_subscription_type()}</label>
+					<select
+						id="sub-type"
+						bind:value={newUser.sub!.subscriptionType}
+						onchange={() => {
+							if (!newUser.sub) {
+								newUser.sub = { ...emptySub };
+							}
+						}}
+						required
+					>
+						<option value={SubscriptionType.Free}>
+							{m.admin_create_user_subscription_type_free()}
+						</option>
+						<option value={SubscriptionType.Basic}>
+							{m.admin_create_user_subscription_type_basic()}
+						</option>
+						<option value={SubscriptionType.Premium}>
+							{m.admin_create_user_subscription_type_premium()}
+						</option>
+					</select>
 				</div>
-			{/if}
-		</div>
+
+				<div class="form-group">
+					<label for="sub-start">{m.admin_create_user_subscription_start_date()}</label>
+					<input
+						type="date"
+						id="sub-start"
+						bind:value={newUser.sub!.subscriptionStartDate}
+						required
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="sub-end">{m.admin_create_user_subscription_end_date()}</label>
+					<input type="date" id="sub-end" bind:value={newUser.sub!.subscriptionEndDate} required />
+				</div>
+			</div>
+		{/if}
 
 		<div class="form-actions">
 			<button type="button" class="cancel-button" onclick={resetForm}
@@ -732,6 +906,43 @@
 
 	.org-details p:last-of-type {
 		margin-bottom: 0.25rem;
+	}
+
+	.subscription-toggle {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.toggle-button {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
+		border: 2px solid #ced4da;
+		background-color: white;
+		color: #495057;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: all 0.2s;
+		font-weight: 500;
+	}
+
+	.toggle-button:hover {
+		border-color: #228be6;
+		background-color: #f8f9fa;
+	}
+
+	.toggle-button.active {
+		border-color: #228be6;
+		background-color: #228be6;
+		color: white;
+	}
+
+	.toggle-button svg {
+		flex-shrink: 0;
 	}
 
 	.form-error {
