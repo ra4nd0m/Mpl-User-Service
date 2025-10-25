@@ -49,7 +49,29 @@ namespace MplAuthService.Routes
                         return Results.NotFound();
                     }
                     var result = await userService.UpdateUser(user, updateUser);
-                    return Results.Ok(result);
+                    UserResponseDto resp;
+                    if (result.Organization != null)
+                    {
+                        var organizationDto = new OrganizationDto(result.Organization.Name, result.Organization.Inn,
+                            result.Organization.SubscriptionType, result.Organization.SubscriptionStartDate,
+                            result.Organization.SubscriptionEndDate, result.Organization.Id);
+                        resp = new UserResponseDto(result.Id, result.Email!, organizationDto);
+                    }
+                    else
+                    {
+                        if (result.IndividualSubscription != null)
+                        {
+                            var subscriptionDto = new SubscriptionDataDto(
+                                result.IndividualSubscription.SubscriptionType,
+                                result.IndividualSubscription.SubscriptionStartDate,
+                                result.IndividualSubscription.SubscriptionEndDate
+                            );
+                            resp = new UserResponseDto(result.Id, result.Email!, null, subscriptionDto);
+                        }
+                        else
+                            resp = new UserResponseDto(result.Id, result.Email!, null);
+                    }
+                    return Results.Ok(resp);
                 }
                 catch (Exception ex)
                 {
