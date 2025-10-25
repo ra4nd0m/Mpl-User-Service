@@ -208,7 +208,8 @@ export enum SubscriptionType {
 export interface UserResponse {
     id: string;
     email: string;
-    org: OrgResponse | null;
+    org?: OrgResponse | null;
+    sub?: SubscriptionDataDto | null;
 }
 
 export interface OrgCreateRequest {
@@ -231,13 +232,15 @@ export interface OrgResponse {
 export interface NewUser {
     email: string;
     password: string;
-    organization: OrgResponse | null;
+    organization?: OrgResponse | null;
+    sub?: SubscriptionDataDto | null;
 }
 
 export interface UpdatedUser {
     newEmail?: string;
     password?: string;
     organization?: OrgResponse | null;
+    sub?: SubscriptionDataDto | null;
 }
 
 export interface DataFilter {
@@ -247,4 +250,10 @@ export interface DataFilter {
     units: number[];
     materialIds: number[];
     properties: number[];
+}
+
+export interface SubscriptionDataDto {
+    subscriptionType: SubscriptionType;
+    subscriptionStartDate: string;
+    subscriptionEndDate: string;
 }
