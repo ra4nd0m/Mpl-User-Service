@@ -6,6 +6,6 @@ namespace MplAuthService.Models.Dtos
         string Email,
         string Password,
         OrganizationDto? Organization = null,
-        SubscriptionDataDto? SubscriptionData = null
+        SubscriptionDataDto? Sub = null
     );
 }

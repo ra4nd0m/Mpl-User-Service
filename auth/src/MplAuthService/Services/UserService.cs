@@ -19,7 +19,7 @@ namespace MplAuthService.Services
             var email = userDto.Email;
             var password = userDto.Password;
             var organization = userDto.Organization;
-            var subscription = userDto.SubscriptionData;
+            var subscription = userDto.Sub;
             if (await userManager.FindByEmailAsync(email) != null)
             {
                 throw new InvalidOperationException("User already exists");
