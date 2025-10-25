@@ -214,7 +214,15 @@
 					{#each userList as user}
 						<tr>
 							<td>{user.email}</td>
-							<td>{user.org?.name || 'N/A'}</td>
+							<td>
+								{#if user.org}
+									<span>{user.org.name}</span>
+								{:else if user.sub}
+									<span>Individual</span>
+								{:else}
+									<span>None</span>
+								{/if}
+							</td>
 							<td>{user.org?.inn || 'N/A'}</td>
 							<td>
 								{#if user.org}
@@ -225,12 +233,32 @@
 									>
 										{getSubscriptionTypeName(user.org.subscriptionType)}
 									</span>
+								{:else if user.sub}
+									<span
+										class="subscription-badge {getSubscriptionTypeName(
+											user.sub.subscriptionType
+										).toLowerCase()}"
+									>
+										{getSubscriptionTypeName(user.sub.subscriptionType)}
+									</span>
 								{:else}
 									N/A
 								{/if}
 							</td>
-							<td>{formatDate(user.org?.subscriptionStartDate)}</td>
-							<td>{formatDate(user.org?.subscriptionEndDate)}</td>
+							<td
+								>{#if user.org}
+									{formatDate(user.org?.subscriptionStartDate)}
+								{:else if user.sub}
+									{formatDate(user.sub?.subscriptionStartDate)}
+								{/if}</td
+							>
+							<td>
+								{#if user.org}
+									{formatDate(user.org?.subscriptionEndDate)}
+								{:else if user.sub}
+									{formatDate(user.sub?.subscriptionEndDate)}
+								{/if}
+							</td>
 							<td class="actions-cell">
 								<button
 									class="action-button edit-button"

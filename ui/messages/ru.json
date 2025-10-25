@@ -75,7 +75,7 @@
 	"admin_dashboard_header": "Административная панель",
 	"admin_user_management": "Управление пользователями",
 	"admin_user_table_email": "Электронная почта",
-	"admin_user_table_organization": "Организация",
+	"admin_user_table_organization": "Организация/Индивидуальная",
 	"admin_user_table_inn": "ИНН",
 	"admin_user_table_subscription": "Подписка",
 	"admin_user_table_start_date": "Дата начала",

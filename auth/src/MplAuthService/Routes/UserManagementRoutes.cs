@@ -17,7 +17,7 @@ namespace MplAuthService.Routes
                 try
                 {
                     logger.LogInformation("Creating user with email {Email}", userDto.Email);
-                    var user = await userService.CreateUser(userDto.Email, userDto.Password, userDto.Organization);
+                    var user = await userService.CreateUser(userDto);
                     UserResponseDto result;
                     if (user.Organization != null)
                     {
@@ -49,7 +49,29 @@ namespace MplAuthService.Routes
                         return Results.NotFound();
                     }
                     var result = await userService.UpdateUser(user, updateUser);
-                    return Results.Ok(result);
+                    UserResponseDto resp;
+                    if (result.Organization != null)
+                    {
+                        var organizationDto = new OrganizationDto(result.Organization.Name, result.Organization.Inn,
+                            result.Organization.SubscriptionType, result.Organization.SubscriptionStartDate,
+                            result.Organization.SubscriptionEndDate, result.Organization.Id);
+                        resp = new UserResponseDto(result.Id, result.Email!, organizationDto);
+                    }
+                    else
+                    {
+                        if (result.IndividualSubscription != null)
+                        {
+                            var subscriptionDto = new SubscriptionDataDto(
+                                result.IndividualSubscription.SubscriptionType,
+                                result.IndividualSubscription.SubscriptionStartDate,
+                                result.IndividualSubscription.SubscriptionEndDate
+                            );
+                            resp = new UserResponseDto(result.Id, result.Email!, null, subscriptionDto);
+                        }
+                        else
+                            resp = new UserResponseDto(result.Id, result.Email!, null);
+                    }
+                    return Results.Ok(resp);
                 }
                 catch (Exception ex)
                 {
@@ -74,7 +96,17 @@ namespace MplAuthService.Routes
                     }
                     else
                     {
-                        result = new UserResponseDto(u.Id, u.Email!, null);
+                        if (u.IndividualSubscription != null)
+                        {
+                            var subscriptionDto = new SubscriptionDataDto(
+                                u.IndividualSubscription.SubscriptionType,
+                                u.IndividualSubscription.SubscriptionStartDate,
+                                u.IndividualSubscription.SubscriptionEndDate
+                            );
+                            result = new UserResponseDto(u.Id, u.Email!, null, subscriptionDto);
+                        }
+                        else
+                            result = new UserResponseDto(u.Id, u.Email!, null);
                     }
                     return result;
                 }));

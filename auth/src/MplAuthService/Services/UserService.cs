@@ -5,6 +5,7 @@ using MplAuthService.Data;
 using MplAuthService.Interfaces;
 using MplAuthService.Models;
 using MplAuthService.Models.Dtos;
+using MplAuthService.Models.Enums;
 using MplAuthService.Utils;
 
 namespace MplAuthService.Services
@@ -12,9 +13,13 @@ namespace MplAuthService.Services
     public class UserService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
         AuthContext context, ILogger<UserService> logger, IJwtService jwtService, IHttpClientFactory httpClientFactory, IOrgService orgService) : IUserService
     {
-        public async Task<User> CreateUser(string email, string password, OrganizationDto organization)
+        public async Task<User> CreateUser(CreateUserDto userDto)
         {
-            logger.LogInformation("Creating user with email {Email}", EmailObfuscator.ObfuscateEmail(email));
+            logger.LogInformation("Creating user with email {Email}", EmailObfuscator.ObfuscateEmail(userDto.Email));
+            var email = userDto.Email;
+            var password = userDto.Password;
+            var organization = userDto.Organization;
+            var subscription = userDto.Sub;
             if (await userManager.FindByEmailAsync(email) != null)
             {
                 throw new InvalidOperationException("User already exists");
@@ -23,22 +28,47 @@ namespace MplAuthService.Services
             using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
-                var existingOrg = await orgService.GetOrganization(organization.Inn);
-                Organization org;
-                if (existingOrg == null)
+                if (subscription == null && organization == null)
                 {
-                    org = await orgService.CreateOrganization(organization);
+                    throw new ArgumentException("Either organization or subscription details must be provided");
                 }
-                else
+
+                if (organization != null && subscription != null)
                 {
-                    org = existingOrg;
+                    throw new ArgumentException("Cannot provide both organization and subscription details");
                 }
+
                 var user = new User
                 {
                     Email = email,
                     UserName = email,
-                    Organization = org,
                 };
+
+                if (organization != null && subscription == null)
+                {
+                    var existingOrg = await orgService.GetOrganization(organization.Inn);
+                    Organization org;
+                    if (existingOrg == null)
+                    {
+                        org = await orgService.CreateOrganization(organization);
+                    }
+                    else
+                    {
+                        org = existingOrg;
+                    }
+                    user.Organization = org;
+                }
+
+                if (subscription != null && organization == null)
+                {
+                    user.IndividualSubscription = new IndividualSubscription
+                    {
+                        SubscriptionType = subscription.SubscriptionType,
+                        SubscriptionStartDate = DateTime.SpecifyKind(subscription.SubscriptionStartDate, DateTimeKind.Utc),
+                        SubscriptionEndDate = DateTime.SpecifyKind(subscription.SubscriptionEndDate, DateTimeKind.Utc),
+                        User = user
+                    };
+                }
 
                 var result = await userManager.CreateAsync(user, password);
                 if (!result.Succeeded)
@@ -100,7 +130,28 @@ namespace MplAuthService.Services
                     }
                 }
 
-                // Update organization (reuse by INN if exists, otherwise create)
+                // Handle switching between organization and individual subscription
+                bool switchingToOrg = updateUser.Organization != null && updateUser.Sub == null;
+                bool switchingToIndividual = updateUser.Sub != null && updateUser.Organization == null;
+
+                // Switching from individual to organization
+                if (switchingToOrg && user.IndividualSubscription != null)
+                {
+                    // Delete the individual subscription from database
+                    context.IndividualSubscriptions.Remove(user.IndividualSubscription);
+                    user.IndividualSubscription = null;
+                    user.IndividualSubscriptionId = null;
+                }
+
+                // Switching from organization to individual
+                if (switchingToIndividual && user.Organization != null)
+                {
+                    // Remove organization reference (org itself stays in DB for other users)
+                    user.Organization = null;
+                    user.OrganizationId = null;
+                }
+
+                // Update or create organization
                 if (updateUser.Organization != null)
                 {
                     var desiredInn = updateUser.Organization.Inn;
@@ -117,6 +168,30 @@ namespace MplAuthService.Services
                     }
 
                     user.Organization = orgToUse;
+                    user.OrganizationId = orgToUse.Id;
+                }
+
+                // Update or create individual subscription
+                if (updateUser.Sub != null)
+                {
+                    if (user.IndividualSubscription != null)
+                    {
+                        // Update existing subscription
+                        user.IndividualSubscription.SubscriptionType = updateUser.Sub.SubscriptionType;
+                        user.IndividualSubscription.SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionStartDate, DateTimeKind.Utc);
+                        user.IndividualSubscription.SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionEndDate, DateTimeKind.Utc);
+                    }
+                    else
+                    {
+                        // Create new subscription
+                        user.IndividualSubscription = new IndividualSubscription
+                        {
+                            SubscriptionType = updateUser.Sub.SubscriptionType,
+                            SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionStartDate, DateTimeKind.Utc),
+                            SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionEndDate, DateTimeKind.Utc),
+                            User = user
+                        };
+                    }
                 }
 
                 // Persist user changes (Identity + FK/navigations)
@@ -132,6 +207,7 @@ namespace MplAuthService.Services
                 // Reload with Organization to return fully populated entity
                 var updatedUser = await context.Users
                     .Include(u => u.Organization)
+                    .Include(u => u.IndividualSubscription)
                     .FirstAsync(u => u.Id == user.Id);
 
                 await transaction.CommitAsync();
@@ -199,14 +275,10 @@ namespace MplAuthService.Services
                     throw new ArgumentException("Email must be provided", nameof(email));
                 }
 
-                var identityUser = await userManager.FindByEmailAsync(email);
-                if (identityUser == null)
-                {
-                    throw new InvalidOperationException("User not found");
-                }
-
+                var identityUser = await userManager.FindByEmailAsync(email) ?? throw new InvalidOperationException("User not found");
                 var userWithOrg = await context.Users
                     .Include(u => u.Organization)
+                    .Include(u => u.IndividualSubscription)
                     .FirstOrDefaultAsync(u => u.Id == identityUser.Id);
 
                 if (userWithOrg == null)
@@ -229,6 +301,7 @@ namespace MplAuthService.Services
                 logger.LogInformation("Getting all users");
                 var users = await context.Users
                     .Include(u => u.Organization)
+                    .Include(u => u.IndividualSubscription)
                     .ToListAsync();
                 return users;
             }
@@ -251,6 +324,14 @@ namespace MplAuthService.Services
                 if (refreshTokens.Count > 0)
                 {
                     context.RefreshTokens.RemoveRange(refreshTokens);
+                    await context.SaveChangesAsync();
+                }
+
+                var individualSubscription = await context.IndividualSubscriptions
+                    .FirstOrDefaultAsync(sub => sub.UserId == user.Id);
+                if (individualSubscription != null)
+                {
+                    context.IndividualSubscriptions.Remove(individualSubscription);
                     await context.SaveChangesAsync();
                 }
 
