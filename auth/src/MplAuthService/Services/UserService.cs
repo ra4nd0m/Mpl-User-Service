@@ -33,7 +33,7 @@ namespace MplAuthService.Services
                     throw new ArgumentException("Either organization or subscription details must be provided");
                 }
 
-                if( organization != null && subscription != null)
+                if (organization != null && subscription != null)
                 {
                     throw new ArgumentException("Cannot provide both organization and subscription details");
                 }
@@ -130,8 +130,28 @@ namespace MplAuthService.Services
                     }
                 }
 
-                // Update organization (reuse by INN if exists, otherwise create)
-                if (updateUser.Organization != null && user.IndividualSubscription == null)
+                // Handle switching between organization and individual subscription
+                bool switchingToOrg = updateUser.Organization != null && updateUser.Sub == null;
+                bool switchingToIndividual = updateUser.Sub != null && updateUser.Organization == null;
+
+                // Switching from individual to organization
+                if (switchingToOrg && user.IndividualSubscription != null)
+                {
+                    // Remove individual subscription
+                    user.IndividualSubscription = null;
+                    user.IndividualSubscriptionId = null;
+                }
+
+                // Switching from organization to individual
+                if (switchingToIndividual && user.Organization != null)
+                {
+                    // Remove organization
+                    user.Organization = null;
+                    user.OrganizationId = null;
+                }
+
+                // Update or create organization
+                if (updateUser.Organization != null)
                 {
                     var desiredInn = updateUser.Organization.Inn;
                     var existingOrg = await orgService.GetOrganization(desiredInn);
@@ -147,23 +167,27 @@ namespace MplAuthService.Services
                     }
 
                     user.Organization = orgToUse;
+                    user.OrganizationId = orgToUse.Id;
                 }
 
-                if (updateUser.SubscriptionData != null && user.Organization == null)
+                // Update or create individual subscription
+                if (updateUser.Sub != null)
                 {
-                    if(user.IndividualSubscription != null)
+                    if (user.IndividualSubscription != null)
                     {
-                        user.IndividualSubscription.SubscriptionType = updateUser.SubscriptionData.SubscriptionType;
-                        user.IndividualSubscription.SubscriptionStartDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionStartDate, DateTimeKind.Utc);
-                        user.IndividualSubscription.SubscriptionEndDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionEndDate, DateTimeKind.Utc);
+                        // Update existing subscription
+                        user.IndividualSubscription.SubscriptionType = updateUser.Sub.SubscriptionType;
+                        user.IndividualSubscription.SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionStartDate, DateTimeKind.Utc);
+                        user.IndividualSubscription.SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionEndDate, DateTimeKind.Utc);
                     }
                     else
                     {
+                        // Create new subscription
                         user.IndividualSubscription = new IndividualSubscription
                         {
-                            SubscriptionType = updateUser.SubscriptionData.SubscriptionType,
-                            SubscriptionStartDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionStartDate, DateTimeKind.Utc),
-                            SubscriptionEndDate = DateTime.SpecifyKind(updateUser.SubscriptionData.SubscriptionEndDate, DateTimeKind.Utc),
+                            SubscriptionType = updateUser.Sub.SubscriptionType,
+                            SubscriptionStartDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionStartDate, DateTimeKind.Utc),
+                            SubscriptionEndDate = DateTime.SpecifyKind(updateUser.Sub.SubscriptionEndDate, DateTimeKind.Utc),
                             User = user
                         };
                     }
