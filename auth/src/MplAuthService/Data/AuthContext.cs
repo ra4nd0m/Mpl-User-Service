@@ -12,6 +12,7 @@ namespace MplAuthService.Data
         }
         public DbSet<Organization> Organizations { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<IndividualSubscription> IndividualSubscriptions { get; set; } = null!;
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -28,6 +29,12 @@ namespace MplAuthService.Data
                 .HasOne(rt => rt.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(rt => rt.UserId);
+
+            builder.Entity<IndividualSubscription>()
+                .HasOne(isub => isub.User)
+                .WithOne(u => u.IndividualSubscription)
+                .HasForeignKey<IndividualSubscription>(isub => isub.UserId);
+
         }
     }
 }

@@ -5,7 +5,9 @@ namespace MplAuthService.Models
     public class User : IdentityUser
     {
         public int? OrganizationId { get; set; }
-        public required Organization? Organization { get; set; }
+        public Organization? Organization { get; set; }
+        public int? IndividualSubscriptionId { get; set; }
+        public IndividualSubscription? IndividualSubscription { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
     }
 }
