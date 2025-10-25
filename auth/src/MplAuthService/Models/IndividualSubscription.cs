@@ -1,3 +1,5 @@
+using MplAuthService.Models.Enums;
+
 namespace MplAuthService.Models
 {
     public class IndividualSubscription
@@ -5,7 +7,7 @@ namespace MplAuthService.Models
         public int Id { get; set; }
         public string UserId { get; set; } = string.Empty;
         public required User User { get; set; }
-        public string SubscriptionType { get; set; } = string.Empty;
+        public required SubscriptionType SubscriptionType { get; set; }
         public DateTime SubscriptionStartDate { get; set; }
         public DateTime SubscriptionEndDate { get; set; }
     }
