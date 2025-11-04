@@ -48,9 +48,17 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
                 foreach (var propertyValue in dateValue.PropertyValues)
                 {
                     if (!validPropertyIds.Contains(propertyValue.PropertyId))
+                    {
                         continue;
+                    }
 
-                    materialValuesToProcess.Add((update.MaterialId, propertyValue.PropertyId, parsedDate, propertyValue.Value));
+                    var normalized = propertyValue.Value?.Trim();
+                    if (string.IsNullOrEmpty(normalized))
+                    {
+                        logger.LogWarning("Skipped empty value for MaterialUid={Uid}, PropertyId={PropertyId}, Date={Date}", update.MaterialId, propertyValue.PropertyId, parsedDate);
+                        continue;
+                    }
+                    materialValuesToProcess.Add((update.MaterialId, propertyValue.PropertyId, parsedDate, normalized));
                 }
             }
         }
