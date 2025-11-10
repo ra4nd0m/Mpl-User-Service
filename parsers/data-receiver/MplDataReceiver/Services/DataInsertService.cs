@@ -249,6 +249,32 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         context.MaterialSources.Add(materialSource);
         await context.SaveChangesAsync();
 
+        // Find or create Properties and bind them
+        if (newMaterial.PropertyNames != null && newMaterial.PropertyNames.Count > 0)
+        {
+            foreach (var propertyName in newMaterial.PropertyNames)
+            {
+                var property = await context.Properties
+                    .FirstOrDefaultAsync(p => p.Name == propertyName);
+
+                if (property == null)
+                {
+                    property = new Property { Name = propertyName, Kind = "decimal" };
+                    context.Properties.Add(property);
+                    await context.SaveChangesAsync();
+                }
+
+                var materialProperty = new MaterialProperty
+                {
+                    Uid = materialSource.Id,
+                    PropertyId = property.Id
+                };
+                context.MaterialProperties.Add(materialProperty);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         logger.LogInformation("Created new MaterialSource with Uid={Uid} for Material={MaterialName}",
             materialSource.Uid, newMaterial.MaterialName);
     }
