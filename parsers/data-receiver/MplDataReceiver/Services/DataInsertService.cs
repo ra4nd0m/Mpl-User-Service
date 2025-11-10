@@ -162,7 +162,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         }
     }
 
-    public async Task AddNewMaterial(NewMaterialRequest newMaterial)
+    public async Task<int> AddNewMaterial(NewMaterialRequest newMaterial)
     {
         // Find or create Material
         var material = await context.Materials
@@ -282,5 +282,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
 
         logger.LogInformation("Created new MaterialSource with Uid={Uid} for Material={MaterialName}",
             materialSource.Uid, newMaterial.MaterialName);
+
+        return materialSource.Id;
     }
 }

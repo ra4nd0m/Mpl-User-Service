@@ -30,8 +30,8 @@ public static class DataInsertRoutes
         {
             try
             {
-                await dataInsertService.AddNewMaterial(materialRequest);
-                return Results.Ok();
+                int resultId = await dataInsertService.AddNewMaterial(materialRequest);
+                return Results.Ok(resultId);
             }
             catch (Exception ex)
             {
