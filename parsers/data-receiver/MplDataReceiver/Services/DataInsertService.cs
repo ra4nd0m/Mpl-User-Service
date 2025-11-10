@@ -249,6 +249,11 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         context.MaterialSources.Add(materialSource);
         await context.SaveChangesAsync();
 
+        // Set Uid to match Id (assuming Uid should equal Id)
+        materialSource.Uid = materialSource.Id;
+        await context.SaveChangesAsync();
+
+
         // Find or create Properties and bind them
         if (newMaterial.PropertyNames != null && newMaterial.PropertyNames.Count > 0)
         {
