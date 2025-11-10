@@ -192,7 +192,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
 
         if (source == null)
         {
-            source = new Source { Name = newMaterial.MaterialSource };
+            source = new Source { Name = newMaterial.MaterialSource, Url = newMaterial.MaterialSource };
             context.Sources.Add(source);
             await context.SaveChangesAsync();
         }
