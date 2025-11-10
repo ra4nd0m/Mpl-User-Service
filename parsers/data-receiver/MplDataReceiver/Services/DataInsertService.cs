@@ -161,4 +161,128 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
             logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
         }
     }
+
+    public async Task<int> AddNewMaterial(NewMaterialRequest newMaterial)
+    {
+        // Find or create Material
+        var material = await context.Materials
+            .FirstOrDefaultAsync(m => m.Name == newMaterial.MaterialName);
+
+        if (material == null)
+        {
+            material = new Material { Name = newMaterial.MaterialName };
+            context.Materials.Add(material);
+            await context.SaveChangesAsync();
+        }
+
+        // Find or create MaterialGroup
+        var materialGroup = await context.MaterialGroups
+            .FirstOrDefaultAsync(mg => mg.Name == newMaterial.MaterialGroupName);
+
+        if (materialGroup == null)
+        {
+            materialGroup = new MaterialGroup { Name = newMaterial.MaterialGroupName };
+            context.MaterialGroups.Add(materialGroup);
+            await context.SaveChangesAsync();
+        }
+
+        // Find or create Source
+        var source = await context.Sources
+            .FirstOrDefaultAsync(s => s.Name == newMaterial.MaterialSource);
+
+        if (source == null)
+        {
+            source = new Source { Name = newMaterial.MaterialSource, Url = newMaterial.MaterialSource };
+            context.Sources.Add(source);
+            await context.SaveChangesAsync();
+        }
+
+        // Find or create DeliveryType
+        var deliveryType = await context.DeliveryTypes
+            .FirstOrDefaultAsync(dt => dt.Name == newMaterial.DeliveryTypeName);
+
+        if (deliveryType == null)
+        {
+            deliveryType = new DeliveryType { Name = newMaterial.DeliveryTypeName };
+            context.DeliveryTypes.Add(deliveryType);
+            await context.SaveChangesAsync();
+        }
+
+        // Find or create Unit
+        var unit = await context.Units
+            .FirstOrDefaultAsync(u => u.Name == newMaterial.UnitName);
+
+        if (unit == null)
+        {
+            unit = new Unit { Name = newMaterial.UnitName };
+            context.Units.Add(unit);
+            await context.SaveChangesAsync();
+        }
+
+        // Check if MaterialSource already exists
+        var existingMaterialSource = await context.MaterialSources
+            .FirstOrDefaultAsync(ms =>
+                ms.MaterialId == material.Id &&
+                ms.SourceId == source.Id &&
+                ms.TargetMarket == newMaterial.TargetMarket &&
+                ms.UnitId == unit.Id &&
+                ms.DeliveryTypeId == deliveryType.Id &&
+                ms.MaterialGroupId == materialGroup.Id);
+
+        if (existingMaterialSource != null)
+        {
+            logger.LogWarning("MaterialSource already exists with Uid={Uid}", existingMaterialSource.Uid);
+            throw new InvalidOperationException("MaterialSource with provided parameters already exists.");
+        }
+
+        // Create new MaterialSource
+        var materialSource = new MaterialSource
+        {
+            MaterialId = material.Id,
+            SourceId = source.Id,
+            TargetMarket = newMaterial.TargetMarket,
+            UnitId = unit.Id,
+            DeliveryTypeId = deliveryType.Id,
+            MaterialGroupId = materialGroup.Id
+        };
+
+        context.MaterialSources.Add(materialSource);
+        await context.SaveChangesAsync();
+
+        // Set Uid to match Id (assuming Uid should equal Id)
+        materialSource.Uid = materialSource.Id;
+        await context.SaveChangesAsync();
+
+
+        // Find or create Properties and bind them
+        if (newMaterial.PropertyNames != null && newMaterial.PropertyNames.Count > 0)
+        {
+            foreach (var propertyName in newMaterial.PropertyNames)
+            {
+                var property = await context.Properties
+                    .FirstOrDefaultAsync(p => p.Name == propertyName);
+
+                if (property == null)
+                {
+                    property = new Property { Name = propertyName, Kind = "decimal" };
+                    context.Properties.Add(property);
+                    await context.SaveChangesAsync();
+                }
+
+                var materialProperty = new MaterialProperty
+                {
+                    Uid = materialSource.Id,
+                    PropertyId = property.Id
+                };
+                context.MaterialProperties.Add(materialProperty);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Created new MaterialSource with Uid={Uid} for Material={MaterialName}",
+            materialSource.Uid, newMaterial.MaterialName);
+
+        return materialSource.Id;
+    }
 }
