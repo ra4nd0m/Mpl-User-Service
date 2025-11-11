@@ -1,6 +1,9 @@
 import cloudscraper
 import datetime
-
+import requests
+import os
+import json
+from decimal import Decimal
 
 class BaseHistoricData:
     def __init__(self, datasource_id, referer, start_date=None, end_date=None):
@@ -120,7 +123,8 @@ class LeadHistoricData(BaseHistoricData):
 
 
 class MaterialDataProcessor:
-    def __init__(self):
+    def __init__(self, config: dict):
+        self.config = config
         self.begin_date = self.finish_date = datetime.date.today().strftime("%Y-%m-%d")
         self.materials = {
             103: AluminiumHistoricData,
@@ -170,3 +174,28 @@ class MaterialDataProcessor:
         except Exception as e:
             print(f"Ошибка при обработке {material_id}: {e}")
             return None
+        
+    def send_payload(self, payload: dict, config: dict):
+        server = os.getenv("SERVER_URL") or config["server"]["url"]
+        route = os.getenv("SERVER_ROUTE") or config["server"]["route"]
+        url = server.rstrip("/") + "/" + route.lstrip("/")
+
+        print(f"[INFO] Отправка на {url}")
+        response = requests.post(url, json=payload, timeout=10)
+        print(f"[INFO] Ответ сервера: {response.status_code} {response.text}")
+
+if __name__ == "__main__":
+    with open("config.json", "r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    processor = MaterialDataProcessor(config)
+
+    payload = processor.process_all_materials()
+
+    if payload["data"]:
+        processor = MaterialDataProcessor(config)
+        processor.send_payload(payload, config)
+        print(payload)
+    else:
+        print("[INFO] Нет данных для отправки")
+
