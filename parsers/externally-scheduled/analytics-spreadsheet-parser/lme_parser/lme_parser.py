@@ -185,7 +185,10 @@ class MaterialDataProcessor:
         print(f"[INFO] Ответ сервера: {response.status_code} {response.text}")
 
 if __name__ == "__main__":
-    with open("config.json", "r", encoding="utf-8") as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(base_dir, "..", "src", "config.json")
+    config_path = os.path.normpath(config_path)
+    with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
     processor = MaterialDataProcessor(config)
