@@ -3,7 +3,6 @@ import datetime
 import requests
 import os
 import json
-from decimal import Decimal
 
 class BaseHistoricData:
     def __init__(self, datasource_id, referer, start_date=None, end_date=None):
