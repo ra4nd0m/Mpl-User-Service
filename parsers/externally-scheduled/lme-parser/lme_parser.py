@@ -194,7 +194,6 @@ if __name__ == "__main__":
     if payload["data"]:
         processor = MaterialDataProcessor(config)
         processor.send_payload(payload, config)
-        print(payload)
     else:
         print("[INFO] Нет данных для отправки")
 
