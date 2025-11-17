@@ -1,0 +1,6 @@
+{
+  "server": {
+    "url": "http://localhost:5202",
+    "route": "insertBatch"
+  }
+}
