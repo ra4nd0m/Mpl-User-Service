@@ -91,9 +91,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("internal", policy =>
         policy.Requirements.Add(new RoleRequirement("internal")));
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("CanExportData", policy =>
+        policy.Requirements.Add(new CanExportDataRequirement()));
 });
 
 builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, CanExportDataHandler>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
