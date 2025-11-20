@@ -235,6 +235,7 @@ export interface NewUser {
     password: string;
     organization?: OrgResponse | null;
     sub?: SubscriptionDataDto | null;
+    canExportData?: boolean;
 }
 
 export interface UpdatedUser {
@@ -242,6 +243,7 @@ export interface UpdatedUser {
     password?: string;
     organization?: OrgResponse | null;
     sub?: SubscriptionDataDto | null;
+    canExportData?: boolean;
 }
 
 export interface DataFilter {

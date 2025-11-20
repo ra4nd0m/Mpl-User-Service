@@ -104,6 +104,8 @@
 	"admin_create_user_subscription_type_premium": "Премиум",
 	"admin_create_user_subscription_start_date": "Дата начала",
 	"admin_create_user_subscription_end_date": "Дата окончания",
+	"admin_create_user_allow_data_export": "Разрешить выгрузку данных",
+	"admin_create_user_allow_data_export_description": "Включите эту опцию, чтобы разрешить пользователю экспорт данных в электронные таблицы",
 	"admin_create_user_cancel_button": "Отмена",
 	"admin_create_user_reset_button": "Сбросить",
 	"admin_create_user_register_button": "Зарегистрировать",

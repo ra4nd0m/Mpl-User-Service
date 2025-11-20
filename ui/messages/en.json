@@ -104,6 +104,8 @@
 	"admin_create_user_subscription_type_premium": "Premium",
 	"admin_create_user_subscription_start_date": "Start Date",
 	"admin_create_user_subscription_end_date": "End Date",
+	"admin_create_user_allow_data_export": "Allow Data Export",
+	"admin_create_user_allow_data_export_description": "Enable this to allow the user to export data to spreadsheets",
 	"admin_create_user_cancel_button": "Cancel",
 	"admin_create_user_reset_button": "Reset",
 	"admin_create_user_register_button": "Register",
