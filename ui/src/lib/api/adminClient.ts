@@ -210,6 +210,7 @@ export interface UserResponse {
     email: string;
     org?: OrgResponse | null;
     sub?: SubscriptionDataDto | null;
+    canExportData?: boolean;
 }
 
 export interface OrgCreateRequest {
