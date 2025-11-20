@@ -22,7 +22,7 @@ namespace MplAuthService.Services
             {
                 new (ClaimTypes.Name, user.Email ?? throw new InvalidOperationException("User email is not set")),
                 new(ClaimTypes.NameIdentifier, user.Id),
-
+                new("CanExportData", user.CanExportData.ToString())
             };
 
             if (!roles.Contains("Admin"))
