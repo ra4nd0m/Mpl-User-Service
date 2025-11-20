@@ -18,11 +18,13 @@ namespace MplAuthService.Services
             var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
             var roles = await userManager.GetRolesAsync(user);
+            bool canExportData = roles.Contains("Admin") || user.CanExportData;
+
             var claims = new List<Claim>
             {
                 new (ClaimTypes.Name, user.Email ?? throw new InvalidOperationException("User email is not set")),
                 new(ClaimTypes.NameIdentifier, user.Id),
-                new("CanExportData", user.CanExportData.ToString())
+                new("CanExportData", canExportData.ToString())
             };
 
             if (!roles.Contains("Admin"))
