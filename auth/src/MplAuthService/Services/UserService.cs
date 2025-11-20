@@ -131,11 +131,7 @@ namespace MplAuthService.Services
                     }
                 }
 
-                // Update CanExportData if provided
-                if (updateUser.CanExportData)
-                {
-                    user.CanExportData = updateUser.CanExportData;
-                }
+                user.CanExportData = updateUser.CanExportData;
 
                 // Handle switching between organization and individual subscription
                 bool switchingToOrg = updateUser.Organization != null && updateUser.Sub == null;
