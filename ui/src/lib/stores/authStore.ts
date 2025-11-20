@@ -5,6 +5,7 @@ export interface User {
     email: string;
     subscriptionType?: string;
     subscriptionEnd?: string;
+    canExportData: boolean;
 }
 
 interface AuthState {
@@ -63,14 +64,18 @@ const createAuthStore = () => {
             let subscriptionType = claims['SubscriptionType'];
 
             const isAdmin = roles.includes('Admin');
-            if(!subscriptionType && isAdmin){
+            if (!subscriptionType && isAdmin) {
                 subscriptionType = 'Admin';
             }
+
+            const canExportData = claims['CanExportData'] === 'True';
+
             const user: User = {
                 id: claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
                 email: claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
                 subscriptionType: subscriptionType,
-                subscriptionEnd: claims['SubscriptionEnd']
+                subscriptionEnd: claims['SubscriptionEnd'],
+                canExportData
             };
 
             update(state => ({
