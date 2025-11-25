@@ -9,5 +9,6 @@ namespace MplAuthService.Models
         public int? IndividualSubscriptionId { get; set; }
         public IndividualSubscription? IndividualSubscription { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+        public bool CanExportData { get; set; } = false;
     }
 }

@@ -6,6 +6,7 @@ namespace MplAuthService.Models.Dtos
         string Email,
         string Password,
         OrganizationDto? Organization = null,
-        SubscriptionDataDto? Sub = null
+        SubscriptionDataDto? Sub = null,
+        bool CanExportData = false
     );
 }

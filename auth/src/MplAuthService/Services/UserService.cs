@@ -42,6 +42,7 @@ namespace MplAuthService.Services
                 {
                     Email = email,
                     UserName = email,
+                    CanExportData = userDto.CanExportData
                 };
 
                 if (organization != null && subscription == null)
@@ -129,6 +130,8 @@ namespace MplAuthService.Services
                         throw new InvalidOperationException($"Failed to update password: {string.Join(", ", result.Errors.Select(e => e.Description))}");
                     }
                 }
+
+                user.CanExportData = updateUser.CanExportData;
 
                 // Handle switching between organization and individual subscription
                 bool switchingToOrg = updateUser.Organization != null && updateUser.Sub == null;

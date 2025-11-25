@@ -78,13 +78,15 @@
 								subscriptionStartDate: formatDateForInput(existingUser.sub.subscriptionStartDate),
 								subscriptionEndDate: formatDateForInput(existingUser.sub.subscriptionEndDate)
 							}
-						: null
+						: null,
+					canExportData: existingUser.canExportData ?? false
 				}
 			: {
 					email: '',
 					password: '',
 					organization: null,
-					sub: null
+					sub: null,
+					canExportData: false
 				}
 	);
 
@@ -360,7 +362,8 @@
 					password: newUser.password || undefined,
 					// Either org or sub
 					organization: subscriptionMode === 'organization' ? newUser.organization! : null,
-					sub: subscriptionMode === 'individual' ? newUser.sub! : null
+					sub: subscriptionMode === 'individual' ? newUser.sub! : null,
+					canExportData: newUser.canExportData
 				};
 
 				// Call update API - use EXISTING email to identify the user
@@ -382,7 +385,8 @@
 					email: newUser.email,
 					password: newUser.password,
 					organization: subscriptionMode === 'organization' ? newUser.organization! : null,
-					sub: subscriptionMode === 'individual' ? newUser.sub! : null
+					sub: subscriptionMode === 'individual' ? newUser.sub! : null,
+					canExportData: newUser.canExportData
 				};
 				const result = await registerUser(newUserReq);
 
@@ -530,6 +534,16 @@
 					/>
 				</div>
 			{/if}
+
+			<div class="form-group checkbox-group">
+				<label class="checkbox-label">
+					<input type="checkbox" bind:checked={newUser.canExportData} />
+					<span>{m.admin_create_user_allow_data_export()}</span>
+				</label>
+				<small class="password-requirements">
+					{m.admin_create_user_allow_data_export_description()}
+				</small>
+			</div>
 		</div>
 
 		<div class="form-section">
@@ -959,5 +973,26 @@
 		padding: 0.75rem;
 		border-radius: 4px;
 		margin-bottom: 1rem;
+	}
+	.checkbox-group {
+		margin-top: 1rem;
+	}
+
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		cursor: pointer;
+		font-weight: normal;
+	}
+
+	.checkbox-label input[type='checkbox'] {
+		width: auto;
+		cursor: pointer;
+		margin: 0;
+	}
+
+	.checkbox-label span {
+		user-select: none;
 	}
 </style>

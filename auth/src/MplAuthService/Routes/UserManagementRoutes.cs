@@ -24,11 +24,11 @@ namespace MplAuthService.Routes
                         var organizationDto = new OrganizationDto(user.Organization.Name, user.Organization.Inn,
                             user.Organization.SubscriptionType, user.Organization.SubscriptionStartDate,
                             user.Organization.SubscriptionEndDate);
-                        result = new UserResponseDto(user.Id, user.Email!, organizationDto);
+                        result = new UserResponseDto(user.Id, user.Email!, organizationDto, null, user.CanExportData);
                     }
                     else
                     {
-                        result = new UserResponseDto(user.Id, user.Email!, null);
+                        result = new UserResponseDto(user.Id, user.Email!, null, null, user.CanExportData);
                     }
                     return Results.Ok(result);
                 }
@@ -55,7 +55,7 @@ namespace MplAuthService.Routes
                         var organizationDto = new OrganizationDto(result.Organization.Name, result.Organization.Inn,
                             result.Organization.SubscriptionType, result.Organization.SubscriptionStartDate,
                             result.Organization.SubscriptionEndDate, result.Organization.Id);
-                        resp = new UserResponseDto(result.Id, result.Email!, organizationDto);
+                        resp = new UserResponseDto(result.Id, result.Email!, organizationDto, null, result.CanExportData);
                     }
                     else
                     {
@@ -66,10 +66,10 @@ namespace MplAuthService.Routes
                                 result.IndividualSubscription.SubscriptionStartDate,
                                 result.IndividualSubscription.SubscriptionEndDate
                             );
-                            resp = new UserResponseDto(result.Id, result.Email!, null, subscriptionDto);
+                            resp = new UserResponseDto(result.Id, result.Email!, null, subscriptionDto, result.CanExportData);
                         }
                         else
-                            resp = new UserResponseDto(result.Id, result.Email!, null);
+                            resp = new UserResponseDto(result.Id, result.Email!, null, null, result.CanExportData);
                     }
                     return Results.Ok(resp);
                 }
@@ -92,7 +92,7 @@ namespace MplAuthService.Routes
                         var organizationDto = new OrganizationDto(u.Organization.Name, u.Organization.Inn,
                             u.Organization.SubscriptionType, u.Organization.SubscriptionStartDate,
                             u.Organization.SubscriptionEndDate, u.Organization.Id);
-                        result = new UserResponseDto(u.Id, u.Email!, organizationDto);
+                        result = new UserResponseDto(u.Id, u.Email!, organizationDto, null, u.CanExportData);
                     }
                     else
                     {
@@ -103,10 +103,10 @@ namespace MplAuthService.Routes
                                 u.IndividualSubscription.SubscriptionStartDate,
                                 u.IndividualSubscription.SubscriptionEndDate
                             );
-                            result = new UserResponseDto(u.Id, u.Email!, null, subscriptionDto);
+                            result = new UserResponseDto(u.Id, u.Email!, null, subscriptionDto, u.CanExportData);
                         }
                         else
-                            result = new UserResponseDto(u.Id, u.Email!, null);
+                            result = new UserResponseDto(u.Id, u.Email!, null, null, u.CanExportData);
                     }
                     return result;
                 }));
@@ -125,11 +125,11 @@ namespace MplAuthService.Routes
                     var organizationDto = new OrganizationDto(user.Organization.Name, user.Organization.Inn,
                         user.Organization.SubscriptionType, user.Organization.SubscriptionStartDate,
                         user.Organization.SubscriptionEndDate, user.Organization.Id);
-                    result = new UserResponseDto(user.Id, user.Email!, organizationDto);
+                    result = new UserResponseDto(user.Id, user.Email!, organizationDto, null, user.CanExportData);
                 }
                 else
                 {
-                    result = new UserResponseDto(user.Id, user.Email!, null);
+                    result = new UserResponseDto(user.Id, user.Email!, null, null, user.CanExportData);
                 }
                 return Results.Ok(result);
             }).RequireAuthorization("AdminOnly");

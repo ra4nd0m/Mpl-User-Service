@@ -204,6 +204,7 @@
 						<th>{m.admin_user_table_email()}</th>
 						<th>{m.admin_user_table_organization()}</th>
 						<th>{m.admin_user_table_inn()}</th>
+						<th>{m.admin_user_table_can_export_data()}</th>
 						<th>{m.admin_user_table_subscription()}</th>
 						<th>{m.admin_user_table_start_date()}</th>
 						<th>{m.admin_user_table_end_date()}</th>
@@ -224,6 +225,7 @@
 								{/if}
 							</td>
 							<td>{user.org?.inn || 'N/A'}</td>
+							<td>{user.canExportData ? m.universal_yes() : m.universal_no()}</td>
 							<td>
 								{#if user.org}
 									<span
