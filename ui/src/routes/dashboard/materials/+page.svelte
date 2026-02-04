@@ -193,147 +193,24 @@
 			<p>{m.materials_loading()}</p>
 		</div>
 	{:else}
-	<MaterialsTable
-		title="LME"
-		materials={filteredLmeMaterials}
-		{isFavorite}
-		{toggleFavorite}
-		{getChangeClass}
-		onShowPrice={showPriceModal}
-		hasSearch={!!searchQuery}
-	/>
-		<table class="materials-table">
-			<thead>
-				<tr>
-					<th rowspan="2" class="favorite-cell"> </th>
-					<th rowspan="2" class="table-material-name">{m.materials_table_material_name()}</th>
-					<th rowspan="2">{m.materials_table_change()}</th>
-					<th colspan="3">{m.materials_table_price_last()}</th>
-					<th rowspan="2">{m.materials_table_last_updated()}</th>
-					<th rowspan="2"></th>
-				</tr>
-				<tr>
-					<th>{m.materials_table_price_average()}</th>
-					<th>{m.materials_table_price_min()}</th>
-					<th>{m.materials_table_price_max()}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each filteredMaterials as material}
-					<tr>
-						<td class="favorite-cell">
-							<button
-								class="favorite-button {isFavorite(material.id) ? 'is-favorite' : ''}"
-								onclick={() => toggleFavorite(material.id)}
-								title={isFavorite(material.id)
-									? m.materials_table_remove_from_favorites()
-									: m.materials_table_add_to_favorites()}
-								aria-label={isFavorite(material.id)
-									? m.materials_table_remove_from_favorites()
-									: m.materials_table_add_to_favorites()}
-							>
-								{#if isFavorite(material.id)}
-									<!-- Checkmark for favorites -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									>
-										<polyline points="20 6 9 17 4 12"></polyline>
-									</svg>
-								{:else}
-									<!-- Cross for non-favorites -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									>
-										<line x1="18" y1="6" x2="6" y2="18"></line>
-										<line x1="6" y1="6" x2="18" y2="18"></line>
-									</svg>
-								{/if}
-							</button>
-						</td>
-						<td class="table-material-name"
-							>{material.materialName +
-								' ' +
-								material.unit +
-								' ' +
-								material.deliveryType +
-								' ' +
-								material.market}</td
-						>
-						<td class={getChangeClass(material.changePercent)}>{material.changePercent}</td>
-						<td
-							>{material.latestAvgValue !== null && material.latestAvgValue !== undefined
-								? nf.format(material.latestAvgValue)
-								: '-'}</td
-						>
-						{#if material.latestMinValue === null}
-							<td>—</td>
-						{:else}
-							<td
-								>{material.latestMinValue !== undefined
-									? nf.format(material.latestMinValue)
-									: '—'}</td
-							>
-						{/if}
-						{#if material.latestMaxValue === null}
-							<td>—</td>
-						{:else}
-							<td
-								>{material.latestMaxValue !== undefined
-									? nf.format(material.latestMaxValue)
-									: '—'}</td
-							>
-						{/if}
-						<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td
-						>
-						<td
-							><button
-								class="show-modal"
-								onclick={() => showPriceModal(material.id)}
-								aria-label={m.workdesk_price_tracking_chart_price_history()}
-								title={m.workdesk_price_tracking_chart_price_history()}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								>
-									<line x1="12" y1="5" x2="12" y2="19"></line>
-									<line x1="5" y1="12" x2="19" y2="12"></line>
-								</svg></button
-							></td
-						>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="8" class="no-data">
-							{searchQuery ? m.materials_no_results() : m.materials_not_available()}
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+		<MaterialsTable
+			title="LME"
+			materials={filteredLmeMaterials}
+			{isFavorite}
+			{toggleFavorite}
+			{getChangeClass}
+			onShowPrice={showPriceModal}
+			hasSearch={!!searchQuery}
+		/>
+		<MaterialsTable
+			title={m.materials_group_other()}
+			materials={filteredOtherMaterials}
+			{isFavorite}
+			{toggleFavorite}
+			{getChangeClass}
+			onShowPrice={showPriceModal}
+			hasSearch={!!searchQuery}
+		/>
 	{/if}
 </section>
 
@@ -424,42 +301,6 @@
 	.clear-search:hover {
 		color: #343a40;
 	}
-	.materials-table {
-		width: 100%;
-		border-collapse: collapse;
-		margin-top: 1rem;
-	}
-
-	.materials-table th,
-	.materials-table td {
-		padding: 0.75rem;
-		text-align: left;
-		border-bottom: 1px solid #ddd;
-		vertical-align: middle;
-	}
-
-	.materials-table th {
-		background-color: #f8f9fa;
-		font-weight: bold;
-		text-align: center;
-	}
-
-	.materials-table .table-material-name {
-		text-align: left;
-	}
-
-	.materials-table td {
-		text-align: center;
-	}
-
-	.materials-table tbody tr:hover {
-		background-color: #f1f1f1;
-	}
-	.no-data {
-		text-align: center;
-		padding: 2rem !important;
-		color: #6c757d;
-	}
 
 	.error-message {
 		color: #dc3545;
@@ -495,51 +336,4 @@
 		}
 	}
 
-	.positive-change {
-		color: #2ecc71;
-		font-weight: 500;
-	}
-
-	.negative-change {
-		color: #e74c3c;
-		font-weight: 500;
-	}
-
-	.favorite-button {
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 0.25rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 4px;
-		transition: background-color 0.2s ease;
-	}
-
-	.favorite-button:hover {
-		background-color: rgba(0, 0, 0, 0.1);
-	}
-
-	.favorite-button.is-favorite svg {
-		color: #2ecc71;
-	}
-
-	.favorite-button:not(.is-favorite) svg {
-		color: #e74c3c;
-	}
-
-	.show-modal {
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: #6c757d;
-		padding: 0.25rem;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
-
-	.show-modal:hover {
-		background-color: #f8f9fa;
-	}
 </style>
