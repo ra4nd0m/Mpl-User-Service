@@ -12,6 +12,7 @@
 
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
+	import MaterialsTable from './MaterialsTable.svelte';
 
 	let isModalShown = $state(false);
 	let selectedMaterialId = $state<number | null>(null);
@@ -38,6 +39,32 @@
 						material.id.toString().includes(searchQuery)
 				)
 			: materialList
+	);
+
+	function matchesSearch(material: Material, query: string) {
+		const lowerQuery = query.toLowerCase();
+		return (
+			material.materialName.toLowerCase().includes(lowerQuery) ||
+			material.deliveryType.toLowerCase().includes(lowerQuery) ||
+			material.market.toLowerCase().includes(lowerQuery) ||
+			material.id.toString().includes(lowerQuery)
+		);
+	}
+
+	const isLme = (material: Material) => material.source === 'lme.com';
+
+	const lmeMaterials = $derived(materialList.filter(isLme));
+	const otherMaterials = $derived(materialList.filter((material) => !isLme(material)));
+
+	const filteredLmeMaterials = $derived(
+		searchQuery
+			? lmeMaterials.filter((material) => matchesSearch(material, searchQuery))
+			: lmeMaterials
+	);
+	const filteredOtherMaterials = $derived(
+		searchQuery
+			? otherMaterials.filter((material) => matchesSearch(material, searchQuery))
+			: otherMaterials
 	);
 
 	const favoriteIds = $derived($favoritesStore.ids);
@@ -166,6 +193,15 @@
 			<p>{m.materials_loading()}</p>
 		</div>
 	{:else}
+	<MaterialsTable
+		title="LME"
+		materials={filteredLmeMaterials}
+		{isFavorite}
+		{toggleFavorite}
+		{getChangeClass}
+		onShowPrice={showPriceModal}
+		hasSearch={!!searchQuery}
+	/>
 		<table class="materials-table">
 			<thead>
 				<tr>
@@ -266,7 +302,12 @@
 						<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td
 						>
 						<td
-							><button class="show-modal" onclick={() => showPriceModal(material.id)} aria-label={m.workdesk_price_tracking_chart_price_history()} title={m.workdesk_price_tracking_chart_price_history()}>
+							><button
+								class="show-modal"
+								onclick={() => showPriceModal(material.id)}
+								aria-label={m.workdesk_price_tracking_chart_price_history()}
+								title={m.workdesk_price_tracking_chart_price_history()}
+							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									width="16"
