@@ -24,23 +24,6 @@
 	let error = $state('');
 	let searchQuery = $state('');
 
-	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
-	let df = $derived(
-		Intl.DateTimeFormat($locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
-	);
-
-	let filteredMaterials: Material[] = $derived(
-		searchQuery
-			? materialList.filter(
-					(material) =>
-						material.materialName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-						material.deliveryType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-						material.market.toLowerCase().includes(searchQuery.toLowerCase()) ||
-						material.id.toString().includes(searchQuery)
-				)
-			: materialList
-	);
-
 	function matchesSearch(material: Material, query: string) {
 		const lowerQuery = query.toLowerCase();
 		return (
