@@ -8,7 +8,7 @@
 		type Material
 	} from '$lib/api/userClient';
 
-	import { m, locale } from '$lib/i18n';
+	import { m } from '$lib/i18n';
 
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
@@ -318,5 +318,4 @@
 			transform: rotate(360deg);
 		}
 	}
-
 </style>
