@@ -73,6 +73,8 @@
 	"materials_table_price_max": "Максимальная",
 	"materials_table_price_average": "Средняя",
 	"materials_table_last_updated": "Последнее обновление",
+	"materials_table_volume": "Объем",
+	"materials_table_open_interest": "Ставка",
 	"materials_no_results": "Не найдено материалов",
 	"materials_not_available": "Материалы недоступны.",
 	"admin_dashboard_header": "Административная панель",
