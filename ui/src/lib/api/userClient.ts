@@ -324,7 +324,8 @@ export interface Material {
     latestMaxValue?: number | null;
     latestSupplyValue?: number | null;
     avalibleProps: number[];
-
+    volume?: number | null;
+    openInterest?: number | null;
 }
 
 export interface MaterialDateMetricReq {

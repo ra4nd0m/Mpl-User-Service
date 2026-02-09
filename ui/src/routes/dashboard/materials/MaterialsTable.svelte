@@ -9,7 +9,8 @@
 		toggleFavorite,
 		getChangeClass,
 		onShowPrice,
-		hasSearch
+		hasSearch,
+		extraColumns = []
 	}: MaterialsTableProps = $props();
 
 	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
@@ -25,6 +26,7 @@
 		getChangeClass: (changePercent: string | null) => string;
 		onShowPrice: (materialId: number) => void;
 		hasSearch: boolean;
+		extraColumns?: { localisedHeader: string; render: (material: Material) => string }[];
 	};
 </script>
 
@@ -37,6 +39,9 @@
 			<th rowspan="2">{m.materials_table_change()}</th>
 			<th colspan="3">{m.materials_table_price_last()}</th>
 			<th rowspan="2">{m.materials_table_last_updated()}</th>
+			{#each extraColumns as column}
+				<th rowspan="2">{column.localisedHeader}</th>
+			{/each}
 			<th rowspan="2"></th>
 		</tr>
 		<tr>
@@ -121,6 +126,9 @@
 					>
 				{/if}
 				<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
+				{#each extraColumns as column}
+					<td>{column.render(material)}</td>
+				{/each}
 				<td
 					><button
 						class="show-modal"
@@ -147,7 +155,7 @@
 			</tr>
 		{:else}
 			<tr>
-				<td colspan="8" class="no-data">
+				<td colspan={8 + extraColumns.length} class="no-data">
 					{hasSearch ? m.materials_no_results() : m.materials_not_available()}
 				</td>
 			</tr>

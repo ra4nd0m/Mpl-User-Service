@@ -35,20 +35,40 @@
 	}
 
 	const isLme = (material: Material) => material.source === 'lme.com';
+	const isShfe = (material: Material) => material.source === 'shfe.com';
 
 	const lmeMaterials = $derived(materialList.filter(isLme));
-	const otherMaterials = $derived(materialList.filter((material) => !isLme(material)));
+	const shfeMaterials = $derived(materialList.filter(isShfe));
+	const otherMaterials = $derived(
+		materialList.filter((material) => !isLme(material) && !isShfe(material))
+	);
 
 	const filteredLmeMaterials = $derived(
 		searchQuery
 			? lmeMaterials.filter((material) => matchesSearch(material, searchQuery))
 			: lmeMaterials
 	);
+	const filteredShfeMaterials = $derived(
+		searchQuery
+			? shfeMaterials.filter((material) => matchesSearch(material, searchQuery))
+			: shfeMaterials
+	);
 	const filteredOtherMaterials = $derived(
 		searchQuery
 			? otherMaterials.filter((material) => matchesSearch(material, searchQuery))
 			: otherMaterials
 	);
+
+	const shfeExtraColumns = [
+		{
+			localisedHeader: m.materials_table_volume(),
+			render: (material: Material) => material.volume ?? '—'
+		},
+		{
+			localisedHeader: m.materials_table_open_interest(),
+			render: (material: Material) => material.openInterest ?? '—'
+		}
+	];
 
 	const favoriteIds = $derived($favoritesStore.ids);
 
@@ -176,15 +196,28 @@
 			<p>{m.materials_loading()}</p>
 		</div>
 	{:else}
-		<MaterialsTable
-			title="LME"
-			materials={filteredLmeMaterials}
-			{isFavorite}
-			{toggleFavorite}
-			{getChangeClass}
-			onShowPrice={showPriceModal}
-			hasSearch={!!searchQuery}
-		/>
+		{#if shfeMaterials.length > 0}
+			<MaterialsTable
+				title="SHFE"
+				materials={filteredShfeMaterials}
+				{isFavorite}
+				{toggleFavorite}
+				{getChangeClass}
+				onShowPrice={showPriceModal}
+				hasSearch={!!searchQuery}
+			/>
+		{/if}
+		{#if lmeMaterials.length > 0}
+			<MaterialsTable
+				title="LME"
+				materials={filteredLmeMaterials}
+				{isFavorite}
+				{toggleFavorite}
+				{getChangeClass}
+				onShowPrice={showPriceModal}
+				hasSearch={!!searchQuery}
+			/>
+		{/if}
 		<MaterialsTable
 			title={m.materials_group_other()}
 			materials={filteredOtherMaterials}
