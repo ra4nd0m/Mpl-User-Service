@@ -318,7 +318,7 @@
 	}
 
 	/* Responsive behavior */
-	@media (max-width: 768px) {
+	@media (max-width: 1200px) {
 		.subscription-badge,
 		.dropdown-menu {
 			display: none !important;
