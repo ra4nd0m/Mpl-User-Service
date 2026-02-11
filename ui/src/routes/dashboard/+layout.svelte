@@ -20,10 +20,20 @@
 
 	function toggleMobileMenu() {
 		mobileMenuOpen = !mobileMenuOpen;
+		if (browser) {
+			if (mobileMenuOpen) {
+				document.body.style.overflow = 'hidden';
+			} else {
+				document.body.style.overflow = '';
+			}
+		}
 	}
 
 	function closeMobileMenu() {
 		mobileMenuOpen = false;
+		if (browser) {
+			document.body.style.overflow = '';
+		}
 	}
 
 	function goHome() {
@@ -570,6 +580,7 @@
 		flex-direction: column;
 		transform: translateX(0);
 		animation: slideInRight 0.3s ease-out;
+		overflow: hidden;
 	}
 
 	.mobile-menu-header {
@@ -607,6 +618,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.mobile-nav-button {
