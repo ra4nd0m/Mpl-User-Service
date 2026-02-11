@@ -10,22 +10,35 @@
 
 	let { children } = $props();
 	let checkingAuth = $state(true);
+	let mobileMenuOpen = $state(false);
 
 	async function handleLogout() {
+		closeMobileMenu();
 		await logout();
 		goto('/login');
 	}
 
+	function toggleMobileMenu() {
+		mobileMenuOpen = !mobileMenuOpen;
+	}
+
+	function closeMobileMenu() {
+		mobileMenuOpen = false;
+	}
+
 	function goHome() {
 		goto('/dashboard');
+		closeMobileMenu();
 	}
 
 	function goToMaterials() {
 		goto('/dashboard/materials');
+		closeMobileMenu();
 	}
 
 	function goToAdmin() {
 		goto('/dashboard/admin');
+		closeMobileMenu();
 	}
 
 	function handleLanguageChange(event: Event) {
@@ -75,7 +88,7 @@
 {#key $locale}
 	<div class="dashboard-layout">
 		<nav class="navbar">
-			<div class="navbar-left">
+			<div class="navbar-brand">
 				<div class="logo">
 					<svg
 						width="235"
@@ -124,43 +137,10 @@
 						></path>
 					</svg>
 				</div>
-				<button class="nav-button" onclick={goHome}>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-						<polyline points="9 22 9 12 15 12 15 22"></polyline>
-					</svg>
-					{m.nav_home()}
-				</button>
-
-				<button class="nav-button" onclick={goToMaterials}>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
-					</svg>
-					{m.nav_all_materials()}
-				</button>
-
-				{#if isAdmin}
-					<button class="nav-button admin-button" onclick={goToAdmin}>
+				
+				<!-- Desktop Navigation -->
+				<div class="navbar-nav-desktop">
+					<button class="nav-button" onclick={goHome}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="20"
@@ -172,49 +152,234 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 						>
-							<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-							<circle cx="9" cy="7" r="4"></circle>
-							<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-							<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+							<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+							<polyline points="9 22 9 12 15 12 15 22"></polyline>
 						</svg>
-						{m.nav_admin_panel()}
+						{m.nav_home()}
 					</button>
-				{/if}
+
+					<button class="nav-button" onclick={goToMaterials}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+						</svg>
+						{m.nav_all_materials()}
+					</button>
+
+					{#if isAdmin}
+						<button class="nav-button admin-button" onclick={goToAdmin}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+								<circle cx="9" cy="7" r="4"></circle>
+								<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+								<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+							</svg>
+							{m.nav_admin_panel()}
+						</button>
+					{/if}
+				</div>
 			</div>
 
 			<div class="navbar-right">
-				<div class="language-toggle">
-					<select value={$locale} onchange={handleLanguageChange}>
-						{#each locales as lang}
-							<option value={lang}>{lang.toUpperCase()}</option>
-						{/each}
-					</select>
-				</div>
-				{#if user}
-					<span class="user-email">{user.email}</span>
-					{#if user.subscriptionType}
-						<SubscriptionInfo />
+				<div class="desktop-controls">
+					<div class="language-toggle">
+						<select value={$locale} onchange={handleLanguageChange}>
+							{#each locales as lang}
+								<option value={lang}>{lang.toUpperCase()}</option>
+							{/each}
+						</select>
+					</div>
+					{#if user}
+						<span class="user-email">{user.email}</span>
+						{#if user.subscriptionType}
+							<SubscriptionInfo />
+						{/if}
 					{/if}
-				{/if}
-				<button class="logout-button" onclick={handleLogout}>
-					{m.nav_logout()}
+					<button class="logout-button" onclick={handleLogout}>
+						{m.nav_logout()}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+							<polyline points="16 17 21 12 16 7"></polyline>
+							<line x1="21" y1="12" x2="9" y2="12"></line>
+						</svg>
+					</button>
+				</div>
+				
+				<!-- Mobile Hamburger Button -->
+				<button class="mobile-menu-toggle" onclick={toggleMobileMenu} aria-label="Toggle menu">
 					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="18"
-						height="18"
+						width="24"
+						height="24"
 						viewBox="0 0 24 24"
 						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						xmlns="http://www.w3.org/2000/svg"
 					>
-						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-						<polyline points="16 17 21 12 16 7"></polyline>
-						<line x1="21" y1="12" x2="9" y2="12"></line>
+						{#if mobileMenuOpen}
+							<path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						{:else}
+							<path d="M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						{/if}
 					</svg>
 				</button>
 			</div>
+
+			<!-- Mobile Menu Overlay -->
+			{#if mobileMenuOpen}
+				<button
+					type="button"
+					class="mobile-menu-overlay"
+					onclick={closeMobileMenu}
+					onkeydown={(e) => e.key === 'Escape' && closeMobileMenu()}
+					aria-label="Close menu"
+				></button>
+				<div class="mobile-menu">
+					<div class="mobile-menu-header">
+						<span>Menu</span>
+						<button class="mobile-menu-close" onclick={closeMobileMenu} aria-label="Close menu">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								<path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+						</button>
+					</div>
+					
+					<div class="mobile-menu-content">
+						<button class="mobile-nav-button" onclick={goHome}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+								<polyline points="9 22 9 12 15 12 15 22"></polyline>
+							</svg>
+							{m.nav_home()}
+						</button>
+
+						<button class="mobile-nav-button" onclick={goToMaterials}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+							</svg>
+							{m.nav_all_materials()}
+						</button>
+
+						{#if isAdmin}
+							<button class="mobile-nav-button admin-button" onclick={goToAdmin}>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+									<circle cx="9" cy="7" r="4"></circle>
+									<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+									<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+								</svg>
+								{m.nav_admin_panel()}
+							</button>
+						{/if}
+
+						<div class="mobile-menu-user-info">
+							{#if user}
+								<div class="mobile-user-email">{user.email}</div>
+								{#if user.subscriptionType}
+									<div class="mobile-subscription">
+										<SubscriptionInfo />
+									</div>
+								{/if}
+							{/if}
+							
+							<div class="mobile-language-toggle">
+								<label for="mobile-language">Language:</label>
+								<select id="mobile-language" value={$locale} onchange={handleLanguageChange}>
+									{#each locales as lang}
+										<option value={lang}>{lang.toUpperCase()}</option>
+									{/each}
+								</select>
+							</div>
+							
+							<button class="mobile-logout-button" onclick={handleLogout}>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+									<polyline points="16 17 21 12 16 7"></polyline>
+									<line x1="21" y1="12" x2="9" y2="12"></line>
+								</svg>
+								{m.nav_logout()}
+							</button>
+						</div>
+					</div>
+				</div>
+			{/if}
 		</nav>
 
 		<main class="content">
@@ -231,6 +396,7 @@
 	}
 
 	.navbar {
+		position: relative;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -240,13 +406,57 @@
 		height: 60px;
 		box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 		border-bottom: 1px solid #e0e0e0;
+		z-index: 1000;
 	}
 
-	.navbar-left,
+	.navbar-brand {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+
+	.navbar-nav-desktop {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
 	.navbar-right {
 		display: flex;
 		align-items: center;
 		gap: 8px;
+	}
+
+	.desktop-controls {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.logo {
+		display: flex;
+		align-items: center;
+		margin-right: 8px;
+	}
+
+	.logo svg {
+		height: 25px;
+		width: auto;
+	}
+
+	.mobile-menu-toggle {
+		display: none;
+		background: none;
+		border: none;
+		color: #727271;
+		cursor: pointer;
+		padding: 8px;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	.mobile-menu-toggle:hover {
+		background-color: rgba(234, 91, 33, 0.1);
 	}
 
 	.language-toggle select {
@@ -277,6 +487,7 @@
 		padding: 8px 12px;
 		border-radius: 4px;
 		transition: background-color 0.2s;
+		white-space: nowrap;
 	}
 
 	.nav-button:hover {
@@ -318,6 +529,7 @@
 		border-radius: 4px;
 		cursor: pointer;
 		transition: background-color 0.2s;
+		white-space: nowrap;
 	}
 
 	.logout-button:hover {
@@ -334,77 +546,281 @@
 		background-color: #f5f5f5;
 	}
 
-	.navbar-left {
+	/* Mobile Menu Styles */
+	.mobile-menu-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.5);
+		z-index: 1000;
+	}
+
+	.mobile-menu {
+		position: fixed;
+		top: 0;
+		right: 0;
+		width: 280px;
+		height: 100vh;
+		background-color: white;
+		box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+		z-index: 1001;
+		display: flex;
+		flex-direction: column;
+		transform: translateX(0);
+		animation: slideInRight 0.3s ease-out;
+	}
+
+	.mobile-menu-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 16px 20px;
+		border-bottom: 1px solid #e0e0e0;
+		background-color: #f8f9fa;
+	}
+
+	.mobile-menu-header span {
+		font-weight: 600;
+		color: #727271;
+		font-size: 16px;
+	}
+
+	.mobile-menu-close {
+		background: none;
+		border: none;
+		color: #727271;
+		cursor: pointer;
+		padding: 4px;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	.mobile-menu-close:hover {
+		background-color: rgba(234, 91, 33, 0.1);
+	}
+
+	.mobile-menu-content {
+		flex: 1;
+		padding: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.mobile-nav-button {
 		display: flex;
 		align-items: center;
+		background: none;
+		border: none;
+		color: #727271;
+		font-size: 16px;
+		cursor: pointer;
+		padding: 16px 12px;
+		border-radius: 8px;
+		transition: background-color 0.2s;
+		text-align: left;
+		width: 100%;
 		gap: 16px;
 	}
 
-	.logo {
+	.mobile-nav-button:hover {
+		background-color: rgba(234, 91, 33, 0.1);
+	}
+
+	.mobile-nav-button.admin-button {
+		background-color: rgba(231, 76, 60, 0.1);
+	}
+
+	.mobile-nav-button.admin-button:hover {
+		background-color: rgba(231, 76, 60, 0.2);
+	}
+
+	.mobile-menu-user-info {
+		margin-top: auto;
+		padding-top: 20px;
+		border-top: 1px solid #e0e0e0;
+	}
+
+	.mobile-user-email {
+		font-size: 14px;
+		color: #727271;
+		background-color: rgba(114, 114, 113, 0.1);
+		padding: 12px;
+		border-radius: 8px;
+		margin-bottom: 12px;
+		word-break: break-all;
+	}
+
+	.mobile-language-toggle {
+		margin-bottom: 16px;
+	}
+
+	.mobile-language-toggle label {
+		display: block;
+		font-size: 14px;
+		color: #727271;
+		margin-bottom: 8px;
+		font-weight: 500;
+	}
+
+	.mobile-language-toggle select {
+		width: 100%;
+		padding: 12px;
+		border: 1px solid #ced4da;
+		border-radius: 8px;
+		background-color: white;
+		color: #727271;
+		font-size: 14px;
+		cursor: pointer;
+		transition: border-color 0.2s;
+		outline: none;
+	}
+
+	.mobile-language-toggle select:focus {
+		border-color: #ea5b21;
+		box-shadow: 0 0 0 2px rgba(234, 91, 33, 0.1);
+	}
+
+	.mobile-logout-button {
 		display: flex;
 		align-items: center;
-		margin-right: 8px;
+		justify-content: center;
+		background-color: rgba(231, 76, 60, 0.1);
+		border: none;
+		color: #e74c3c;
+		font-size: 16px;
+		font-weight: 500;
+		cursor: pointer;
+		padding: 16px;
+		border-radius: 8px;
+		transition: background-color 0.2s;
+		width: 100%;
+		gap: 12px;
 	}
 
-	.logo svg {
-		height: 25px;
-		width: auto;
+	.mobile-logout-button:hover {
+		background-color: rgba(231, 76, 60, 0.2);
 	}
 
+	.mobile-subscription {
+		margin-bottom: 16px;
+	}
+
+	@keyframes slideInRight {
+		from {
+			transform: translateX(100%);
+		}
+		to {
+			transform: translateX(0);
+		}
+	}
+
+	.mobile-language-toggle {
+		margin-bottom: 16px;
+	}
+
+	.mobile-language-toggle label {
+		display: block;
+		font-size: 14px;
+		color: #727271;
+		margin-bottom: 8px;
+		font-weight: 500;
+	}
+
+	.mobile-language-toggle select {
+		width: 100%;
+		padding: 12px;
+		border: 1px solid #ced4da;
+		border-radius: 8px;
+		background-color: white;
+		color: #727271;
+		font-size: 14px;
+		cursor: pointer;
+		transition: border-color 0.2s;
+		outline: none;
+	}
+
+	.mobile-language-toggle select:focus {
+		border-color: #ea5b21;
+		box-shadow: 0 0 0 2px rgba(234, 91, 33, 0.1);
+	}
+
+	.mobile-logout-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: rgba(231, 76, 60, 0.1);
+		border: none;
+		color: #e74c3c;
+		font-size: 16px;
+		font-weight: 500;
+		cursor: pointer;
+		padding: 16px;
+		border-radius: 8px;
+		transition: background-color 0.2s;
+		width: 100%;
+		gap: 12px;
+	}
+
+	.mobile-logout-button:hover {
+		background-color: rgba(231, 76, 60, 0.2);
+	}
+
+	.mobile-subscription {
+		margin-bottom: 16px;
+	}
+
+	/* Responsive Design */
 	@media (max-width: 768px) {
-		.navbar-left {
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
-			scrollbar-width: none; /* Firefox */
+		.navbar {
+			padding: 0 16px;
 		}
-
-		.navbar-left::-webkit-scrollbar {
-			display: none; /* Chrome, Safari, Edge */
-		}
-	}
-
-	@media (max-width: 600px) {
-		.user-email {
+		
+		.navbar-nav-desktop {
 			display: none;
 		}
 
-		.navbar {
-			padding: 0 10px;
+		.desktop-controls {
+			display: none;
 		}
 
-		.nav-button {
-			padding: 8px 6px;
-			font-size: 12px;
+		.mobile-menu-toggle {
+			display: block;
+		}
+
+		.navbar-brand {
+			gap: 8px;
+		}
+
+		.logo svg {
+			height: 20px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.navbar {
+			padding: 0 12px;
+			height: 56px;
 		}
 
 		.logo svg {
 			height: 18px;
 		}
 
-		.language-toggle select {
-			font-size: 11px;
-			padding: 4px 6px;
+		.mobile-menu {
+			width: 100%;
+		}
+
+		.content {
+			padding: 16px;
 		}
 	}
 
-	@media (max-width: 768px) {
-		.navbar-left {
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
-			scrollbar-width: none; /* Firefox */
-			gap: 8px;
-		}
-
-		.navbar-left::-webkit-scrollbar {
-			display: none; /* Chrome, Safari, Edge */
-		}
-
-		.logo {
-			margin-right: 4px;
-		}
-
-		.logo svg {
-			height: 20px;
+	@media (max-width: 360px) {
+		.navbar {
+			padding: 0 8px;
 		}
 	}
 </style>
