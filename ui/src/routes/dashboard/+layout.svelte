@@ -773,7 +773,7 @@
 	}
 
 	/* Responsive Design */
-	@media (max-width: 768px) {
+	@media (max-width: 1200px) {
 		.navbar {
 			padding: 0 16px;
 		}
@@ -792,6 +792,16 @@
 
 		.navbar-brand {
 			gap: 8px;
+		}
+
+		.logo svg {
+			height: 20px;
+		}
+	}
+	
+	@media (max-width: 768px) {
+		.navbar {
+			padding: 0 16px;
 		}
 
 		.logo svg {
