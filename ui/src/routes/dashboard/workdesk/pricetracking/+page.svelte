@@ -222,4 +222,70 @@
 		transform: translateY(-2px);
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 	}
+
+	/* Mobile responsive styles */
+	@media (max-width: 768px) {
+		.header-content {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 1rem;
+		}
+
+		.dnd-controls {
+			align-self: flex-end;
+		}
+
+		.dnd-actions {
+			justify-content: flex-end;
+		}
+
+		.price-tracking-header h1 {
+			font-size: 1.5rem;
+		}
+
+		.price-tracking-header p {
+			font-size: 0.9rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.header-content {
+			gap: 0.75rem;
+		}
+
+		.dnd-controls {
+			align-self: stretch;
+		}
+
+		.btn-reorder,
+		.btn-confirm,
+		.btn-cancel {
+			width: 100%;
+			padding: 0.75rem 1rem;
+			font-size: 0.9rem;
+		}
+
+		.dnd-actions {
+			flex-direction: column;
+			gap: 0.5rem;
+			justify-content: stretch;
+		}
+
+		.price-tracking-header h1 {
+			font-size: 1.3rem;
+		}
+
+		.price-tracking-header {
+			margin-bottom: 1.5rem;
+			padding-bottom: 0.75rem;
+		}
+
+		.price-tables-container {
+			gap: 1.5rem;
+		}
+
+		.price-tables-container.dnd-enabled {
+			padding: 0.75rem;
+		}
+	}
 </style>
