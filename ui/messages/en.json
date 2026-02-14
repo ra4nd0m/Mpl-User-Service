@@ -80,7 +80,7 @@
 	"admin_dashboard_header": "Admin Dashboard",
 	"admin_user_management": "User Management",
 	"admin_user_table_email": "Email",
-	"admin_user_table_organization": "Organization/ Individual",
+	"admin_user_table_organization": "Organization",
 	"admin_user_table_inn": "INN",
 	"admin_user_table_subscription": "Subscription",
 	"admin_user_table_can_export_data": "Can Export Data",
