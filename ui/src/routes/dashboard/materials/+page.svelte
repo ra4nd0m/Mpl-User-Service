@@ -175,6 +175,27 @@
 		{/each}
 	</div>
 
+	<!-- Mobile Group Selection -->
+	<div class="mobile-group-select">
+		<label for="group-select">{m.materials_filter_by_group()}</label>
+		<select
+			id="group-select"
+			value={selectedGroupId ?? 'all'}
+			onchange={(e) => {
+				const target = e.target as HTMLSelectElement;
+				if (target) {
+					const value = target.value;
+					selectGroup(value === 'all' ? null : parseInt(value));
+				}
+			}}
+		>
+			<option value="all">{m.materials_group_all()}</option>
+			{#each materialGroups as group}
+				<option value={group.id}>{group.name}</option>
+			{/each}
+		</select>
+	</div>
+
 	<div class="search-container">
 		<input
 			type="text"
@@ -300,22 +321,32 @@
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		font-size: 1rem;
+		box-sizing: border-box;
 	}
 
 	.clear-search {
 		position: absolute;
-		right: -35px;
+		right: 0.5rem;
 		top: 50%;
 		transform: translateY(-50%);
 		background: none;
 		border: none;
-		font-size: 1.5rem;
+		font-size: 1.125rem;
 		cursor: pointer;
 		color: #6c757d;
+		padding: 0.25rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		width: 1.5rem;
+		height: 1.5rem;
+		transition: all 0.2s ease;
 	}
 
 	.clear-search:hover {
 		color: #343a40;
+		background-color: rgba(52, 58, 64, 0.1);
 	}
 
 	.error-message {
@@ -343,12 +374,140 @@
 		margin-bottom: 1rem;
 	}
 
+	/* Mobile Group Select */
+	.mobile-group-select {
+		display: none;
+		margin-bottom: 1rem;
+	}
+
+	.mobile-group-select label {
+		display: block;
+		font-weight: bold;
+		color: #727271;
+		margin-bottom: 0.5rem;
+		font-size: 0.95rem;
+	}
+
+	.mobile-group-select select {
+		width: 100%;
+		padding: 0.75rem;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		background-color: white;
+		color: #727271;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: border-color 0.2s;
+		outline: none;
+		appearance: none;
+		background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+		background-repeat: no-repeat;
+		background-position: right 0.75rem center;
+		background-size: 0.65rem auto;
+	}
+
+	.mobile-group-select select:focus {
+		border-color: #ea5b21;
+		box-shadow: 0 0 0 2px rgba(234, 91, 33, 0.1);
+	}
+
 	@keyframes spin {
 		0% {
 			transform: rotate(0deg);
 		}
 		100% {
 			transform: rotate(360deg);
+		}
+	}
+
+	/* Mobile responsive styles */
+	@media (max-width: 768px) {
+		.group-buttons {
+			display: none;
+		}
+
+		.mobile-group-select {
+			display: block;
+			margin-bottom: 1.25rem;
+		}
+
+		.search-container {
+			margin-bottom: 1.25rem;
+			max-width: 100%;
+		}
+
+		.search-input {
+			padding: 0.75rem;
+			padding-right: 2.75rem;
+			font-size: 1rem;
+		}
+
+		.clear-search {
+			right: 0.625rem;
+			font-size: 1rem;
+		}
+
+		h1 {
+			font-size: 1.5rem;
+			margin-bottom: 1.25rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.mobile-group-select {
+			margin-bottom: 1.5rem;
+		}
+
+		.mobile-group-select select {
+			padding: 1rem;
+			font-size: 1rem;
+			border-radius: 6px;
+		}
+
+		.search-container {
+			margin-bottom: 1.5rem;
+		}
+
+		.search-input {
+			padding: 1rem;
+			padding-right: 3rem;
+			font-size: 1rem;
+			border-radius: 6px;
+		}
+
+		.clear-search {
+			right: 0.75rem;
+			font-size: 1.125rem;
+		}
+
+		h1 {
+			font-size: 1.4rem;
+			text-align: center;
+			margin-bottom: 1.5rem;
+		}
+
+		.error-message {
+			font-size: 0.9rem;
+		}
+
+		.loading-spinner-container {
+			padding: 3rem 1rem;
+		}
+	}
+
+	@media (max-width: 360px) {
+		.search-input {
+			padding: 0.9rem;
+			padding-right: 2.5rem;
+		}
+
+		.clear-search {
+			right: 0.5rem;
+			font-size: 1rem;
+		}
+
+		h1 {
+			font-size: 1.3rem;
 		}
 	}
 </style>

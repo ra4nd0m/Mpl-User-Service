@@ -31,242 +31,284 @@
 </script>
 
 <h2>{title}</h2>
-<table class="materials-table">
-	<thead>
-		<tr>
-			<th rowspan="2" class="favorite-cell"> </th>
-			<th rowspan="2" class="table-material-name">{m.materials_table_material_name()}</th>
-			<th rowspan="2">{m.materials_table_change()}</th>
-			<th colspan="3">{m.materials_table_price_last()}</th>
-			<th rowspan="2">{m.materials_table_last_updated()}</th>
-			{#each extraColumns as column}
-				<th rowspan="2">{column.localisedHeader}</th>
-			{/each}
-			<th rowspan="2"></th>
-		</tr>
-		<tr>
-			<th>{m.materials_table_price_average()}</th>
-			<th>{m.materials_table_price_min()}</th>
-			<th>{m.materials_table_price_max()}</th>
-		</tr>
-	</thead>
-	<tbody>
-		{#each materials as material}
-			<tr>
-				<td class="favorite-cell">
-					<button
-						class="favorite-button {isFavorite(material.id) ? 'is-favorite' : ''}"
-						onclick={() => toggleFavorite(material.id)}
-						title={isFavorite(material.id)
-							? m.materials_table_remove_from_favorites()
-							: m.materials_table_add_to_favorites()}
-						aria-label={isFavorite(material.id)
-							? m.materials_table_remove_from_favorites()
-							: m.materials_table_add_to_favorites()}
-					>
-						{#if isFavorite(material.id)}
-							<!-- Checkmark for favorites -->
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+<div class="materials-table-container">
+	<div class="table-wrapper">
+		<table class="materials-table">
+			<thead>
+				<tr>
+					<th rowspan="2" class="favorite-cell"> </th>
+					<th rowspan="2" class="table-material-name">{m.materials_table_material_name()}</th>
+					<th rowspan="2">{m.materials_table_change()}</th>
+					<th colspan="3">{m.materials_table_price_last()}</th>
+					<th rowspan="2">{m.materials_table_last_updated()}</th>
+					{#each extraColumns as column}
+						<th rowspan="2">{column.localisedHeader}</th>
+					{/each}
+					<th rowspan="2"></th>
+				</tr>
+				<tr>
+					<th>{m.materials_table_price_average()}</th>
+					<th>{m.materials_table_price_min()}</th>
+					<th>{m.materials_table_price_max()}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each materials as material}
+					<tr>
+						<td class="favorite-cell">
+							<button
+								class="favorite-button {isFavorite(material.id) ? 'is-favorite' : ''}"
+								onclick={() => toggleFavorite(material.id)}
+								title={isFavorite(material.id)
+									? m.materials_table_remove_from_favorites()
+									: m.materials_table_add_to_favorites()}
+								aria-label={isFavorite(material.id)
+									? m.materials_table_remove_from_favorites()
+									: m.materials_table_add_to_favorites()}
 							>
-								<polyline points="20 6 9 17 4 12"></polyline>
-							</svg>
-						{:else}
-							<!-- Cross for non-favorites -->
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+								{#if isFavorite(material.id)}
+									<!-- Checkmark for favorites -->
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<polyline points="20 6 9 17 4 12"></polyline>
+									</svg>
+								{:else}
+									<!-- Cross for non-favorites -->
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<line x1="18" y1="6" x2="6" y2="18"></line>
+										<line x1="6" y1="6" x2="18" y2="18"></line>
+									</svg>
+								{/if}
+							</button>
+						</td>
+						<td class="table-material-name">
+							<div class="material-name">
+								{material.materialName}
+								{material.unit}
+								{material.deliveryType}
+								{material.market}
+							</div>
+						</td>
+					<td class="{getChangeClass(material.changePercent)}">{material.changePercent}</td>
+					<td>
+						{material.latestAvgValue !== null && material.latestAvgValue !== undefined
+							? nf.format(material.latestAvgValue)
+							: '-'}
+					</td>
+					{#if material.latestMinValue === null}
+						<td>—</td>
+					{:else}
+						<td>{material.latestMinValue !== undefined ? nf.format(material.latestMinValue) : '—'}</td>
+					{/if}
+					{#if material.latestMaxValue === null}
+						<td>—</td>
+					{:else}
+						<td>{material.latestMaxValue !== undefined ? nf.format(material.latestMaxValue) : '—'}</td>
+					{/if}
+					<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
+					{#each extraColumns as column}
+						<td>{column.render(material)}</td>
+						{/each}
+						<td>
+							<button
+								class="show-modal"
+								onclick={() => onShowPrice(material.id)}
+								aria-label={m.workdesk_price_tracking_chart_price_history()}
+								title={m.workdesk_price_tracking_chart_price_history()}
 							>
-								<line x1="18" y1="6" x2="6" y2="18"></line>
-								<line x1="6" y1="6" x2="18" y2="18"></line>
-							</svg>
-						{/if}
-					</button>
-				</td>
-				<td class="table-material-name"
-					>{material.materialName +
-						' ' +
-						material.unit +
-						' ' +
-						material.deliveryType +
-						' ' +
-						material.market}</td
-				>
-				<td class={getChangeClass(material.changePercent)}>{material.changePercent}</td>
-				<td
-					>{material.latestAvgValue !== null && material.latestAvgValue !== undefined
-						? nf.format(material.latestAvgValue)
-						: '-'}</td
-				>
-				{#if material.latestMinValue === null}
-					<td>—</td>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<line x1="12" y1="5" x2="12" y2="19"></line>
+									<line x1="5" y1="12" x2="19" y2="12"></line>
+								</svg>
+							</button>
+						</td>
+					</tr>
 				{:else}
-					<td>{material.latestMinValue !== undefined ? nf.format(material.latestMinValue) : '—'}</td
-					>
-				{/if}
-				{#if material.latestMaxValue === null}
-					<td>—</td>
-				{:else}
-					<td>{material.latestMaxValue !== undefined ? nf.format(material.latestMaxValue) : '—'}</td
-					>
-				{/if}
-				<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
-				{#each extraColumns as column}
-					<td>{column.render(material)}</td>
+					<tr>
+						<td colspan={8 + extraColumns.length} class="no-data">
+							{hasSearch ? m.materials_no_results() : m.materials_not_available()}
+						</td>
+					</tr>
 				{/each}
-				<td
-					><button
-						class="show-modal"
-						onclick={() => onShowPrice(material.id)}
-						aria-label={m.workdesk_price_tracking_chart_price_history()}
-						title={m.workdesk_price_tracking_chart_price_history()}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<line x1="12" y1="5" x2="12" y2="19"></line>
-							<line x1="5" y1="12" x2="19" y2="12"></line>
-						</svg></button
-					></td
-				>
-			</tr>
-		{:else}
-			<tr>
-				<td colspan={8 + extraColumns.length} class="no-data">
-					{hasSearch ? m.materials_no_results() : m.materials_not_available()}
-				</td>
-			</tr>
-		{/each}
-	</tbody>
-</table>
+			</tbody>
+		</table>
+	</div>
+</div>
 
 <style>
+	h2 {
+		margin-bottom: 1.5rem;
+		font-size: 1.5rem;
+		color: #333;
+		border-bottom: 1px solid #e9ecef;
+		padding-bottom: 0.75rem;
+	}
+
+	.materials-table-container {
+		margin-bottom: 2rem;
+		border: 1px solid #e9ecef;
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+		background-color: white;
+		transition: all 0.3s ease;
+	}
+
+	.materials-table-container:hover {
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.table-wrapper {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
 	.materials-table {
 		width: 100%;
+		min-width: 800px;
 		border-collapse: collapse;
-		margin-top: 1rem;
+		margin: 0;
+		background-color: white;
 	}
 
 	.materials-table th,
 	.materials-table td {
 		padding: 0.75rem;
 		text-align: left;
-		border-bottom: 1px solid #ddd;
+		border-bottom: 1px solid #e9ecef;
 		vertical-align: middle;
+		white-space: nowrap;
 	}
 
 	.materials-table th {
 		background-color: #f8f9fa;
-		font-weight: bold;
+		font-weight: 600;
 		text-align: center;
+		color: #495057;
+		position: sticky;
+		top: 0;
+		z-index: 1;
 	}
 
 	.materials-table .table-material-name {
-		text-align: left;
+		text-align: left !important;
+		min-width: 250px;
+		max-width: 300px;
+		white-space: normal;
+		word-wrap: break-word;
+	}
+
+	.materials-table .favorite-cell {
+		width: 60px;
+		text-align: center !important;
 	}
 
 	.materials-table td {
 		text-align: center;
 	}
 
+	.materials-table td:nth-child(2) {
+		text-align: left;
+	}
+
+	.materials-table tbody tr {
+		transition: background-color 0.2s ease;
+	}
+
 	.materials-table tbody tr:hover {
-		background-color: #f1f1f1;
+		background-color: #f1f3f5;
 	}
+
+	.materials-table tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	.material-name {
+		font-weight: 600;
+		color: #333;
+		line-height: 1.4;
+	}
+
 	.no-data {
-		text-align: center;
-		padding: 2rem !important;
+		text-align: center !important;
+		padding: 3rem 1rem !important;
 		color: #6c757d;
-	}
-
-	.error-message {
-		color: #dc3545;
-		padding: 0.75rem;
-		background-color: rgba(220, 53, 69, 0.1);
-		border-radius: 4px;
-		margin-bottom: 1rem;
-	}
-
-	.loading-spinner-container {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 2rem;
-	}
-
-	.loading-spinner {
-		width: 40px;
-		height: 40px;
-		border: 4px solid #f3f3f3;
-		border-top: 4px solid #3498db;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 1rem;
-	}
-
-	@keyframes spin {
-		0% {
-			transform: rotate(0deg);
-		}
-		100% {
-			transform: rotate(360deg);
-		}
+		background-color: #f8f9fa;
+		font-style: italic;
 	}
 
 	.positive-change {
-		color: #2ecc71;
-		font-weight: 500;
+		color: #198754;
+		font-weight: 600;
 	}
 
 	.negative-change {
-		color: #e74c3c;
-		font-weight: 500;
+		color: #dc3545;
+		font-weight: 600;
 	}
 
 	.favorite-button {
 		background: none;
 		border: none;
 		cursor: pointer;
-		padding: 0.25rem;
+		padding: 0.375rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 4px;
-		transition: background-color 0.2s ease;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+		width: 32px;
+		height: 32px;
 	}
 
 	.favorite-button:hover {
 		background-color: rgba(0, 0, 0, 0.1);
+		transform: scale(1.1);
+	}
+
+	.favorite-button.is-favorite {
+		background-color: rgba(25, 135, 84, 0.1);
 	}
 
 	.favorite-button.is-favorite svg {
-		color: #2ecc71;
+		color: #198754;
+	}
+
+	.favorite-button:not(.is-favorite) {
+		background-color: rgba(220, 53, 69, 0.1);
 	}
 
 	.favorite-button:not(.is-favorite) svg {
-		color: #e74c3c;
+		color: #dc3545;
 	}
 
 	.show-modal {
@@ -274,12 +316,134 @@
 		border: none;
 		cursor: pointer;
 		color: #6c757d;
-		padding: 0.25rem;
-		border-radius: 4px;
-		transition: background-color 0.2s;
+		padding: 0.375rem;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
 	}
 
 	.show-modal:hover {
-		background-color: #f8f9fa;
+		background-color: #e9ecef;
+		color: #495057;
+		transform: scale(1.1);
+	}
+
+	/* Mobile responsive styles */
+	@media (max-width: 768px) {
+		h2 {
+			font-size: 1.3rem;
+			margin-bottom: 1rem;
+		}
+
+		.materials-table-container {
+			margin-bottom: 1.5rem;
+			border-radius: 6px;
+		}
+
+		.materials-table {
+			min-width: 700px;
+			font-size: 0.9rem;
+		}
+
+		.materials-table th,
+		.materials-table td {
+			padding: 0.625rem 0.5rem;
+		}
+
+		.materials-table .table-material-name {
+			min-width: 200px;
+			max-width: 220px;
+		}
+
+		.favorite-cell {
+			width: 50px;
+		}
+
+		.no-data {
+			padding: 2rem 1rem !important;
+			font-size: 0.9rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		h2 {
+			font-size: 1.2rem;
+			text-align: center;
+		}
+
+		.materials-table-container {
+			border-radius: 4px;
+		}
+
+		.materials-table {
+			min-width: 650px;
+			font-size: 0.85rem;
+		}
+
+		.materials-table th,
+		.materials-table td {
+			padding: 0.5rem 0.375rem;
+		}
+
+		.materials-table .table-material-name {
+			min-width: 180px;
+			max-width: 200px;
+		}
+
+		.favorite-cell {
+			width: 44px;
+		}
+
+		.favorite-button,
+		.show-modal {
+			width: 28px;
+			height: 28px;
+			padding: 0.25rem;
+		}
+
+		.favorite-button svg,
+		.show-modal svg {
+			width: 14px;
+			height: 14px;
+		}
+
+		.material-name {
+			font-size: 0.85rem;
+			line-height: 1.3;
+		}
+
+		.no-data {
+			padding: 1.5rem 0.5rem !important;
+			font-size: 0.85rem;
+		}
+	}
+
+	@media (max-width: 360px) {
+		h2 {
+			font-size: 1.1rem;
+		}
+
+		.materials-table {
+			min-width: 600px;
+			font-size: 0.8rem;
+		}
+
+		.materials-table th,
+		.materials-table td {
+			padding: 0.5rem 0.25rem;
+		}
+
+		.materials-table .table-material-name {
+			min-width: 160px;
+			max-width: 180px;
+		}
+
+		.material-name {
+			font-size: 0.8rem;
+		}
 	}
 </style>

@@ -53,6 +53,7 @@
 </script>
 
 <div class="subscription-info">
+	<!-- Desktop dropdown version -->
 	<button
 		class="subscription-badge {user?.subscriptionType?.toLowerCase() || 'free'}"
 		onclick={toggleDropdown}
@@ -101,6 +102,29 @@
 			</div>
 		</div>
 	{/if}
+
+	<!-- Mobile inline version -->
+	<div class="mobile-subscription-info">
+		<div class="mobile-subscription-header">
+			<span class="mobile-subscription-badge {user?.subscriptionType?.toLowerCase() || 'free'}">
+				{user?.subscriptionType || 'Free'}
+			</span>
+		</div>
+		<div class="mobile-subscription-details">
+			<div class="mobile-detail-row">
+				<span class="mobile-detail-label">{m.nav_subscription_expires()}</span>
+				<span class="mobile-detail-value">{formatDate(user?.subscriptionEnd)}</span>
+			</div>
+			{#if getDaysRemaining(user?.subscriptionEnd)}
+				<div class="mobile-detail-row">
+					<span class="mobile-detail-label">Time Left:</span>
+					<span class="mobile-detail-value days-remaining">
+						{getDaysRemaining(user?.subscriptionEnd)} days
+					</span>
+				</div>
+			{/if}
+		</div>
+	</div>
 </div>
 
 <style>
@@ -224,6 +248,85 @@
 
 	.manage-link:hover {
 		text-decoration: underline;
+	}
+
+	/* Mobile subscription info styles */
+	.mobile-subscription-info {
+		display: none;
+		background-color: rgba(114, 114, 113, 0.05);
+		border-radius: 8px;
+		padding: 12px;
+		border: 1px solid rgba(114, 114, 113, 0.1);
+	}
+
+	.mobile-subscription-header {
+		margin-bottom: 8px;
+	}
+
+	.mobile-subscription-badge {
+		display: inline-block;
+		font-size: 14px;
+		font-weight: 600;
+		padding: 6px 12px;
+		border-radius: 16px;
+		background-color: #3498db;
+		color: white;
+	}
+
+	.mobile-subscription-badge.free {
+		background-color: #e9ecef;
+		color: #495057;
+	}
+
+	.mobile-subscription-badge.basic {
+		background-color: #4dabf7;
+		color: white;
+	}
+
+	.mobile-subscription-badge.premium {
+		background-color: #f783ac;
+		color: white;
+	}
+
+	.mobile-subscription-details {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.mobile-detail-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.mobile-detail-label {
+		font-size: 12px;
+		color: #6c757d;
+		font-weight: 500;
+	}
+
+	.mobile-detail-value {
+		font-size: 12px;
+		font-weight: 500;
+		color: #343a40;
+	}
+
+	.mobile-detail-value.days-remaining {
+		color: #2b8a3e;
+		font-weight: 600;
+	}
+
+	/* Responsive behavior */
+	@media (max-width: 1200px) {
+		.subscription-badge,
+		.dropdown-menu {
+			display: none !important;
+		}
+
+		.mobile-subscription-info {
+			display: block;
+		}
 	}
 
 	@keyframes fadeIn {

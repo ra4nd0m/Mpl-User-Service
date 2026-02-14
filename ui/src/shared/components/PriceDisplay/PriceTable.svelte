@@ -1297,12 +1297,23 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		padding: 0.25rem;
+		padding: 0.5rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		color: #495057;
 		transition: transform 0.2s ease;
+		min-height: 2.5rem;
+		border-radius: 4px;
+	}
+
+	.toggle-button:hover {
+		background-color: #f1f3f5;
+	}
+
+	.toggle-button svg {
+		width: 20px;
+		height: 20px;
 	}
 
 	.toggle-button svg.expanded {
@@ -1535,8 +1546,37 @@
 			align-items: flex-start;
 		}
 
+		/* Hide date preset buttons on mobile to save space */
+		.date-presets {
+			display: none;
+		}
+
 		.date-range-picker {
 			flex-wrap: wrap;
+			width: 100%;
+			gap: 0.75rem;
+		}
+
+		.date-input {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
+			flex: 1;
+			min-width: 120px;
+		}
+
+		.date-input input {
+			width: 100%;
+			padding: 0.5rem;
+			padding-right: 1px;
+			font-size: 16px; /* Prevent zoom on iOS */
+		}
+
+		.apply-btn {
+			width: 100%;
+			padding: 0.75rem;
+			font-size: 1rem;
+			margin-top: 0.5rem;
 		}
 
 		.price-table {
@@ -1546,6 +1586,17 @@
 		.price-table th,
 		.price-table td {
 			padding: 0.5rem;
+		}
+
+		/* Make toggle button bigger on mobile */
+		.toggle-button {
+			padding: 0.75rem;
+			min-height: 3rem;
+		}
+
+		.toggle-button svg {
+			width: 24px;
+			height: 24px;
 		}
 	}
 
