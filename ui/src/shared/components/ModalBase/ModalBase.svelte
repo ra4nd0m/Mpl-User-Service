@@ -35,8 +35,12 @@
 	$effect(() => {
 		if (showModal) {
 			document.addEventListener('keydown', handleEscKey);
+			// Prevent body scroll when modal is open
+			document.body.style.overflow = 'hidden';
 			return () => {
 				document.removeEventListener('keydown', handleEscKey);
+				// Restore body scroll when modal is closed
+				document.body.style.overflow = '';
 			};
 		}
 	});
@@ -101,7 +105,9 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		z-index: 100;
+		z-index: 1050;
+		padding: 1rem;
+		box-sizing: border-box;
 	}
 
 	.modal-container {
@@ -110,6 +116,31 @@
 		width: 90%;
 		overflow-y: auto;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
+	/* Mobile optimizations */
+
+	@media (max-width: 768px) {
+		.modal-backdrop {
+			padding: 0.5rem;
+		}
+		
+		.modal-container {
+			width: 95%;
+			max-height: 85vh;
+			border-radius: 12px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.modal-backdrop {
+			padding: 0.25rem;
+		}
+		
+		.modal-container {
+			width: 98%;
+			border-radius: 8px;
+		}
 	}
 	.modal-header {
 		display: flex;
