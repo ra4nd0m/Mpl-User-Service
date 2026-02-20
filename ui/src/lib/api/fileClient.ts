@@ -15,6 +15,7 @@ export interface UploadItem {
 export interface UserFileMetadata {
     id: string;
     fileName: string;
+    requiredSubscription: SubscriptionType;
     uploadedAt: string;
 }
 
