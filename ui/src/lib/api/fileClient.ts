@@ -42,6 +42,7 @@ export async function uploadFile(item: UploadItem) {
         if (!resp.ok) {
             throw new Error(resp.statusText);
         }
+        item.status = 'complete';
     } catch (err) {
         if (controller.signal.aborted) {
             item.status = 'cancelled';
