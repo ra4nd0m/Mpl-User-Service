@@ -1,0 +1,78 @@
+#!/bin/bash
+
+set -e
+
+TARGET_DIR="/opt/mpluserservice"
+SERVICE_NAME="mpluser.service"
+OWNER="userapi:userapi"
+
+echo "Searching for latest mpl-user-api-*.zip archive..."
+
+ARCHIVE=$(ls -t mpl-user-api-*.zip 2>/dev/null | head -n 1)
+
+if [ -z "$ARCHIVE" ]; then
+    echo "No mpl-user-api-*.zip archive found."
+    exit 1
+
+fi
+
+echo "Using archive: $ARCHIVE"
+
+WORKDIR=$(mktemp -d)
+unzip -q "$ARCHIVE" -d "$WORKDIR"
+
+if [ ! -f "$WORKDIR/MplUserService" ]; then
+    echo "Executable 'MplUserService' not found in archive."
+    exit 1
+fi
+
+if [ ! -f "$WORKDIR/MplUserService.pdb" ]; then
+    echo "'MplUserService.pdb' not found in archive."
+    exit 1
+fi
+
+echo "Stopping service..."
+systemctl stop "$SERVICE_NAME"
+
+echo "Ensuring target directory exists..."
+mkdir -p "$TARGET_DIR"
+
+echo "Copying executable and pdb..."
+cp "$WORKDIR/MplUserService" "$TARGET_DIR/"
+cp "$WORKDIR/MplUserService.pdb" "$TARGET_DIR/"
+
+if [ -f "$WORKDIR/appsettings.json" ]; then
+    if [ -f "$TARGET_DIR/appsettings.json" ]; then
+        read -p "appsettings.json exists. Overwrite? (y/N): " CONFIRM
+        if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+            cp "$WORKDIR/appsettings.json" "$TARGET_DIR/"
+            echo "appsettings.json overwritten."
+        else
+            echo "Keeping existing appsettings.json."
+        fi
+    else
+        cp "$WORKDIR/appsettings.json" "$TARGET_DIR/"
+        echo "appsettings.json copied."
+    fi
+fi
+
+echo "Setting ownership..."
+chown "$OWNER" "$TARGET_DIR/MplUserService" "$TARGET_DIR/MplUserService.pdb"
+
+if [ -f "$TARGET_DIR/appsettings.json" ]; then
+    chown "$OWNER" "$TARGET_DIR/appsettings.json"
+fi
+
+echo "Making executable runnable..."
+chmod +x "$TARGET_DIR/MplUserService"
+
+echo "Starting service..."
+systemctl start "$SERVICE_NAME"
+
+echo "Service status:"
+systemctl status "$SERVICE_NAME" --no-pager
+
+echo "Cleaning up..."
+rm -rf "$WORKDIR"
+
+echo "Deployment complete."
