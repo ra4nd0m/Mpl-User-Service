@@ -65,7 +65,13 @@
 	}
 </script>
 
-<div class="dropzone" ondrop={handleDrop} ondragover={(e) => e.preventDefault()}>
+<div
+	class="dropzone"
+	role="button"
+	tabindex="0"
+	ondrop={handleDrop}
+	ondragover={(e) => e.preventDefault()}
+>
 	Drag PDFs here
 </div>
 
