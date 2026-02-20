@@ -68,57 +68,409 @@
 	}
 </script>
 
-<div
-	class="dropzone"
-	role="button"
-	tabindex="0"
-	ondrop={handleDrop}
-	ondragover={(e) => e.preventDefault()}
->
-	Drag PDFs here
-</div>
-
-<input type="file" multiple accept="application/pdf" onchange={handlePicker} />
-
-{#each files as item}
-	<div class="file-row">
-		<strong>{item.file.name}</strong>
-
-		<select bind:value={item.requiredSubscription} disabled={item.status === 'uploading'}>
-			{#each subscriptionOptions as [label, value]}
-				<option {value}>{label}</option>
-			{/each}
-		</select>
-
-		<span>
-			{#if item.status === 'pending'}
-				Pending
-			{/if}
-			{#if item.status === 'uploading'}
-				Uploading
-			{/if}
-			{#if item.status === 'complete'}
-				Complete
-			{/if}
-			{#if item.status === 'error'}
-				Error
-			{/if}
-			{#if item.status === 'cancelled'}
-				Cancelled
-			{/if}
-		</span>
-
-		<button onclick={() => handleRemove(item.id)} disabled={item.status === 'complete'}>
-			Cancel
-		</button>
+<div class="modal-content">
+	<div
+		class="dropzone"
+		role="button"
+		tabindex="0"
+		ondrop={handleDrop}
+		ondragover={(e) => e.preventDefault()}
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="48"
+			height="48"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+			<polyline points="17 8 12 3 7 8"></polyline>
+			<line x1="12" y1="3" x2="12" y2="15"></line>
+		</svg>
+		<p>Drag and drop PDF files here</p>
+		<p class="or">or</p>
+		<label for="file-input" class="file-input-label">Browse Files</label>
+		<input
+			id="file-input"
+			type="file"
+			multiple
+			accept="application/pdf"
+			onchange={handlePicker}
+			class="file-input-hidden"
+		/>
 	</div>
 
-	{#if !isUploading}
-		<button onclick={publishFiles} disabled={!canPublish}>Upload</button>
-	{:else}
-		<button
-			onclick={() => files.forEach((f) => f.status === 'uploading' && f.abortController?.abort())}
-			>Cancel Upload</button
-		>
+	{#if files.length > 0}
+		<div class="files-section">
+			<h4>Files to Upload</h4>
+			<div class="files-table">
+				{#each files as item}
+					<div class="file-row" class:complete={item.status === 'complete'}>
+						<div class="file-name">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+								<polyline points="14 2 14 8 20 8"></polyline>
+							</svg>
+							<strong>{item.file.name}</strong>
+						</div>
+
+						<select
+							bind:value={item.requiredSubscription}
+							disabled={item.status === 'uploading'}
+							class="subscription-select"
+						>
+							{#each subscriptionOptions as [label, value]}
+								<option {value}>{label}</option>
+							{/each}
+						</select>
+
+						<span class="status status-{item.status}">
+							{#if item.status === 'pending'}
+								Pending
+							{:else if item.status === 'uploading'}
+								Uploading...
+							{:else if item.status === 'complete'}
+								✓ Complete
+							{:else if item.status === 'error'}
+								✗ Error
+							{:else if item.status === 'cancelled'}
+								Cancelled
+							{/if}
+						</span>
+
+						<button
+							class="btn-remove"
+							onclick={() => handleRemove(item.id)}
+							disabled={item.status === 'complete'}
+							title="Remove file"
+							aria-label="Remove file"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+					</div>
+				{/each}
+			</div>
+
+			<div class="actions">
+				{#if !isUploading}
+					<button class="btn btn-primary" onclick={publishFiles} disabled={!canPublish}>
+						Upload All Files
+					</button>
+				{:else}
+					<button
+						class="btn btn-secondary"
+						onclick={() =>
+							files.forEach((f) => f.status === 'uploading' && f.abortController?.abort())}
+					>
+						Cancel Upload
+					</button>
+				{/if}
+			</div>
+		</div>
 	{/if}
-{/each}
+</div>
+
+<style>
+	.modal-content {
+		padding: 1rem;
+	}
+
+	.dropzone {
+		border: 2px dashed #cbd5e0;
+		border-radius: 8px;
+		padding: 3rem 2rem;
+		text-align: center;
+		background-color: #f7fafc;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		margin-bottom: 2rem;
+	}
+
+	.dropzone:hover {
+		border-color: #4299e1;
+		background-color: #ebf8ff;
+	}
+
+	.dropzone:focus {
+		outline: none;
+		border-color: #4299e1;
+		box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+	}
+
+	.dropzone svg {
+		color: #718096;
+		margin: 0 auto 1rem;
+		transition: color 0.3s ease;
+	}
+
+	.dropzone:hover svg {
+		color: #4299e1;
+	}
+
+	.dropzone p {
+		margin: 0.5rem 0;
+		color: #4a5568;
+		font-size: 1rem;
+	}
+
+	.dropzone p.or {
+		color: #a0aec0;
+		font-size: 0.875rem;
+		margin: 1rem 0;
+	}
+
+	.file-input-label {
+		display: inline-block;
+		padding: 0.75rem 1.5rem;
+		background-color: #4299e1;
+		color: white;
+		border-radius: 6px;
+		cursor: pointer;
+		font-weight: 500;
+		transition: background-color 0.2s;
+	}
+
+	.file-input-label:hover {
+		background-color: #3182ce;
+	}
+
+	.file-input-hidden {
+		display: none;
+	}
+
+	.files-section {
+		margin-top: 2rem;
+	}
+
+	.files-section h4 {
+		margin: 0 0 1rem 0;
+		color: #2d3748;
+		font-size: 1.125rem;
+	}
+
+	.files-table {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.file-row {
+		display: grid;
+		grid-template-columns: 1fr auto auto auto;
+		gap: 1rem;
+		align-items: center;
+		padding: 1rem;
+		background-color: #f7fafc;
+		border-radius: 6px;
+		border: 1px solid #e2e8f0;
+		transition: all 0.2s;
+	}
+
+	.file-row:hover {
+		background-color: #edf2f7;
+		border-color: #cbd5e0;
+	}
+
+	.file-row.complete {
+		background-color: #f0fff4;
+		border-color: #9ae6b4;
+	}
+
+	.file-name {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		min-width: 0;
+	}
+
+	.file-name svg {
+		flex-shrink: 0;
+		color: #718096;
+	}
+
+	.file-name strong {
+		color: #2d3748;
+		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.subscription-select {
+		padding: 0.5rem 0.75rem;
+		border: 1px solid #cbd5e0;
+		border-radius: 4px;
+		background-color: white;
+		color: #2d3748;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: border-color 0.2s;
+	}
+
+	.subscription-select:hover:not(:disabled) {
+		border-color: #4299e1;
+	}
+
+	.subscription-select:focus {
+		outline: none;
+		border-color: #4299e1;
+		box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+	}
+
+	.subscription-select:disabled {
+		background-color: #f7fafc;
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+
+	.status {
+		padding: 0.375rem 0.75rem;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	.status-pending {
+		background-color: #fef5e7;
+		color: #d69e2e;
+	}
+
+	.status-uploading {
+		background-color: #ebf8ff;
+		color: #3182ce;
+	}
+
+	.status-complete {
+		background-color: #f0fff4;
+		color: #38a169;
+	}
+
+	.status-error {
+		background-color: #fff5f5;
+		color: #e53e3e;
+	}
+
+	.status-cancelled {
+		background-color: #f7fafc;
+		color: #718096;
+	}
+
+	.btn-remove {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border: none;
+		background-color: transparent;
+		color: #e53e3e;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: all 0.2s;
+		padding: 0;
+	}
+
+	.btn-remove:hover:not(:disabled) {
+		background-color: #fff5f5;
+	}
+
+	.btn-remove:disabled {
+		color: #cbd5e0;
+		cursor: not-allowed;
+	}
+
+	.actions {
+		display: flex;
+		justify-content: flex-end;
+		padding-top: 1rem;
+		border-top: 1px solid #e2e8f0;
+	}
+
+	.btn {
+		padding: 0.75rem 1.5rem;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn-primary {
+		background-color: #4299e1;
+		color: white;
+	}
+
+	.btn-primary:hover:not(:disabled) {
+		background-color: #3182ce;
+	}
+
+	.btn-primary:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	.btn-secondary {
+		background-color: #718096;
+		color: white;
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background-color: #4a5568;
+	}
+
+	.btn-secondary:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	@media (max-width: 768px) {
+		.file-row {
+			grid-template-columns: 1fr;
+			gap: 0.75rem;
+		}
+
+		.file-name {
+			grid-column: 1 / -1;
+		}
+
+		.subscription-select,
+		.status {
+			justify-self: start;
+		}
+
+		.btn-remove {
+			justify-self: end;
+			grid-row: 1;
+			grid-column: 2;
+		}
+	}
+</style>

@@ -93,33 +93,142 @@
 	<meta name="description" content="View and download reports available" />
 </svelte:head>
 
-<div>
-	{#if isAdmin}
-		<button onclick={openAddFileModal}>Open add file modal</button>
-	{/if}
+<div class="reports-page">
+	<div class="header">
+		<h2>Reports</h2>
+		{#if isAdmin}
+			<button class="btn btn-primary" onclick={openAddFileModal}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<line x1="12" y1="5" x2="12" y2="19"></line>
+					<line x1="5" y1="12" x2="19" y2="12"></line>
+				</svg>
+				Add Files
+			</button>
+		{/if}
+	</div>
 
-	<h2>Reports</h2>
 	{#if reportFilesList.length === 0}
-		<p>No reports available</p>
+		<div class="empty-state">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="64"
+				height="64"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+				<polyline points="14 2 14 8 20 8"></polyline>
+			</svg>
+			<p>No reports available</p>
+		</div>
 	{:else}
-		<ul>
+		<div class="reports-table">
+			<div class="table-header">
+				<div class="col-filename">File Name</div>
+				<div class="col-date">Upload Date</div>
+				<div class="col-subscription">Required</div>
+				<div class="col-actions">Actions</div>
+			</div>
 			{#each reportFilesList as file}
-				<li>
-					<strong>{file.fileName}</strong>
-					<span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
-					{#if file.status === 'pending' || file.status === 'cancelled' || file.status === 'error'}
-						{#if canDownload(file)}
-							<button onclick={() => handleDownload(file)}>Download</button>
+				<div class="table-row">
+					<div class="col-filename">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+							<polyline points="14 2 14 8 20 8"></polyline>
+						</svg>
+						<span class="filename">{file.fileName}</span>
+					</div>
+					<div class="col-date">
+						{new Date(file.uploadedAt).toLocaleDateString()}
+					</div>
+					<div class="col-subscription">
+						<span class="badge badge-{file.requiredSubscription}">
+							{file.requiredSubscription === SubscriptionType.Free
+								? 'Free'
+								: file.requiredSubscription === SubscriptionType.Basic
+									? 'Basic'
+									: 'Premium'}
+						</span>
+					</div>
+					<div class="col-actions">
+						{#if file.status === 'pending' || file.status === 'cancelled' || file.status === 'error'}
+							{#if canDownload(file)}
+								<button class="btn btn-sm btn-primary" onclick={() => handleDownload(file)}>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+										<polyline points="7 10 12 15 17 10"></polyline>
+										<line x1="12" y1="15" x2="12" y2="3"></line>
+									</svg>
+									Download
+								</button>
+							{:else}
+								<span class="access-denied">Requires higher subscription</span>
+							{/if}
+						{:else if file.status === 'downloading'}
+							<button
+								class="btn btn-sm btn-secondary"
+								onclick={() => handleCancelDownload(file)}
+							>
+								Cancel
+							</button>
 						{/if}
-					{:else if file.status === 'downloading'}
-						<button onclick={() => handleCancelDownload(file)}>Cancel Download</button>
-					{/if}
-					{#if isAdmin}
-						<button onclick={() => handleDelete(file.id)}>Delete</button>
-					{/if}
-				</li>
+						{#if isAdmin}
+							<button class="btn btn-sm btn-danger" onclick={() => handleDelete(file.id)}>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<polyline points="3 6 5 6 21 6"></polyline>
+									<path
+										d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+									></path>
+								</svg>
+								Delete
+							</button>
+						{/if}
+					</div>
+				</div>
 			{/each}
-		</ul>
+		</div>
 	{/if}
 </div>
 
@@ -141,3 +250,259 @@
 		onCancel: cancelDelete
 	}}
 />
+
+<style>
+	.reports-page {
+		padding: 2rem;
+		max-width: 1400px;
+		margin: 0 auto;
+	}
+
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+	}
+
+	.header h2 {
+		margin: 0;
+		color: #2d3748;
+		font-size: 1.875rem;
+		font-weight: 700;
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.5rem;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn-primary {
+		background-color: #4299e1;
+		color: white;
+	}
+
+	.btn-primary:hover:not(:disabled) {
+		background-color: #3182ce;
+	}
+
+	.btn-secondary {
+		background-color: #718096;
+		color: white;
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background-color: #4a5568;
+	}
+
+	.btn-danger {
+		background-color: #e53e3e;
+		color: white;
+	}
+
+	.btn-danger:hover:not(:disabled) {
+		background-color: #c53030;
+	}
+
+	.btn:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	.btn-sm {
+		padding: 0.5rem 1rem;
+		font-size: 0.8125rem;
+	}
+
+	.btn svg {
+		flex-shrink: 0;
+	}
+
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 4rem 2rem;
+		background-color: #f7fafc;
+		border-radius: 8px;
+		border: 2px dashed #cbd5e0;
+	}
+
+	.empty-state svg {
+		color: #cbd5e0;
+		margin-bottom: 1rem;
+	}
+
+	.empty-state p {
+		color: #718096;
+		font-size: 1.125rem;
+		margin: 0;
+	}
+
+	.reports-table {
+		background-color: white;
+		border-radius: 8px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		overflow: hidden;
+	}
+
+	.table-header {
+		display: grid;
+		grid-template-columns: 2fr 1fr 1fr 2fr;
+		gap: 1rem;
+		padding: 1rem 1.5rem;
+		background-color: #f7fafc;
+		border-bottom: 1px solid #e2e8f0;
+		font-weight: 600;
+		font-size: 0.875rem;
+		color: #4a5568;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.table-row {
+		display: grid;
+		grid-template-columns: 2fr 1fr 1fr 2fr;
+		gap: 1rem;
+		padding: 1.25rem 1.5rem;
+		border-bottom: 1px solid #e2e8f0;
+		transition: background-color 0.2s;
+		align-items: center;
+	}
+
+	.table-row:hover {
+		background-color: #f7fafc;
+	}
+
+	.table-row:last-child {
+		border-bottom: none;
+	}
+
+	.col-filename {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		min-width: 0;
+	}
+
+	.col-filename svg {
+		flex-shrink: 0;
+		color: #4299e1;
+	}
+
+	.filename {
+		color: #2d3748;
+		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.col-date {
+		color: #718096;
+		font-size: 0.875rem;
+	}
+
+	.col-subscription {
+		display: flex;
+		align-items: center;
+	}
+
+	.badge {
+		display: inline-block;
+		padding: 0.25rem 0.75rem;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
+	}
+
+	.badge-0 {
+		background-color: #e6fffa;
+		color: #234e52;
+	}
+
+	.badge-1 {
+		background-color: #fef5e7;
+		color: #744210;
+	}
+
+	.badge-2 {
+		background-color: #ede9fe;
+		color: #5b21b6;
+	}
+
+	.col-actions {
+		display: flex;
+		gap: 0.5rem;
+		justify-content: flex-end;
+	}
+
+	.access-denied {
+		color: #e53e3e;
+		font-size: 0.8125rem;
+		font-style: italic;
+	}
+
+	@media (max-width: 1024px) {
+		.table-header,
+		.table-row {
+			grid-template-columns: 2fr 1fr 1.5fr;
+		}
+
+		.col-subscription {
+			display: none;
+		}
+
+		.table-header .col-subscription {
+			display: none;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.reports-page {
+			padding: 1rem;
+		}
+
+		.header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1rem;
+		}
+
+		.table-header {
+			display: none;
+		}
+
+		.table-row {
+			grid-template-columns: 1fr;
+			gap: 0.75rem;
+			padding: 1rem;
+		}
+
+		.col-date,
+		.col-subscription {
+			display: block;
+			font-size: 0.8125rem;
+		}
+
+		.col-actions {
+			flex-wrap: wrap;
+			justify-content: flex-start;
+		}
+	}
+</style>
