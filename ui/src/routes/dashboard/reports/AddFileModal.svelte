@@ -54,9 +54,9 @@
 	}
 
 	async function publishFiles() {
-		for (const file of files) {
-			if (file.status === 'pending' || file.status === 'error') {
-				await uploadFile(file);
+		for (const item of files) {
+			if (item.status === 'pending' || item.status === 'error') {
+				await uploadFile(item);
 			}
 		}
 	}
