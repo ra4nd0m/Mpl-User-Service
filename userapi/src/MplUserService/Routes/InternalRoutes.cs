@@ -6,7 +6,7 @@ namespace MplUserService.Routes
     {
         public static void MapInternalRoutes(this WebApplication app)
         {
-            app.MapDelete("/user/{userId}", async (string userId, IUserService service) =>
+            app.MapDelete("/user/{userId}", async (string userId, IUserService service, ILogger<Program> logger) =>
             {
                 try
                 {
@@ -15,7 +15,8 @@ namespace MplUserService.Routes
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    logger.LogError(ex, "Error deleting user {UserId}", userId);
+                    return Results.BadRequest();
                 }
             }).RequireAuthorization("internal");
         }
