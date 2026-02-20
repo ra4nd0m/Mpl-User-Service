@@ -2,6 +2,8 @@
 	import { uploadFile, type UploadItem } from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
 
+	let { refreshReports }: { refreshReports: () => void } = $props();
+
 	const subscriptionOptions = (Object.entries(SubscriptionType) as [string, number][]).filter(
 		([, v]) => typeof v === 'number'
 	);
@@ -62,6 +64,7 @@
 				await uploadFile(item);
 			}
 		}
+		refreshReports();
 	}
 </script>
 

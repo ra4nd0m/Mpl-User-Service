@@ -76,11 +76,15 @@
 		fileToDelete = null;
 	}
 
-	onMount(async () => {
+	async function refreshReportList() {
 		const files = await getFilesList();
 		if (files) {
 			reportList = files;
 		}
+	}
+
+	onMount(async () => {
+		await refreshReportList();
 	});
 </script>
 
@@ -119,7 +123,12 @@
 	{/if}
 </div>
 
-<ModalBase bind:showModal={showAddFileModal} title="Add Files Modal" Component={AddFileModal} />
+<ModalBase
+	bind:showModal={showAddFileModal}
+	title="Add Files Modal"
+	Component={AddFileModal}
+	componentProps={{ refreshReports: refreshReportList }}
+/>
 <ModalBase
 	bind:showModal={showDeleteConfirmation}
 	title="Confirm Deletion"
