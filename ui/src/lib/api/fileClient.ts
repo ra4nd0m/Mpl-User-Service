@@ -31,6 +31,7 @@ export async function uploadFile(item: UploadItem) {
 
     const formData = new FormData();
     formData.append('file', item.file);
+    formData.append('requiredSubscription', item.requiredSubscription.toString());
 
     try {
         const resp = await fetchWithAuth('reports/upload', {

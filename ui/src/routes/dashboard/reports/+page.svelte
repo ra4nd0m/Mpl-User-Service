@@ -47,30 +47,6 @@
 	}
 
 	onMount(async () => {
-		// TODO: Remove filler data once backend is ready
-		const fillerData: UserFileMetadata[] = [
-			{
-				id: '9f4b7a27-9b38-4d6a-a6e1-4f62c5a0f33c',
-				fileName: 'Monthly Report Jan 2026.pdf',
-				uploadedAt: '2026-02-20T02:12:00Z',
-                requiredSubscription: SubscriptionType.Premium
-			},
-			{
-				id: '8e3c8b16-8a27-5c5b-95d0-3e51b4a9e22b',
-				fileName: 'Quarterly Summary Q4 2025.pdf',
-				uploadedAt: '2026-02-15T14:30:00Z',
-                requiredSubscription: SubscriptionType.Premium
-			},
-			{
-				id: '7d2b7a05-7916-4b4a-84d0-2d40a3a8d11a',
-				fileName: 'Compliance Audit Report.pdf',
-				uploadedAt: '2026-02-10T09:45:00Z',
-                requiredSubscription: SubscriptionType.Premium
-			}
-		];
-
-		reportList = fillerData;
-
 		const files = await getFilesList();
 		if (files) {
 			reportList = files;
