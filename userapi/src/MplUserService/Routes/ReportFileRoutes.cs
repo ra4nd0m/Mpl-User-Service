@@ -93,6 +93,25 @@ namespace MplUserService.Routes
                 }
             })
             .RequireAuthorization("RequireAdmin");
+
+            app.MapDelete("/reports/{id:guid}", async (
+                Guid id,
+                IReportFileService service,
+                CancellationToken ct
+            ) =>
+            {
+                try
+                {
+                    await service.DeleteAsync(id, ct);
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Error deleting file. See: ${ex}");
+                    return Results.BadRequest();
+                }
+            })
+            .RequireAuthorization("RequireAdmin");
         }
     }
 }

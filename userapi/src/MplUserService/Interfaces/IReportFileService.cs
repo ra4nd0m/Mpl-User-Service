@@ -12,11 +12,13 @@ namespace MplUserService.Interfaces
             CancellationToken ct);
 
         Task<List<ReportFilesListDto>> ListAsync(CancellationToken ct);
-        
+
         Task<(Stream Stream, string FileName)> DownloadAsync(
             Guid id,
             ClaimsPrincipal user,
             CancellationToken ct
         );
+
+        Task DeleteAsync(Guid id, CancellationToken ct);
     }
 }

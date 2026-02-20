@@ -78,5 +78,18 @@ namespace MplUserService.Services
             var (stream, _) = await store.GetAsync(file.StoredName, ct);
             return (stream, file.FileName);
         }
+
+        public async Task DeleteAsync(Guid id, CancellationToken ct)
+        {
+            var file = await context.ReportFiles.FindAsync([id], ct);
+
+            if (file == null)
+                return;
+
+            await store.DeleteAsync(file.StoredName, ct);
+
+            context.ReportFiles.Remove(file);
+            await context.SaveChangesAsync(ct);
+        }
     }
 }
