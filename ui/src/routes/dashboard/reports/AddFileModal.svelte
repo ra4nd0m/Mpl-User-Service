@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { uploadFile, type UploadItem } from '$lib/api/fileClient';
 	import type { SubscriptionType } from '$lib/api/adminClient';
-	import Page from '../+page.svelte';
 
 	const files = $state<UploadItem[]>([]);
 
