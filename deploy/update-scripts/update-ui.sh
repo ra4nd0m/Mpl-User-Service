@@ -19,6 +19,14 @@ echo "Using archive: $ARCHIVE"
 
 WORKDIR=$(mktemp -d)
 unzip -q "$ARCHIVE" -d "$WORKDIR"
+EXTRACT_BASE="$WORKDIR"
+
+# Step into single top-level folder if present (foldered archive)
+COUNT=$(find "$WORKDIR" -mindepth 1 -maxdepth 1 | wc -l)
+INNER=$(find "$WORKDIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+if [ "$COUNT" -eq 1 ] && [ -d "$INNER" ]; then
+    WORKDIR="$INNER"
+fi
 
 echo "Ensuring target directory exists..."
 mkdir -p "$TARGET_DIR"
@@ -39,6 +47,6 @@ echo "nginx status:"
 systemctl status "$SERVICE_NAME" --no-pager
 
 echo "Cleaning up..."
-rm -rf "$WORKDIR"
+rm -rf "$EXTRACT_BASE"
 
 echo "UI deployment complete."
