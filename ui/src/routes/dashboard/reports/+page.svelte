@@ -8,7 +8,10 @@
 		type UserFile,
 		type DownloadStatus,
 		type UserFileMetadata,
-		downloadFile
+		downloadFile,
+
+		deleteFile
+
 	} from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
 
@@ -79,6 +82,9 @@
 					{/if}
 					{:else if file.status === 'downloading'}
 						<button onclick={() => handleCancelDownload(file)}>Cancel Download</button>
+					{/if}
+                    {#if isAdmin}
+						<button onclick={() => deleteFile(file.id)}>Delete</button>
 					{/if}
 				</li>
 			{/each}

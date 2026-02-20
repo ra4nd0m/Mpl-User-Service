@@ -100,3 +100,16 @@ export async function downloadFile(file: UserFile) {
         file.abortController = null;
     }
 }
+
+export async function deleteFile(fileId: string) {
+    try {
+        const resp = await fetchWithAuth(`reports/${fileId}`, {
+            method: 'DELETE'
+        });
+        if (!resp.ok) {
+            throw new Error(resp.statusText);
+        }
+    } catch (err) {
+        console.error(`Error while deleting the file ${err}`)
+    }
+}
