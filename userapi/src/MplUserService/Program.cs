@@ -28,6 +28,9 @@ var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.EnableDynamicJson();
 var dataSource = dataSourceBuilder.Build();
 
+var storageRoot = configuration["Storage:RootPath"] ?? throw new InvalidOperationException("Storage:RootPath is missing");
+builder.Services.AddSingleton<IObjectStore>(_ => new DiskObjectStoreService(storageRoot));
+
 var urls = builder.Configuration["Hosting:Urls"];
 if (!string.IsNullOrEmpty(urls))
 {
