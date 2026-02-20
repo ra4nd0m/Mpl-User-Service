@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using MplUserService.Interfaces;
 using MplUserService.Models.Enums;
 
@@ -92,7 +93,8 @@ namespace MplUserService.Routes
                     return Results.BadRequest();
                 }
             })
-            .RequireAuthorization("RequireAdmin");
+            .RequireAuthorization("RequireAdmin")
+            .WithMetadata(new RequestSizeLimitAttribute(20 * 1024 * 1024)); 
 
             app.MapDelete("/reports/{id:guid}", async (
                 Guid id,
