@@ -2,6 +2,7 @@ import type { SubscriptionType } from '$lib/api/adminClient';
 import { fetchWithAuth } from './authClient';
 
 export type UploadStatus = 'pending' | 'uploading' | 'complete' | 'error' | 'cancelled';
+export type DownloadStatus = 'pending' | 'downloading' | 'complete' | 'error' | 'cancelled';
 
 export interface UploadItem {
     id: string;
@@ -18,7 +19,8 @@ export interface UserFileMetadata {
 }
 
 export interface UserFile extends UserFileMetadata {
-    blob: Blob;
+    status: DownloadStatus;
+    abortController: AbortController | null;
 }
 
 export async function uploadFile(item: UploadItem) {
@@ -64,9 +66,13 @@ export async function getFilesList(): Promise<UserFileMetadata[] | null> {
     }
 }
 
-export async function downloadFile(id: string, filename: string) {
+export async function downloadFile(file: UserFile) {
+    const controller = new AbortController();
+    file.abortController = controller;
+    file.status = 'downloading';
+
     try {
-        const resp = await fetchWithAuth(`reports/${id}`);
+        const resp = await fetchWithAuth(`reports/${file.id}`);
 
         if (!resp.ok) {
             throw new Error(resp.statusText)
@@ -77,11 +83,18 @@ export async function downloadFile(id: string, filename: string) {
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename;
+        a.download = file.fileName;
         a.click();
 
         URL.revokeObjectURL(url);
     } catch (err) {
-        console.error(`File download error: ${err}`)
+        if (controller.signal.aborted) {
+            file.status = 'cancelled';
+        } else {
+            file.status = 'error';
+            console.error(`File download error: ${err}`)
+        }
+    } finally {
+        file.abortController = null;
     }
 }
