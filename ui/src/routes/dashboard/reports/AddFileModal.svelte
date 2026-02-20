@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { uploadFile, type UploadItem } from '$lib/api/fileClient';
-	import type { SubscriptionType } from '$lib/api/adminClient';
+	import { SubscriptionType } from '$lib/api/adminClient';
+
+	const subscriptionOptions = (Object.entries(SubscriptionType) as [string, number][]).filter(
+		([, v]) => typeof v === 'number'
+	);
 
 	const files = $state<UploadItem[]>([]);
 
@@ -17,7 +21,7 @@
 			files.push({
 				id: crypto.randomUUID(),
 				file,
-				requiredSubscription: 2 as SubscriptionType,
+				requiredSubscription: SubscriptionType.Premium,
 				status: 'pending',
 				abortController: null
 			});
@@ -72,7 +76,9 @@
 		<strong>{item.file.name}</strong>
 
 		<select bind:value={item.requiredSubscription} disabled={item.status === 'uploading'}>
-			<option value="2">Premium</option>
+			{#each subscriptionOptions as [label, value]}
+				<option {value}>{label}</option>
+			{/each}
 		</select>
 
 		<span>
