@@ -13,6 +13,14 @@
 	import { SubscriptionType } from '$lib/api/adminClient';
 
 	const isAdmin = $derived($authStore.roles?.includes('Admin'));
+	const userSubscriptionLevel = $derived(
+		SubscriptionType[$authStore.user?.subscriptionType as keyof typeof SubscriptionType] ?? SubscriptionType.Free
+	);
+
+	function canDownload(file: UserFile): boolean {
+		return isAdmin || userSubscriptionLevel >= file.requiredSubscription;
+	}
+
 	let showAddFileModal = $state(false);
 
 	let reportList = $state<UserFileMetadata[]>([]);
@@ -90,7 +98,9 @@
 					<strong>{file.fileName}</strong>
 					<span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
 					{#if file.status === 'pending' || file.status === 'cancelled' || file.status === 'error'}
+					{#if canDownload(file)}
 						<button onclick={() => handleDownload(file)}>Download</button>
+					{/if}
 					{:else if file.status === 'downloading'}
 						<button onclick={() => handleCancelDownload(file)}>Cancel Download</button>
 					{/if}
