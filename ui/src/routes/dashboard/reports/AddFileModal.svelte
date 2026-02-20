@@ -110,5 +110,12 @@
 		</button>
 	</div>
 
-	<button onclick={publishFiles} disabled={!canPublish || isUploading}>Upload</button>
+	{#if !isUploading}
+		<button onclick={publishFiles} disabled={!canPublish}>Upload</button>
+	{:else}
+		<button
+			onclick={() => files.forEach((f) => f.status === 'uploading' && f.abortController?.abort())}
+			>Cancel Upload</button
+		>
+	{/if}
 {/each}
