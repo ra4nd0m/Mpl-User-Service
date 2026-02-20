@@ -109,6 +109,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IReportFileService, ReportFileService>();
 builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
 
 builder.Services.AddCors(options =>
@@ -136,6 +137,7 @@ app.MapUserDataRoutes();
 app.MapMaterialRoutes();
 app.MapGeneratorRoutes();
 app.MapInternalRoutes();
+app.MapReportFileRoutes();
 
 
 using (var scope = app.Services.CreateScope())
