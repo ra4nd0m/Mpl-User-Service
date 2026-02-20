@@ -25,7 +25,8 @@ namespace MplUserService.Routes
                     return Results.BadRequest();
                 }
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireRateLimiting("DownloadPolicy");
 
             app.MapGet("/reports/{id:guid}", async (
                 Guid id,

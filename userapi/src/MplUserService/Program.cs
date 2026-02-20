@@ -11,6 +11,8 @@ using MplUserService.Interfaces;
 using MplUserService.Models.Enums;
 using MplUserService.Routes;
 using MplUserService.Services;
+using System.Threading.RateLimiting;
+using Microsoft.Extensions.Primitives;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
@@ -125,6 +127,39 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("UploadPolicy", httpContext =>
+        RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: httpContext.User?.Identity?.Name ??
+                httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 30,
+                TokensPerPeriod = 30,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                AutoReplenishment = true,
+                QueueLimit = 0
+            }
+        )
+    );
+    options.AddPolicy("DownloadPolicy", context =>
+    {
+        var key = context.User?.Identity?.Name ??
+            context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: key,
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 30,
+                TokensPerPeriod = 30,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                AutoReplenishment = true,
+                QueueLimit = 0
+            });
+    });
+});
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -132,6 +167,8 @@ app.UseForwardedHeaders();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 app.MapUserDataRoutes();
 app.MapMaterialRoutes();
