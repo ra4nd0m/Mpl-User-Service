@@ -46,6 +46,11 @@
 		closeMobileMenu();
 	}
 
+	function goToReports() {
+		goto('/dashboard/reports');
+		closeMobileMenu();
+	}
+
 	function goToAdmin() {
 		goto('/dashboard/admin');
 		closeMobileMenu();
@@ -147,7 +152,7 @@
 						></path>
 					</svg>
 				</div>
-				
+
 				<!-- Desktop Navigation -->
 				<div class="navbar-nav-desktop">
 					<button class="nav-button" onclick={goHome}>
@@ -183,6 +188,27 @@
 							<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
 						</svg>
 						{m.nav_all_materials()}
+					</button>
+
+					<button class="nav-button" onclick={goToReports}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+							<polyline points="14 2 14 8 20 8"></polyline>
+							<line x1="16" y1="13" x2="8" y2="13"></line>
+							<line x1="16" y1="17" x2="8" y2="17"></line>
+							<polyline points="10 9 9 9 8 9"></polyline>
+						</svg>
+						{m.nav_reports()}
 					</button>
 
 					{#if isAdmin}
@@ -243,7 +269,7 @@
 						</svg>
 					</button>
 				</div>
-				
+
 				<!-- Mobile Hamburger Button -->
 				<button class="mobile-menu-toggle" onclick={toggleMobileMenu} aria-label="Toggle menu">
 					<svg
@@ -254,12 +280,42 @@
 						xmlns="http://www.w3.org/2000/svg"
 					>
 						{#if mobileMenuOpen}
-							<path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path
+								d="M18 6L6 18"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path
+								d="M6 6l12 12"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
 						{:else}
-							<path d="M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path
+								d="M3 12h18"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path
+								d="M3 6h18"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path
+								d="M3 18h18"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
 						{/if}
 					</svg>
 				</button>
@@ -285,12 +341,24 @@
 								fill="none"
 								xmlns="http://www.w3.org/2000/svg"
 							>
-								<path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-								<path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								<path
+									d="M18 6L6 18"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+								<path
+									d="M6 6l12 12"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
 							</svg>
 						</button>
 					</div>
-					
+
 					<div class="mobile-menu-content">
 						<button class="mobile-nav-button" onclick={goHome}>
 							<svg
@@ -327,6 +395,27 @@
 							{m.nav_all_materials()}
 						</button>
 
+						<button class="mobile-nav-button" onclick={goToReports}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+								<polyline points="14 2 14 8 20 8"></polyline>
+								<line x1="16" y1="13" x2="8" y2="13"></line>
+								<line x1="16" y1="17" x2="8" y2="17"></line>
+								<polyline points="10 9 9 9 8 9"></polyline>
+							</svg>
+							{m.nav_reports()}
+						</button>
+
 						{#if isAdmin}
 							<button class="mobile-nav-button admin-button" onclick={goToAdmin}>
 								<svg
@@ -358,7 +447,7 @@
 									</div>
 								{/if}
 							{/if}
-							
+
 							<div class="mobile-language-toggle">
 								<label for="mobile-language">Language:</label>
 								<select id="mobile-language" value={$locale} onchange={handleLanguageChange}>
@@ -367,7 +456,7 @@
 									{/each}
 								</select>
 							</div>
-							
+
 							<button class="mobile-logout-button" onclick={handleLogout}>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -790,7 +879,7 @@
 		.navbar {
 			padding: 0 16px;
 		}
-		
+
 		.navbar-nav-desktop {
 			display: none;
 		}
@@ -811,7 +900,7 @@
 			height: 20px;
 		}
 	}
-	
+
 	@media (max-width: 768px) {
 		.navbar {
 			padding: 0 16px;
