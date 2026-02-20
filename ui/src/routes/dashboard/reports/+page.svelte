@@ -18,8 +18,8 @@
 	let reportFilesList = $derived<UserFile[]>(
 		reportList.map((item) => ({
 			...item,
-			status: 'pending' as DownloadStatus,
-			abortController: null as AbortController | null
+			status: 'pending',
+			abortController: null
 		}))
 	);
 
