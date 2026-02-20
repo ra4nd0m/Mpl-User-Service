@@ -66,6 +66,11 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Reports</title>
+	<meta name="description" content="View and download reports available" />
+</svelte:head>
+
 <div>
 	{#if isAdmin}
 		<button onclick={openAddFileModal}>Open add file modal</button>
