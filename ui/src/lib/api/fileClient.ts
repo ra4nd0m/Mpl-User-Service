@@ -1,7 +1,7 @@
 import type { SubscriptionType } from '$lib/api/adminClient';
 import { fetchWithAuth } from './authClient';
 
-export type UploadStatus = 'pending' | 'uploading' | 'complete' | 'error' | 'canceled';
+export type UploadStatus = 'pending' | 'uploading' | 'complete' | 'error' | 'cancelled';
 
 export interface UploadItem {
     id: string;
@@ -30,7 +30,7 @@ export async function uploadFile(item: UploadItem) {
         }
     } catch (err) {
         if (controller.signal.aborted) {
-            item.status = 'canceled';
+            item.status = 'cancelled';
         } else {
             item.status = 'error';
             console.error('File upload error:', err);
