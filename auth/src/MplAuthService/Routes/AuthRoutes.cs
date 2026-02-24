@@ -24,7 +24,7 @@ namespace MplAuthService.Routes
                     var user = await userManager.FindByEmailAsync(loginDto.Email);
                     if (user == null || !await userManager.CheckPasswordAsync(user, loginDto.Password))
                     {
-                        logger.LogWarning("Failed to login user with email {Email}", loginDto.Email);
+                        logger.LogWarning("Failed to login user with email {Email}", EmailObfuscator.ObfuscateEmail(loginDto.Email));
                         return Results.BadRequest("Invalid email or password");
                     }
 
