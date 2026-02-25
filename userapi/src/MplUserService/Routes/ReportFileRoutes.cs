@@ -126,6 +126,11 @@ namespace MplUserService.Routes
                     var usage = await service.GetReportStorageUsageAsync(ct);
                     return Results.Ok(usage);
                 }
+                catch(InvalidOperationException ex)
+                {
+                    logger.LogWarning($"Storage quota not configured. See: ${ex}");
+                    return Results.BadRequest("File is empty or storage quota exceeded");
+                }
                 catch (Exception ex)
                 {
                     logger.LogError($"Error getting storage usage. See: ${ex}");
