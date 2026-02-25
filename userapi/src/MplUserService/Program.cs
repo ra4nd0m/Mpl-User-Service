@@ -13,6 +13,7 @@ using MplUserService.Routes;
 using MplUserService.Services;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Primitives;
+using MplUserService.Options;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
@@ -40,6 +41,10 @@ if (!string.IsNullOrEmpty(urls))
 {
     builder.WebHost.UseUrls(urls);
 }
+
+builder.Services.Configure<StorageQuotaOptions>(
+    configuration.GetSection(StorageQuotaOptions.SectionName)
+);
 
 builder.Services.AddHttpClient("DbClient", client =>
 {

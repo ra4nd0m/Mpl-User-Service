@@ -24,6 +24,11 @@ export interface UserFile extends UserFileMetadata {
     abortController: AbortController | null;
 }
 
+export interface StorageUsage {
+    usedBytes: number;
+    maxBytes: number;
+}
+
 export async function uploadFile(item: UploadItem) {
     const controller = new AbortController();
     item.abortController = controller;
@@ -112,5 +117,19 @@ export async function deleteFile(fileId: string) {
         }
     } catch (err) {
         console.error(`Error while deleting the file ${err}`)
+    }
+}
+
+export async function getStorageUsage(): Promise<StorageUsage | null> {
+    try {
+        const resp = await fetchWithAuth(`reports/storage-usage`);
+        if (!resp.ok) {
+            throw new Error(resp.statusText);
+        }
+
+        return await resp.json()
+    } catch (err) {
+        console.error(`Error while getting the storage usage ${err}`)
+        return null;
     }
 }

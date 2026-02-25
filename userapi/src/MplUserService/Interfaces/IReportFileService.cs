@@ -20,5 +20,7 @@ namespace MplUserService.Interfaces
         );
 
         Task DeleteAsync(Guid id, CancellationToken ct);
+
+        Task<StorageUsageDto> GetReportStorageUsageAsync(CancellationToken ct);
     }
 }
