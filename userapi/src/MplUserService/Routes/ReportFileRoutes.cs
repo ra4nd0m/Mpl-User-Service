@@ -95,7 +95,7 @@ namespace MplUserService.Routes
                 }
             })
             .RequireAuthorization("RequireAdmin")
-            .WithMetadata(new RequestSizeLimitAttribute(20 * 1024 * 1024)); 
+            .WithMetadata(new RequestSizeLimitAttribute(20 * 1024 * 1024));
 
             app.MapDelete("/reports/{id:guid}", async (
                 Guid id,
@@ -111,6 +111,24 @@ namespace MplUserService.Routes
                 catch (Exception ex)
                 {
                     logger.LogError($"Error deleting file. See: ${ex}");
+                    return Results.BadRequest();
+                }
+            })
+            .RequireAuthorization("RequireAdmin");
+
+            app.MapGet("/reports/storage-usage", async (
+                IReportFileService service,
+                CancellationToken ct
+            ) =>
+            {
+                try
+                {
+                    var usage = await service.GetReportStorageUsageAsync(ct);
+                    return Results.Ok(usage);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Error getting storage usage. See: ${ex}");
                     return Results.BadRequest();
                 }
             })
