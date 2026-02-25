@@ -28,6 +28,7 @@ namespace MplUserService.Services
         {
             var currentlyUsedBytes = await context.ReportFiles.SumAsync(f => f.SizeBytes, ct);
             var incomingFileSize = file.Length;
+
             if (incomingFileSize <= 0)
                 throw new InvalidOperationException("File is empty");
             if (currentlyUsedBytes + incomingFileSize > _maxBytes)
@@ -105,6 +106,12 @@ namespace MplUserService.Services
 
             context.ReportFiles.Remove(file);
             await context.SaveChangesAsync(ct);
+        }
+
+        public async Task<StorageUsageDto> GetReportStorageUsageAsync(CancellationToken ct)
+        {
+            var usedBytes = await context.ReportFiles.SumAsync(f => f.SizeBytes, ct);
+            return new StorageUsageDto(usedBytes, _maxBytes);
         }
     }
 }
