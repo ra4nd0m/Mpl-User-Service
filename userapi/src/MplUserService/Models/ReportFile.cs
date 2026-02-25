@@ -9,5 +9,6 @@ namespace MplUserService.Models
         public string StoredName { get; set; } = null!;
         public SubscriptionType RequiredSubscription { get; set; }
         public DateTime UploadedAt { get; set; }
+        public long SizeBytes { get; set; }
     }
 }
