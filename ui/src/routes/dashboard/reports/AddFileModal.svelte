@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { uploadFile, type UploadItem } from '$lib/api/fileClient';
+	import { onMount } from 'svelte';
+	import {
+		uploadFile,
+		getStorageUsage,
+		type UploadItem,
+		type StorageUsage
+	} from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
 
 	let { refreshReports }: { refreshReports: () => void } = $props();
@@ -9,9 +15,43 @@
 	);
 
 	const files = $state<UploadItem[]>([]);
+	let storageUsage = $state<StorageUsage | null>(null);
 
-	const canPublish = $derived(files.some((f) => f.status === 'pending' || f.status === 'error'));
+	const pendingBytes = $derived(
+		files
+			.filter((f) => f.status === 'pending' || f.status === 'error')
+			.reduce((sum, f) => sum + f.file.size, 0)
+	);
+
+	const storageExceeded = $derived(
+		storageUsage !== null && storageUsage.usedBytes + pendingBytes > storageUsage.maxBytes
+	);
+
+	const usagePercent = $derived(
+		storageUsage ? Math.min((storageUsage.usedBytes / storageUsage.maxBytes) * 100, 100) : 0
+	);
+
+	const projectedPercent = $derived(
+		storageUsage
+			? Math.min(((storageUsage.usedBytes + pendingBytes) / storageUsage.maxBytes) * 100, 100)
+			: 0
+	);
+
+	function formatBytes(bytes: number): string {
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+		if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+		return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+	}
+
+	const canPublish = $derived(
+		!storageExceeded && files.some((f) => f.status === 'pending' || f.status === 'error')
+	);
 	const isUploading = $derived(files.some((f) => f.status === 'uploading'));
+
+	onMount(async () => {
+		storageUsage = await getStorageUsage();
+	});
 
 	function addFiles(fileList: FileList) {
 		for (const file of fileList) {
@@ -64,6 +104,7 @@
 				await uploadFile(item);
 			}
 		}
+		storageUsage = await getStorageUsage();
 		refreshReports();
 	}
 </script>
@@ -103,6 +144,33 @@
 			class="file-input-hidden"
 		/>
 	</div>
+
+	{#if storageUsage !== null}
+		<div class="storage-bar-section" class:exceeded={storageExceeded}>
+			<div class="storage-bar-header">
+				<span class="storage-label">Storage</span>
+				<span class="storage-values">
+					{formatBytes(storageUsage.usedBytes)}
+					{#if pendingBytes > 0}
+						<span class="pending-delta"> + {formatBytes(pendingBytes)} pending</span>
+					{/if}
+					/ {formatBytes(storageUsage.maxBytes)}
+				</span>
+			</div>
+			<div class="storage-track">
+				<div class="storage-fill" style="width: {usagePercent}%"></div>
+				{#if pendingBytes > 0 && !storageExceeded}
+					<div
+						class="storage-fill pending"
+						style="width: {projectedPercent - usagePercent}%; left: {usagePercent}%"
+					></div>
+				{/if}
+			</div>
+			{#if storageExceeded}
+				<p class="storage-exceeded-msg">Storage limit exceeded — remove some files to upload.</p>
+			{/if}
+		</div>
+	{/if}
 
 	{#if files.length > 0}
 		<div class="files-section">
@@ -196,6 +264,77 @@
 <style>
 	.modal-content {
 		padding: 1rem;
+	}
+
+	.storage-bar-section {
+		margin-bottom: 1.25rem;
+		padding: 0.75rem 1rem;
+		background-color: #f7fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+	}
+
+	.storage-bar-section.exceeded {
+		background-color: #fff5f5;
+		border-color: #fc8181;
+	}
+
+	.storage-bar-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: 0.5rem;
+	}
+
+	.storage-label {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #4a5568;
+	}
+
+	.storage-values {
+		font-size: 0.8rem;
+		color: #718096;
+	}
+
+	.pending-delta {
+		color: #d69e2e;
+		font-weight: 500;
+	}
+
+	.storage-track {
+		position: relative;
+		height: 8px;
+		background-color: #e2e8f0;
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	.storage-fill {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		background-color: #4299e1;
+		border-radius: 4px;
+		transition: width 0.3s ease;
+	}
+
+	.storage-bar-section.exceeded .storage-fill {
+		background-color: #e53e3e;
+	}
+
+	.storage-fill.pending {
+		position: absolute;
+		background-color: #ecc94b;
+		opacity: 0.8;
+	}
+
+	.storage-exceeded-msg {
+		margin: 0.5rem 0 0;
+		font-size: 0.8rem;
+		color: #e53e3e;
+		font-weight: 500;
 	}
 
 	.dropzone {
