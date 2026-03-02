@@ -7,7 +7,7 @@ export type DownloadStatus = 'pending' | 'downloading' | 'complete' | 'error' | 
 export interface UploadItem {
     id: string;
     file: File;
-    fileGroup: string;
+    group: string;
     requiredSubscription: SubscriptionType;
     status: UploadStatus;
     abortController: AbortController | null;
@@ -16,6 +16,7 @@ export interface UploadItem {
 export interface UserFileMetadata {
     id: string;
     fileName: string;
+    group: string;
     requiredSubscription: SubscriptionType;
     uploadedAt: string;
 }
@@ -37,6 +38,7 @@ export async function uploadFile(item: UploadItem) {
 
     const formData = new FormData();
     formData.append('file', item.file);
+    formData.append('group', item.group);
     formData.append('requiredSubscription', item.requiredSubscription.toString());
 
     try {

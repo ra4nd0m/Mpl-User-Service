@@ -29,6 +29,9 @@
 	let fileToDelete = $state<string | null>(null);
 
 	let reportList = $state<UserFileMetadata[]>([]);
+	const existingGroups = $derived<string[]>(
+		[...new Set(reportList.map((f) => f.group).filter(Boolean))]
+	);
 	let reportFilesList = $derived<UserFile[]>(
 		reportList.map((item) => ({
 			...item,
@@ -139,6 +142,7 @@
 		<div class="reports-table">
 			<div class="table-header">
 				<div class="col-filename">File Name</div>
+				<div class="col-group">Group</div>
 				<div class="col-date">Upload Date</div>
 				<div class="col-subscription">Required</div>
 				<div class="col-actions">Actions</div>
@@ -159,6 +163,9 @@
 							<polyline points="14 2 14 8 20 8"></polyline>
 						</svg>
 						<span class="filename">{file.fileName}</span>
+					</div>
+					<div class="col-group">
+						<span class="group-tag">{file.group}</span>
 					</div>
 					<div class="col-date">
 						{new Date(file.uploadedAt).toLocaleDateString()}
@@ -236,7 +243,7 @@
 	bind:showModal={showAddFileModal}
 	title="Add Files Modal"
 	Component={AddFileModal}
-	componentProps={{ refreshReports: refreshReportList }}
+	componentProps={{ refreshReports: refreshReportList, existingGroups }}
 />
 <ModalBase
 	bind:showModal={showDeleteConfirmation}
@@ -361,7 +368,7 @@
 
 	.table-header {
 		display: grid;
-		grid-template-columns: 2fr 1fr 1fr 2fr;
+		grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
 		gap: 1rem;
 		padding: 1rem 1.5rem;
 		background-color: #f7fafc;
@@ -375,7 +382,7 @@
 
 	.table-row {
 		display: grid;
-		grid-template-columns: 2fr 1fr 1fr 2fr;
+		grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
 		gap: 1rem;
 		padding: 1.25rem 1.5rem;
 		border-bottom: 1px solid #e2e8f0;
@@ -409,6 +416,25 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.col-group {
+		display: flex;
+		align-items: center;
+	}
+
+	.group-tag {
+		display: inline-block;
+		padding: 0.25rem 0.625rem;
+		background-color: #edf2f7;
+		color: #4a5568;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 140px;
 	}
 
 	.col-date {
@@ -461,7 +487,7 @@
 	@media (max-width: 1024px) {
 		.table-header,
 		.table-row {
-			grid-template-columns: 2fr 1fr 1.5fr;
+			grid-template-columns: 2fr 1fr 1fr 1.5fr;
 		}
 
 		.col-subscription {
@@ -494,6 +520,7 @@
 			padding: 1rem;
 		}
 
+		.col-group,
 		.col-date,
 		.col-subscription {
 			display: block;

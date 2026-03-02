@@ -8,7 +8,7 @@
 	} from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
 
-	let { refreshReports }: { refreshReports: () => void } = $props();
+	let { refreshReports, existingGroups }: { refreshReports: () => void; existingGroups: string[] } = $props();
 
 	const subscriptionOptions = (Object.entries(SubscriptionType) as [string, number][]).filter(
 		([, v]) => typeof v === 'number'
@@ -45,7 +45,11 @@
 	}
 
 	const canPublish = $derived(
-		!storageExceeded && files.some((f) => f.status === 'pending' || f.status === 'error')
+		!storageExceeded &&
+		files.some((f) => f.status === 'pending' || f.status === 'error') &&
+		files
+			.filter((f) => f.status === 'pending' || f.status === 'error')
+			.every((f) => f.group.trim() !== '')
 	);
 	const isUploading = $derived(files.some((f) => f.status === 'uploading'));
 
@@ -63,6 +67,7 @@
 			files.push({
 				id: crypto.randomUUID(),
 				file,
+				group: '',
 				requiredSubscription: SubscriptionType.Premium,
 				status: 'pending',
 				abortController: null
@@ -194,6 +199,15 @@
 							<strong>{item.file.name}</strong>
 						</div>
 
+						<input
+							list="groups-datalist"
+							bind:value={item.group}
+							disabled={item.status === 'uploading' || item.status === 'complete'}
+							placeholder="Group (required)"
+							class="group-input"
+							class:group-missing={item.group.trim() === '' && item.status !== 'complete'}
+						/>
+
 						<select
 							bind:value={item.requiredSubscription}
 							disabled={item.status === 'uploading'}
@@ -260,6 +274,12 @@
 		</div>
 	{/if}
 </div>
+
+<datalist id="groups-datalist">
+	{#each existingGroups as group}
+		<option value={group}></option>
+	{/each}
+</datalist>
 
 <style>
 	.modal-content {
@@ -419,7 +439,7 @@
 
 	.file-row {
 		display: grid;
-		grid-template-columns: 1fr auto auto auto;
+		grid-template-columns: 1fr auto auto auto auto;
 		gap: 1rem;
 		align-items: center;
 		padding: 1rem;
@@ -457,6 +477,42 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.group-input {
+		padding: 0.5rem 0.75rem;
+		border: 1px solid #cbd5e0;
+		border-radius: 4px;
+		background-color: white;
+		color: #2d3748;
+		font-size: 0.875rem;
+		width: 160px;
+		transition: border-color 0.2s;
+	}
+
+	.group-input:hover:not(:disabled) {
+		border-color: #4299e1;
+	}
+
+	.group-input:focus {
+		outline: none;
+		border-color: #4299e1;
+		box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+	}
+
+	.group-input:disabled {
+		background-color: #f7fafc;
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+
+	.group-input.group-missing {
+		border-color: #fc8181;
+	}
+
+	.group-input.group-missing:focus {
+		border-color: #e53e3e;
+		box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
 	}
 
 	.subscription-select {
@@ -593,7 +649,7 @@
 
 	@media (max-width: 768px) {
 		.file-row {
-			grid-template-columns: 1fr;
+			grid-template-columns: 1fr auto;
 			gap: 0.75rem;
 		}
 
@@ -601,9 +657,15 @@
 			grid-column: 1 / -1;
 		}
 
+		.group-input {
+			width: 100%;
+		}
+
+		.group-input,
 		.subscription-select,
 		.status {
 			justify-self: start;
+			grid-column: 1;
 		}
 
 		.btn-remove {
