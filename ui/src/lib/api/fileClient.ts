@@ -7,6 +7,7 @@ export type DownloadStatus = 'pending' | 'downloading' | 'complete' | 'error' | 
 export interface UploadItem {
     id: string;
     file: File;
+    fileGroup: string;
     requiredSubscription: SubscriptionType;
     status: UploadStatus;
     abortController: AbortController | null;
