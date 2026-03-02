@@ -33,8 +33,14 @@
 	);
 	const groupOptions = $derived(existingGroups.map((g) => ({ value: g, label: g })));
 	let selectedGroup = $state<string>('');
+	let sortDir = $state<'asc' | 'desc'>('desc');
 	const reportFilesList = $derived(
-		fileMap.filter((f) => selectedGroup === '' || f.group === selectedGroup)
+		fileMap
+			.filter((f) => selectedGroup === '' || f.group === selectedGroup)
+			.toSorted((a, b) => {
+				const diff = new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime();
+				return sortDir === 'desc' ? -diff : diff;
+			})
 	);
 
 	function openAddFileModal() {
@@ -162,7 +168,12 @@
 			<div class="table-header">
 				<div class="col-filename">File Name</div>
 				<div class="col-group">Group</div>
-				<div class="col-date">Upload Date</div>
+				<div class="col-date">
+					<button class="sort-btn" onclick={() => (sortDir = sortDir === 'desc' ? 'asc' : 'desc')}>
+						Upload Date
+						<span class="sort-arrow">{sortDir === 'desc' ? '↓' : '↑'}</span>
+					</button>
+				</div>
 				<div class="col-subscription">Required</div>
 				<div class="col-actions">Actions</div>
 			</div>
@@ -460,6 +471,30 @@
 	.col-date {
 		color: #718096;
 		font-size: 0.875rem;
+	}
+
+	.sort-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		background: none;
+		border: none;
+		padding: 0;
+		font: inherit;
+		font-weight: 600;
+		color: #4a5568;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		transition: color 0.15s;
+	}
+
+	.sort-btn:hover {
+		color: #2d3748;
+	}
+
+	.sort-arrow {
+		font-size: 0.75rem;
 	}
 
 	.col-subscription {
