@@ -9,6 +9,7 @@ namespace MplUserService.Interfaces
     {
         Task<Guid> UploadAsync(IFormFile file,
             SubscriptionType requiredSubscription,
+            string group,
             CancellationToken ct);
 
         Task<List<ReportFilesListDto>> ListAsync(CancellationToken ct);

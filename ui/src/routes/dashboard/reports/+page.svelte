@@ -1,14 +1,13 @@
 <script lang="ts">
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import ConfirmationDialog from '$components/ConfirmationDialog/ConfirmationDialog.svelte';
+	import GroupSelector from '$components/GroupSelector/GroupSelector.svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import { onMount } from 'svelte';
 	import AddFileModal from './AddFileModal.svelte';
 	import {
 		getFilesList,
 		type UserFile,
-		type DownloadStatus,
-		type UserFileMetadata,
 		downloadFile,
 		deleteFile
 	} from '$lib/api/fileClient';
@@ -28,13 +27,20 @@
 	let showDeleteConfirmation = $state(false);
 	let fileToDelete = $state<string | null>(null);
 
-	let reportList = $state<UserFileMetadata[]>([]);
-	let reportFilesList = $derived<UserFile[]>(
-		reportList.map((item) => ({
-			...item,
-			status: 'pending',
-			abortController: null
-		}))
+	let fileMap = $state<UserFile[]>([]);
+	const existingGroups = $derived<string[]>(
+		[...new Set(fileMap.map((f) => f.group).filter(Boolean))]
+	);
+	const groupOptions = $derived(existingGroups.map((g) => ({ value: g, label: g })));
+	let selectedGroup = $state<string>('');
+	let sortDir = $state<'asc' | 'desc'>('desc');
+	const reportFilesList = $derived(
+		fileMap
+			.filter((f) => selectedGroup === '' || f.group === selectedGroup)
+			.toSorted((a, b) => {
+				const diff = new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime();
+				return sortDir === 'desc' ? -diff : diff;
+			})
 	);
 
 	function openAddFileModal() {
@@ -61,7 +67,7 @@
 
 		deleteFile(fileToDelete)
 			.then(() => {
-				reportList = reportList.filter((f) => f.id !== fileToDelete);
+				fileMap = fileMap.filter((f) => f.id !== fileToDelete);
 				showDeleteConfirmation = false;
 				fileToDelete = null;
 			})
@@ -79,7 +85,7 @@
 	async function refreshReportList() {
 		const files = await getFilesList();
 		if (files) {
-			reportList = files;
+			fileMap = files.map((f) => ({ ...f, status: 'pending', abortController: null }));
 		}
 	}
 
@@ -117,7 +123,11 @@
 		{/if}
 	</div>
 
-	{#if reportFilesList.length === 0}
+	{#if existingGroups.length > 0}
+		<GroupSelector bind:selected={selectedGroup} groups={groupOptions} label="Filter by group" allLabel="All groups" />
+	{/if}
+
+	{#if fileMap.length === 0}
 		<div class="empty-state">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -135,11 +145,35 @@
 			</svg>
 			<p>No reports available</p>
 		</div>
+	{:else if reportFilesList.length === 0}
+		<div class="empty-state">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="64"
+				height="64"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+				<polyline points="14 2 14 8 20 8"></polyline>
+			</svg>
+			<p>No reports in group "{selectedGroup}"</p>
+		</div>
 	{:else}
 		<div class="reports-table">
 			<div class="table-header">
 				<div class="col-filename">File Name</div>
-				<div class="col-date">Upload Date</div>
+				<div class="col-group">Group</div>
+				<div class="col-date">
+					<button class="sort-btn" onclick={() => (sortDir = sortDir === 'desc' ? 'asc' : 'desc')}>
+						Upload Date
+						<span class="sort-arrow">{sortDir === 'desc' ? '↓' : '↑'}</span>
+					</button>
+				</div>
 				<div class="col-subscription">Required</div>
 				<div class="col-actions">Actions</div>
 			</div>
@@ -159,6 +193,9 @@
 							<polyline points="14 2 14 8 20 8"></polyline>
 						</svg>
 						<span class="filename">{file.fileName}</span>
+					</div>
+					<div class="col-group">
+						<span class="group-tag">{file.group}</span>
 					</div>
 					<div class="col-date">
 						{new Date(file.uploadedAt).toLocaleDateString()}
@@ -236,7 +273,7 @@
 	bind:showModal={showAddFileModal}
 	title="Add Files Modal"
 	Component={AddFileModal}
-	componentProps={{ refreshReports: refreshReportList }}
+	componentProps={{ refreshReports: refreshReportList, existingGroups }}
 />
 <ModalBase
 	bind:showModal={showDeleteConfirmation}
@@ -262,7 +299,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 2rem;
+		gap: 1rem;
+		margin-bottom: 1rem;
 	}
 
 	.header h2 {
@@ -361,7 +399,7 @@
 
 	.table-header {
 		display: grid;
-		grid-template-columns: 2fr 1fr 1fr 2fr;
+		grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
 		gap: 1rem;
 		padding: 1rem 1.5rem;
 		background-color: #f7fafc;
@@ -375,7 +413,7 @@
 
 	.table-row {
 		display: grid;
-		grid-template-columns: 2fr 1fr 1fr 2fr;
+		grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
 		gap: 1rem;
 		padding: 1.25rem 1.5rem;
 		border-bottom: 1px solid #e2e8f0;
@@ -411,9 +449,52 @@
 		white-space: nowrap;
 	}
 
+	.col-group {
+		display: flex;
+		align-items: center;
+	}
+
+	.group-tag {
+		display: inline-block;
+		padding: 0.25rem 0.625rem;
+		background-color: #edf2f7;
+		color: #4a5568;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 140px;
+	}
+
 	.col-date {
 		color: #718096;
 		font-size: 0.875rem;
+	}
+
+	.sort-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		background: none;
+		border: none;
+		padding: 0;
+		font: inherit;
+		font-weight: 600;
+		color: #4a5568;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		transition: color 0.15s;
+	}
+
+	.sort-btn:hover {
+		color: #2d3748;
+	}
+
+	.sort-arrow {
+		font-size: 0.75rem;
 	}
 
 	.col-subscription {
@@ -461,7 +542,7 @@
 	@media (max-width: 1024px) {
 		.table-header,
 		.table-row {
-			grid-template-columns: 2fr 1fr 1.5fr;
+			grid-template-columns: 2fr 1fr 1fr 1.5fr;
 		}
 
 		.col-subscription {
@@ -494,6 +575,7 @@
 			padding: 1rem;
 		}
 
+		.col-group,
 		.col-date,
 		.col-subscription {
 			display: block;

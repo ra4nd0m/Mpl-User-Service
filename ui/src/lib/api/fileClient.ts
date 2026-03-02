@@ -7,6 +7,7 @@ export type DownloadStatus = 'pending' | 'downloading' | 'complete' | 'error' | 
 export interface UploadItem {
     id: string;
     file: File;
+    group: string;
     requiredSubscription: SubscriptionType;
     status: UploadStatus;
     abortController: AbortController | null;
@@ -15,6 +16,7 @@ export interface UploadItem {
 export interface UserFileMetadata {
     id: string;
     fileName: string;
+    group: string;
     requiredSubscription: SubscriptionType;
     uploadedAt: string;
 }
@@ -36,6 +38,7 @@ export async function uploadFile(item: UploadItem) {
 
     const formData = new FormData();
     formData.append('file', item.file);
+    formData.append('group', item.group);
     formData.append('requiredSubscription', item.requiredSubscription.toString());
 
     try {
@@ -80,7 +83,9 @@ export async function downloadFile(file: UserFile) {
     file.status = 'downloading';
 
     try {
-        const resp = await fetchWithAuth(`reports/${file.id}`);
+        const resp = await fetchWithAuth(`reports/${file.id}`, {
+            signal: controller.signal
+        });
 
         if (!resp.ok) {
             throw new Error(resp.statusText)
@@ -95,6 +100,7 @@ export async function downloadFile(file: UserFile) {
         a.click();
 
         URL.revokeObjectURL(url);
+        file.status = 'pending';
     } catch (err) {
         if (controller.signal.aborted) {
             file.status = 'cancelled';

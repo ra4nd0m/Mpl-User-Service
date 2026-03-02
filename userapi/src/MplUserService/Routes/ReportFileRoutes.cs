@@ -72,9 +72,10 @@ namespace MplUserService.Routes
                     var form = await request.ReadFormAsync(ct);
                     var file = form.Files.GetFile("file");
                     var requiredSubscriptionStr = form["requiredSubscription"].ToString();
+                    var group = form["group"].ToString();
 
-                    if (file == null || string.IsNullOrEmpty(requiredSubscriptionStr))
-                        return Results.BadRequest("Missing file or requiredSubscription");
+                    if (file == null || string.IsNullOrEmpty(requiredSubscriptionStr) || string.IsNullOrEmpty(group))
+                        return Results.BadRequest("Missing file, requiredSubscription, or group");
 
                     if (!Enum.TryParse<SubscriptionType>(
                         requiredSubscriptionStr,
@@ -84,7 +85,7 @@ namespace MplUserService.Routes
                         return Results.BadRequest("Invalid requiredSubscription value");
                     }
 
-                    var id = await service.UploadAsync(file, requiredSubscription, ct);
+                    var id = await service.UploadAsync(file, requiredSubscription, group, ct);
 
                     return Results.Ok(new { Id = id });
                 }

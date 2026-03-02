@@ -7,6 +7,7 @@ namespace MplUserService.Models
         public Guid Id { get; set; }
         public string FileName { get; set; } = null!;
         public string StoredName { get; set; } = null!;
+        public string FileGroup { get; set; } = null!;
         public SubscriptionType RequiredSubscription { get; set; }
         public DateTime UploadedAt { get; set; }
         public long SizeBytes { get; set; }
