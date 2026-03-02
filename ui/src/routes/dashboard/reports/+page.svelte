@@ -1,14 +1,13 @@
 <script lang="ts">
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import ConfirmationDialog from '$components/ConfirmationDialog/ConfirmationDialog.svelte';
+	import GroupSelector from '$components/GroupSelector/GroupSelector.svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import { onMount } from 'svelte';
 	import AddFileModal from './AddFileModal.svelte';
 	import {
 		getFilesList,
 		type UserFile,
-		type DownloadStatus,
-		type UserFileMetadata,
 		downloadFile,
 		deleteFile
 	} from '$lib/api/fileClient';
@@ -28,16 +27,14 @@
 	let showDeleteConfirmation = $state(false);
 	let fileToDelete = $state<string | null>(null);
 
-	let reportList = $state<UserFileMetadata[]>([]);
+	let fileMap = $state<UserFile[]>([]);
 	const existingGroups = $derived<string[]>(
-		[...new Set(reportList.map((f) => f.group).filter(Boolean))]
+		[...new Set(fileMap.map((f) => f.group).filter(Boolean))]
 	);
-	let reportFilesList = $derived<UserFile[]>(
-		reportList.map((item) => ({
-			...item,
-			status: 'pending',
-			abortController: null
-		}))
+	const groupOptions = $derived(existingGroups.map((g) => ({ value: g, label: g })));
+	let selectedGroup = $state<string>('');
+	const reportFilesList = $derived(
+		fileMap.filter((f) => selectedGroup === '' || f.group === selectedGroup)
 	);
 
 	function openAddFileModal() {
@@ -64,7 +61,7 @@
 
 		deleteFile(fileToDelete)
 			.then(() => {
-				reportList = reportList.filter((f) => f.id !== fileToDelete);
+				fileMap = fileMap.filter((f) => f.id !== fileToDelete);
 				showDeleteConfirmation = false;
 				fileToDelete = null;
 			})
@@ -82,7 +79,7 @@
 	async function refreshReportList() {
 		const files = await getFilesList();
 		if (files) {
-			reportList = files;
+			fileMap = files.map((f) => ({ ...f, status: 'pending', abortController: null }));
 		}
 	}
 
@@ -120,7 +117,11 @@
 		{/if}
 	</div>
 
-	{#if reportFilesList.length === 0}
+	{#if existingGroups.length > 0}
+		<GroupSelector bind:selected={selectedGroup} groups={groupOptions} label="Filter by group" allLabel="All groups" />
+	{/if}
+
+	{#if fileMap.length === 0}
 		<div class="empty-state">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -137,6 +138,24 @@
 				<polyline points="14 2 14 8 20 8"></polyline>
 			</svg>
 			<p>No reports available</p>
+		</div>
+	{:else if reportFilesList.length === 0}
+		<div class="empty-state">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="64"
+				height="64"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+				<polyline points="14 2 14 8 20 8"></polyline>
+			</svg>
+			<p>No reports in group "{selectedGroup}"</p>
 		</div>
 	{:else}
 		<div class="reports-table">
@@ -269,7 +288,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 2rem;
+		gap: 1rem;
+		margin-bottom: 1rem;
 	}
 
 	.header h2 {

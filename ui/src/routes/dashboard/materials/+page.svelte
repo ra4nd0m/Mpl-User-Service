@@ -13,16 +13,21 @@
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
 	import MaterialsTable from './MaterialsTable.svelte';
+	import GroupSelector from '$components/GroupSelector/GroupSelector.svelte';
 
 	let isModalShown = $state(false);
 	let selectedMaterialId = $state<number | null>(null);
 
 	let materialGroups: { id: number; name: string }[] = $state([]);
-	let selectedGroupId: number | null = $state(null);
 	let materialList: Material[] = $state([]);
 	let loading = $state(true);
 	let error = $state('');
 	let searchQuery = $state('');
+
+	let selectedGroupStr = $state('');
+	const groupOptions = $derived(
+		materialGroups.map((g) => ({ value: String(g.id), label: g.name }))
+	);
 
 	function matchesSearch(material: Material, query: string) {
 		const lowerQuery = query.toLowerCase();
@@ -84,7 +89,7 @@
 		}
 	}
 
-	async function loadMaterials(groupId: number | null = selectedGroupId) {
+	async function loadMaterials(groupId: number | null = null) {
 		try {
 			loading = true;
 			error = '';
@@ -126,8 +131,7 @@
 	}
 
 	async function selectGroup(groupId: number | null) {
-		selectedGroupId = groupId;
-		await loadMaterials(selectedGroupId);
+		await loadMaterials(groupId);
 	}
 
 	function getChangeClass(changePercent: string | null): string {
@@ -162,39 +166,14 @@
 
 <section>
 	<h1>{m.materials_header()}</h1>
-	<!-- Material Group Buttons -->
-	<div class="group-buttons">
-		<span class="group-label">{m.materials_filter_by_group()}</span>
-		<button class:active={selectedGroupId === null} onclick={() => selectGroup(null)}>
-			{m.materials_group_all()}
-		</button>
-		{#each materialGroups as group}
-			<button class:active={selectedGroupId === group.id} onclick={() => selectGroup(group.id)}>
-				{group.name}
-			</button>
-		{/each}
-	</div>
-
-	<!-- Mobile Group Selection -->
-	<div class="mobile-group-select">
-		<label for="group-select">{m.materials_filter_by_group()}</label>
-		<select
-			id="group-select"
-			value={selectedGroupId ?? 'all'}
-			onchange={(e) => {
-				const target = e.target as HTMLSelectElement;
-				if (target) {
-					const value = target.value;
-					selectGroup(value === 'all' ? null : parseInt(value));
-				}
-			}}
-		>
-			<option value="all">{m.materials_group_all()}</option>
-			{#each materialGroups as group}
-				<option value={group.id}>{group.name}</option>
-			{/each}
-		</select>
-	</div>
+	<!-- Material Group Selector -->
+	<GroupSelector
+		bind:selected={selectedGroupStr}
+		groups={groupOptions}
+		label={m.materials_filter_by_group()}
+		allLabel={m.materials_group_all()}
+		onchange={(v) => selectGroup(v === '' ? null : parseInt(v, 10))}
+	/>
 
 	<div class="search-container">
 		<input
@@ -262,51 +241,6 @@
 {/if}
 
 <style>
-	.group-buttons {
-		margin-bottom: 1rem;
-		display: flex;
-		flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.group-label {
-		font-weight: bold;
-		margin-right: 0.5rem; /* Add some space between label and buttons */
-		color: #727271;
-	}
-
-	.group-buttons button {
-		padding: 0.5rem 1rem;
-		border: 1px solid #ced4da;
-		border-radius: 4px;
-		background-color: #f8f9fa;
-		color: #727271;
-		cursor: pointer;
-		transition:
-			background-color 0.2s ease-in-out,
-			border-color 0.2s ease-in-out,
-			color 0.2s ease-in-out;
-	}
-
-	.group-buttons button:hover {
-		background-color: rgba(234, 91, 33, 0.1);
-		border-color: #ea5b21;
-		color: #ea5b21;
-	}
-
-	.group-buttons button.active {
-		background-color: #ea5b21;
-		color: white;
-		border-color: #ea5b21;
-		font-weight: bold;
-	}
-
-	.group-buttons button.active:hover {
-		background-color: #d54e1a;
-		border-color: #d54e1a;
-	}
-
 	.search-container {
 		position: relative;
 		margin-bottom: 1rem;
@@ -374,43 +308,6 @@
 		margin-bottom: 1rem;
 	}
 
-	/* Mobile Group Select */
-	.mobile-group-select {
-		display: none;
-		margin-bottom: 1rem;
-	}
-
-	.mobile-group-select label {
-		display: block;
-		font-weight: bold;
-		color: #727271;
-		margin-bottom: 0.5rem;
-		font-size: 0.95rem;
-	}
-
-	.mobile-group-select select {
-		width: 100%;
-		padding: 0.75rem;
-		border: 1px solid #ced4da;
-		border-radius: 4px;
-		background-color: white;
-		color: #727271;
-		font-size: 1rem;
-		cursor: pointer;
-		transition: border-color 0.2s;
-		outline: none;
-		appearance: none;
-		background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
-		background-repeat: no-repeat;
-		background-position: right 0.75rem center;
-		background-size: 0.65rem auto;
-	}
-
-	.mobile-group-select select:focus {
-		border-color: #ea5b21;
-		box-shadow: 0 0 0 2px rgba(234, 91, 33, 0.1);
-	}
-
 	@keyframes spin {
 		0% {
 			transform: rotate(0deg);
@@ -422,15 +319,6 @@
 
 	/* Mobile responsive styles */
 	@media (max-width: 768px) {
-		.group-buttons {
-			display: none;
-		}
-
-		.mobile-group-select {
-			display: block;
-			margin-bottom: 1.25rem;
-		}
-
 		.search-container {
 			margin-bottom: 1.25rem;
 			max-width: 100%;
@@ -454,16 +342,6 @@
 	}
 
 	@media (max-width: 480px) {
-		.mobile-group-select {
-			margin-bottom: 1.5rem;
-		}
-
-		.mobile-group-select select {
-			padding: 1rem;
-			font-size: 1rem;
-			border-radius: 6px;
-		}
-
 		.search-container {
 			margin-bottom: 1.5rem;
 		}
