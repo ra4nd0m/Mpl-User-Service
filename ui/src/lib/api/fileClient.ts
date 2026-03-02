@@ -83,7 +83,9 @@ export async function downloadFile(file: UserFile) {
     file.status = 'downloading';
 
     try {
-        const resp = await fetchWithAuth(`reports/${file.id}`);
+        const resp = await fetchWithAuth(`reports/${file.id}`, {
+            signal: controller.signal
+        });
 
         if (!resp.ok) {
             throw new Error(resp.statusText)
@@ -98,6 +100,7 @@ export async function downloadFile(file: UserFile) {
         a.click();
 
         URL.revokeObjectURL(url);
+        file.status = 'pending';
     } catch (err) {
         if (controller.signal.aborted) {
             file.status = 'cancelled';
