@@ -218,15 +218,17 @@
 				hasSearch={!!searchQuery}
 			/>
 		{/if}
-		<MaterialsTable
-			title={m.materials_group_other()}
-			materials={filteredOtherMaterials}
-			{isFavorite}
-			{toggleFavorite}
-			{getChangeClass}
-			onShowPrice={showPriceModal}
-			hasSearch={!!searchQuery}
-		/>
+		{#if filteredOtherMaterials.length > 0}
+			<MaterialsTable
+				title={m.materials_group_other()}
+				materials={filteredOtherMaterials}
+				{isFavorite}
+				{toggleFavorite}
+				{getChangeClass}
+				onShowPrice={showPriceModal}
+				hasSearch={!!searchQuery}
+			/>
+		{/if}
 	{/if}
 </section>
 
