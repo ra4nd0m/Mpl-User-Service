@@ -23,6 +23,7 @@ namespace MplUserService.Services
         public async Task<Guid> UploadAsync(
             IFormFile file,
             SubscriptionType requiredSubscription,
+            string group,
             CancellationToken ct
         )
         {
@@ -44,6 +45,7 @@ namespace MplUserService.Services
                 Id = Guid.NewGuid(),
                 FileName = file.FileName,
                 StoredName = key,
+                FileGroup = group,
                 RequiredSubscription = requiredSubscription,
                 UploadedAt = DateTime.UtcNow,
                 SizeBytes = incomingFileSize
@@ -60,6 +62,7 @@ namespace MplUserService.Services
                 .Select(f => new ReportFilesListDto(
                     f.Id,
                     f.FileName,
+                    f.FileGroup,
                     f.RequiredSubscription,
                     f.UploadedAt
                 ))
