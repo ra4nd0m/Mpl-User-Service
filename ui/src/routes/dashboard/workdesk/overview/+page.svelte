@@ -9,6 +9,7 @@
 		getMaterials,
 		getOverview
 	} from '$lib/api/userClient';
+	import { m } from '$lib/i18n';
 
 	type ProcessedMaterialDataEntry = {
 		date: string;
@@ -92,7 +93,7 @@
 						return { date: entry.date, valuesMap };
 					});
 				} else {
-					error = 'Failed to fetch data';
+					error = m.overview_error_fetch_data();
 					materialData = [];
 				}
 			} else {
@@ -100,7 +101,7 @@
 			}
 		} catch (err) {
 			console.error('Error fetching data', err);
-			error = 'Failed to fetch data';
+			error = m.overview_error_fetch_data();
 			materialData = [];
 		} finally {
 			isLoading = false;
@@ -123,7 +124,7 @@
 		// Get favorite materials info
 		const materialList = await getMaterials();
 		if (!materialList) {
-			error = 'Failed to fetch materials';
+			error = m.overview_error_fetch_materials();
 			isLoading = false;
 			return;
 		}
@@ -136,38 +137,38 @@
 </script>
 
 <svelte:head>
-	<title>Price Tracking Overview</title>
+	<title>{m.overview_page_title()}</title>
 	<meta
 		name="description"
-		content="Track market values for your favorite materials over time. Monitor historical data and trends."
+		content={m.overview_page_description()}
 	/>
 </svelte:head>
 
 <section class="dashboard-heading">
-	<h1>Overview</h1>
-	<p>Showing market values for your {favoriteMaterials.length} favorite materials</p>
+	<h1>{m.overview_header()}</h1>
+	<p>{m.overview_showing_favorites({ count: favoriteMaterials.length })}</p>
 
 	<!-- Date range selector -->
 	<div class="date-controls">
 		<div class="date-inputs">
 			<div class="date-field">
-				<label for="start-date">Start Date</label>
+				<label for="start-date">{m.overview_start_date()}</label>
 				<input type="date" id="start-date" bind:value={startDate} max={endDate} />
 			</div>
 			<div class="date-field">
-				<label for="end-date">End Date</label>
+				<label for="end-date">{m.overview_end_date()}</label>
 				<input type="date" id="end-date" bind:value={endDate} min={startDate} />
 			</div>
 		</div>
-		<button class="update-btn" onclick={handleDateChange}>Update</button>
+		<button class="update-btn" onclick={handleDateChange}>{m.overview_update_button()}</button>
 	</div>
 </section>
 
 <section>
 	{#if isLoading}
-		<div class="loading">Loading data...</div>
+		<div class="loading">{m.overview_loading()}</div>
 	{:else if materialData.length === 0}
-		<div class="no-data">No data available</div>
+		<div class="no-data">{m.overview_no_data()}</div>
 	{:else if error}
 		<div class="error">{error}</div>
 	{:else}
@@ -176,7 +177,7 @@
 			<table>
 				<thead>
 					<tr>
-						<th rowspan="2">Date</th>
+						<th rowspan="2">{m.overview_date_column()}</th>
 						{#each favoriteMaterials as material}
 							{@const displayProps = displayPropsMap.get(material.id) ?? []}
 							{#if displayProps.length > 0}
