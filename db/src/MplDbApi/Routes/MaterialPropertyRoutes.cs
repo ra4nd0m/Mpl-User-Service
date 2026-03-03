@@ -17,7 +17,7 @@ namespace MplDbApi.Routes
                 {
                     return Results.Problem("An error occurred while retrieving material properties");
                 }
-            });
+            }).RequireAuthorization();
 
             app.MapGet("/properties/dropdown", async (IMaterialPropService service) =>
             {
@@ -30,7 +30,7 @@ namespace MplDbApi.Routes
                 {
                     return Results.Problem("An error occurred while retrieving material properties for dropdown");
                 }
-            });
+            }).RequireAuthorization();
         }
     }
 }

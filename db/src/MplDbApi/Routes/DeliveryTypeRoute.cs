@@ -22,7 +22,7 @@ public static class DeliveryTypeRoutes
                 logger.LogError(ex, "Error with receiving delivery types list.");
                 return Results.Problem("Error with receiving delivery types.");
             }
-        });
+        }).RequireAuthorization();
 
         app.MapGet("/deliverytypes/{id}", async (IDeliveryTypeService service, int id) =>
         {
@@ -42,6 +42,6 @@ public static class DeliveryTypeRoutes
                 logger.LogError(ex, "Error with receiving delivery type with ID {Id}.", id);
                 return Results.Problem("Error with receving delivery type.");
             }
-        });
+        }).RequireAuthorization();
     }
 }

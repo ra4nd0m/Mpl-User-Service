@@ -20,7 +20,7 @@ namespace MplDbApi.Routes
                     return Results.Problem("Error with receiving units.");
                 }
 
-            });
+            }).RequireAuthorization();
         }
     }
 }

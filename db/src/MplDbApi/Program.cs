@@ -64,7 +64,10 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+});
 
 //This service is internal so no need for restrictive cors 
 builder.Services.AddCors(options =>
