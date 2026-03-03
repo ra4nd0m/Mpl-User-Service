@@ -7,6 +7,7 @@
 		type StorageUsage
 	} from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
+	import { m } from '$lib/i18n';
 
 	let { refreshReports, existingGroups }: { refreshReports: () => void; existingGroups: string[] } = $props();
 
@@ -60,7 +61,7 @@
 	function addFiles(fileList: FileList) {
 		for (const file of fileList) {
 			if (file.type !== 'application/pdf') {
-				alert(`File ${file.name} is not a PDF and will be skipped.`);
+				alert(m.add_files_not_pdf_error({ fileName: file.name }));
 				continue;
 			}
 
@@ -137,9 +138,9 @@
 			<polyline points="17 8 12 3 7 8"></polyline>
 			<line x1="12" y1="3" x2="12" y2="15"></line>
 		</svg>
-		<p>Drag and drop PDF files here</p>
-		<p class="or">or</p>
-		<label for="file-input" class="file-input-label">Browse Files</label>
+		<p>{m.add_files_drag_drop()}</p>
+		<p class="or">{m.add_files_or()}</p>
+		<label for="file-input" class="file-input-label">{m.add_files_browse_files()}</label>
 		<input
 			id="file-input"
 			type="file"
@@ -153,11 +154,11 @@
 	{#if storageUsage !== null}
 		<div class="storage-bar-section" class:exceeded={storageExceeded}>
 			<div class="storage-bar-header">
-				<span class="storage-label">Storage</span>
+				<span class="storage-label">{m.add_files_storage()}</span>
 				<span class="storage-values">
 					{formatBytes(storageUsage.usedBytes)}
 					{#if pendingBytes > 0}
-						<span class="pending-delta"> + {formatBytes(pendingBytes)} pending</span>
+						<span class="pending-delta"> + {formatBytes(pendingBytes)} {m.add_files_pending()}</span>
 					{/if}
 					/ {formatBytes(storageUsage.maxBytes)}
 				</span>
@@ -172,14 +173,14 @@
 				{/if}
 			</div>
 			{#if storageExceeded}
-				<p class="storage-exceeded-msg">Storage limit exceeded — remove some files to upload.</p>
+				<p class="storage-exceeded-msg">{m.add_files_storage_exceeded()}</p>
 			{/if}
 		</div>
 	{/if}
 
 	{#if files.length > 0}
 		<div class="files-section">
-			<h4>Files to Upload</h4>
+			<h4>{m.add_files_files_to_upload()}</h4>
 			<div class="files-table">
 				{#each files as item}
 					<div class="file-row" class:complete={item.status === 'complete'}>
@@ -203,10 +204,10 @@
 							list="groups-datalist"
 							bind:value={item.group}
 							disabled={item.status === 'uploading' || item.status === 'complete'}
-							placeholder="Group (required)"
-							class="group-input"
-							class:group-missing={item.group.trim() === '' && item.status !== 'complete'}
-						/>
+						placeholder={m.add_files_group_required()}
+						class="group-input"
+						class:group-missing={item.group.trim() === '' && item.status !== 'complete'}
+					/>
 
 						<select
 							bind:value={item.requiredSubscription}
@@ -220,25 +221,25 @@
 
 						<span class="status status-{item.status}">
 							{#if item.status === 'pending'}
-								Pending
-							{:else if item.status === 'uploading'}
-								Uploading...
-							{:else if item.status === 'complete'}
-								✓ Complete
-							{:else if item.status === 'error'}
-								✗ Error
-							{:else if item.status === 'cancelled'}
-								Cancelled
-							{/if}
-						</span>
+							{m.add_files_status_pending()}
+						{:else if item.status === 'uploading'}
+							{m.add_files_status_uploading()}
+						{:else if item.status === 'complete'}
+							{m.add_files_status_complete()}
+						{:else if item.status === 'error'}
+							{m.add_files_status_error()}
+						{:else if item.status === 'cancelled'}
+							{m.add_files_status_cancelled()}
+						{/if}
+					</span>
 
-						<button
-							class="btn-remove"
-							onclick={() => handleRemove(item.id)}
-							disabled={item.status === 'complete'}
-							title="Remove file"
-							aria-label="Remove file"
-						>
+					<button
+						class="btn-remove"
+						onclick={() => handleRemove(item.id)}
+						disabled={item.status === 'complete'}
+						title={m.add_files_remove_file()}
+						aria-label={m.add_files_remove_file()}
+					>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="18"
@@ -259,7 +260,7 @@
 			<div class="actions">
 				{#if !isUploading}
 					<button class="btn btn-primary" onclick={publishFiles} disabled={!canPublish}>
-						Upload All Files
+						{m.add_files_upload_all()}
 					</button>
 				{:else}
 					<button
@@ -267,7 +268,7 @@
 						onclick={() =>
 							files.forEach((f) => f.status === 'uploading' && f.abortController?.abort())}
 					>
-						Cancel Upload
+						{m.add_files_cancel_upload()}
 					</button>
 				{/if}
 			</div>

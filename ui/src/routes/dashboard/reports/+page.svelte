@@ -12,6 +12,7 @@
 		deleteFile
 	} from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
+	import { m } from '$lib/i18n';
 
 	const isAdmin = $derived($authStore.roles?.includes('Admin'));
 	const userSubscriptionLevel = $derived(
@@ -73,7 +74,7 @@
 			})
 			.catch((err) => {
 				console.error(`Failed to delete file: ${err}`);
-				alert('Failed to delete file. Please try again.');
+				alert(m.reports_delete_failed());
 			});
 	}
 
@@ -95,13 +96,13 @@
 </script>
 
 <svelte:head>
-	<title>Reports</title>
-	<meta name="description" content="View and download reports available" />
+	<title>{m.reports_page_title()}</title>
+	<meta name="description" content={m.reports_page_description()} />
 </svelte:head>
 
 <div class="reports-page">
 	<div class="header">
-		<h2>Reports</h2>
+		<h2>{m.reports_header()}</h2>
 		{#if isAdmin}
 			<button class="btn btn-primary" onclick={openAddFileModal}>
 				<svg
@@ -118,13 +119,13 @@
 					<line x1="12" y1="5" x2="12" y2="19"></line>
 					<line x1="5" y1="12" x2="19" y2="12"></line>
 				</svg>
-				Add Files
+				{m.reports_add_files_button()}
 			</button>
 		{/if}
 	</div>
 
 	{#if existingGroups.length > 0}
-		<GroupSelector bind:selected={selectedGroup} groups={groupOptions} label="Filter by group" allLabel="All groups" />
+		<GroupSelector bind:selected={selectedGroup} groups={groupOptions} label={m.reports_filter_by_group()} allLabel={m.reports_all_groups()} />
 	{/if}
 
 	{#if fileMap.length === 0}
@@ -143,7 +144,7 @@
 				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
 				<polyline points="14 2 14 8 20 8"></polyline>
 			</svg>
-			<p>No reports available</p>
+			<p>{m.reports_no_reports_available()}</p>
 		</div>
 	{:else if reportFilesList.length === 0}
 		<div class="empty-state">
@@ -161,21 +162,21 @@
 				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
 				<polyline points="14 2 14 8 20 8"></polyline>
 			</svg>
-			<p>No reports in group "{selectedGroup}"</p>
+			<p>{m.reports_no_reports_in_group({ group: selectedGroup })}</p>
 		</div>
 	{:else}
 		<div class="reports-table">
 			<div class="table-header">
-				<div class="col-filename">File Name</div>
-				<div class="col-group">Group</div>
+				<div class="col-filename">{m.reports_table_file_name()}</div>
+				<div class="col-group">{m.reports_table_group()}</div>
 				<div class="col-date">
 					<button class="sort-btn" onclick={() => (sortDir = sortDir === 'desc' ? 'asc' : 'desc')}>
-						Upload Date
+						{m.reports_table_upload_date()}
 						<span class="sort-arrow">{sortDir === 'desc' ? '↓' : '↑'}</span>
 					</button>
 				</div>
-				<div class="col-subscription">Required</div>
-				<div class="col-actions">Actions</div>
+				<div class="col-subscription">{m.reports_table_required()}</div>
+				<div class="col-actions">{m.reports_table_actions()}</div>
 			</div>
 			{#each reportFilesList as file}
 				<div class="table-row">
@@ -203,10 +204,10 @@
 					<div class="col-subscription">
 						<span class="badge badge-{file.requiredSubscription}">
 							{file.requiredSubscription === SubscriptionType.Free
-								? 'Free'
+								? m.reports_subscription_free()
 								: file.requiredSubscription === SubscriptionType.Basic
-									? 'Basic'
-									: 'Premium'}
+									? m.reports_subscription_basic()
+									: m.reports_subscription_premium()}
 						</span>
 					</div>
 					<div class="col-actions">
@@ -228,17 +229,17 @@
 										<polyline points="7 10 12 15 17 10"></polyline>
 										<line x1="12" y1="15" x2="12" y2="3"></line>
 									</svg>
-									Download
+									{m.reports_download_button()}
 								</button>
 							{:else}
-								<span class="access-denied">Requires higher subscription</span>
+								<span class="access-denied">{m.reports_requires_higher_subscription()}</span>
 							{/if}
 						{:else if file.status === 'downloading'}
 							<button
 								class="btn btn-sm btn-secondary"
 								onclick={() => handleCancelDownload(file)}
 							>
-								Cancel
+								{m.reports_cancel_button()}
 							</button>
 						{/if}
 						{#if isAdmin}
@@ -259,7 +260,7 @@
 										d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
 									></path>
 								</svg>
-								Delete
+								{m.reports_delete_button()}
 							</button>
 						{/if}
 					</div>
@@ -271,18 +272,18 @@
 
 <ModalBase
 	bind:showModal={showAddFileModal}
-	title="Add Files Modal"
+	title={m.reports_add_files_modal_title()}
 	Component={AddFileModal}
 	componentProps={{ refreshReports: refreshReportList, existingGroups }}
 />
 <ModalBase
 	bind:showModal={showDeleteConfirmation}
-	title="Confirm Deletion"
+	title={m.reports_confirm_deletion_title()}
 	size={{ width: '500px', height: 'auto' }}
 	Component={ConfirmationDialog}
 	componentProps={{
-		message: 'Are you sure you want to delete this file? This action cannot be undone.',
-		confirmText: 'Delete',
+		message: m.reports_confirm_deletion_message(),
+		confirmText: m.reports_delete_confirm_button(),
 		onConfirm: confirmDelete,
 		onCancel: cancelDelete
 	}}
