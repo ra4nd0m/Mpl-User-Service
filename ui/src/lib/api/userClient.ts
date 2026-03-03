@@ -1,13 +1,8 @@
-import { delay, ENABLE_MOCKS, mockFavoriteMaterials } from "$lib/mock";
 import type { WidgetSettings } from "$lib/stores/widgetSettingStore";
 import { fetchWithAuth } from "./authClient";
 
 export async function getFavorites(): Promise<number[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            return mockFavoriteMaterials['123'];
-        }
         const resp = await fetchWithAuth('/favorites');
         if (!resp.ok) {
             console.error('Failed to get favorites:', resp.statusText);
@@ -22,14 +17,6 @@ export async function getFavorites(): Promise<number[] | null> {
 
 export async function addFavorite(id: number): Promise<number[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            const currentFavorites = mockFavoriteMaterials['123'];
-            if (!currentFavorites.includes(id)) {
-                currentFavorites.push(id);
-            }
-            return currentFavorites;
-        }
         const resp = await fetchWithAuth(`/favorites/${id}`, {
             method: 'PUT'
         });
@@ -47,15 +34,6 @@ export async function addFavorite(id: number): Promise<number[] | null> {
 
 export async function removeFavorite(id: number): Promise<number[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            const currentFavorites = mockFavoriteMaterials['123'];
-            const index = currentFavorites.indexOf(id);
-            if (index >= 0) {
-                currentFavorites.splice(index, 1);
-            }
-            return currentFavorites;
-        }
         const resp = await fetchWithAuth(`/favorites/${id}`, {
             method: 'DELETE'
         });
