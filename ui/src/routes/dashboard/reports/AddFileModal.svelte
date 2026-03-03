@@ -9,7 +9,8 @@
 	import { SubscriptionType } from '$lib/api/adminClient';
 	import { m } from '$lib/i18n';
 
-	let { refreshReports, existingGroups }: { refreshReports: () => void; existingGroups: string[] } = $props();
+	let { refreshReports, existingGroups }: { refreshReports: () => void; existingGroups: string[] } =
+		$props();
 
 	const subscriptionOptions = (Object.entries(SubscriptionType) as [string, number][]).filter(
 		([, v]) => typeof v === 'number'
@@ -47,10 +48,10 @@
 
 	const canPublish = $derived(
 		!storageExceeded &&
-		files.some((f) => f.status === 'pending' || f.status === 'error') &&
-		files
-			.filter((f) => f.status === 'pending' || f.status === 'error')
-			.every((f) => f.group.trim() !== '')
+			files.some((f) => f.status === 'pending' || f.status === 'error') &&
+			files
+				.filter((f) => f.status === 'pending' || f.status === 'error')
+				.every((f) => f.group.trim() !== '')
 	);
 	const isUploading = $derived(files.some((f) => f.status === 'uploading'));
 
@@ -158,7 +159,9 @@
 				<span class="storage-values">
 					{formatBytes(storageUsage.usedBytes)}
 					{#if pendingBytes > 0}
-						<span class="pending-delta"> + {formatBytes(pendingBytes)} {m.add_files_pending()}</span>
+						<span class="pending-delta">
+							+ {formatBytes(pendingBytes)} {m.add_files_pending()}</span
+						>
 					{/if}
 					/ {formatBytes(storageUsage.maxBytes)}
 				</span>
@@ -204,10 +207,10 @@
 							list="groups-datalist"
 							bind:value={item.group}
 							disabled={item.status === 'uploading' || item.status === 'complete'}
-						placeholder={m.add_files_group_required()}
-						class="group-input"
-						class:group-missing={item.group.trim() === '' && item.status !== 'complete'}
-					/>
+							placeholder={m.add_files_group_required()}
+							class="group-input"
+							class:group-missing={item.group.trim() === '' && item.status !== 'complete'}
+						/>
 
 						<select
 							bind:value={item.requiredSubscription}
@@ -221,25 +224,25 @@
 
 						<span class="status status-{item.status}">
 							{#if item.status === 'pending'}
-							{m.add_files_status_pending()}
-						{:else if item.status === 'uploading'}
-							{m.add_files_status_uploading()}
-						{:else if item.status === 'complete'}
-							{m.add_files_status_complete()}
-						{:else if item.status === 'error'}
-							{m.add_files_status_error()}
-						{:else if item.status === 'cancelled'}
-							{m.add_files_status_cancelled()}
-						{/if}
-					</span>
+								{m.add_files_status_pending()}
+							{:else if item.status === 'uploading'}
+								{m.add_files_status_uploading()}
+							{:else if item.status === 'complete'}
+								{m.add_files_status_complete()}
+							{:else if item.status === 'error'}
+								{m.add_files_status_error()}
+							{:else if item.status === 'cancelled'}
+								{m.add_files_status_cancelled()}
+							{/if}
+						</span>
 
-					<button
-						class="btn-remove"
-						onclick={() => handleRemove(item.id)}
-						disabled={item.status === 'complete'}
-						title={m.add_files_remove_file()}
-						aria-label={m.add_files_remove_file()}
-					>
+						<button
+							class="btn-remove"
+							onclick={() => handleRemove(item.id)}
+							disabled={item.status === 'complete'}
+							title={m.add_files_remove_file()}
+							aria-label={m.add_files_remove_file()}
+						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="18"

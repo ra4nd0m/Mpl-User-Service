@@ -10,6 +10,7 @@
         type Material
     } from '$lib/api/userClient';
     import { onMount } from 'svelte';
+    import { m } from '$lib/i18n';
     
     let filters = $state<DataFilter[]>([]);
     let materials = $state<Material[]>([]);
@@ -167,35 +168,35 @@
 </script>
 
 <svelte:head>
-    <title>Data Filters</title>
-    <meta name="description" content="Manage data access filters for different user roles." />
+    <title>{m.filters_page_title()}</title>
+    <meta name="description" content={m.filters_page_description()} />
 </svelte:head>
 
 <section class="filters-header">
-    <h1>Data Filters</h1>
-    <p>Configure data access permissions and filtering rules for different user roles.</p>
+    <h1>{m.filters_header()}</h1>
+    <p>{m.filters_subheader()}</p>
 </section>
 
 {#if loading}
     <div class="loading">
         <div class="loading-spinner"></div>
-        <p>Loading filters...</p>
+        <p>{m.filters_loading()}</p>
     </div>
 {:else if error}
     <div class="error">
-        <p>Error: {error}</p>
-        <button onclick={loadAllData} class="retry-btn">Retry</button>
+        <p>{m.filters_error()} {error}</p>
+        <button onclick={loadAllData} class="retry-btn">{m.filters_retry_button()}</button>
     </div>
 {:else if filters.length === 0}
     <div class="no-data">
-        <p>No filters configured.</p>
+        <p>{m.filters_no_filters()}</p>
     </div>
 {:else}
     <div class="filters-container">
         {#each filters as filter}
             <div class="filter-card">
                 <div class="filter-header">
-                    <h3>Filter</h3>
+                    <h3>{m.filters_filter_title()}</h3>
                     <span class="role-badge" class:admin={filter.affectedRole === 'Admin'}>
                         {filter.affectedRole}
                     </span>
@@ -203,7 +204,7 @@
 
                 <div class="filter-content">
                     <div class="filter-section">
-                        <h4>Groups</h4>
+                        <h4>{m.filters_groups()}</h4>
                         <div class="filter-values">
                             {#if filter.groups.length > 0}
                                 {@const groupNames = getGroupNames(filter.groups)}
@@ -212,17 +213,17 @@
                                 {/each}
                                 {#if groupNames.length < filter.groups.length}
                                     <span class="warning">
-                                        ({filter.groups.length - groupNames.length} groups not found)
+                                        {m.filters_not_found_warning({ count: filter.groups.length - groupNames.length, type: 'groups' })}
                                     </span>
                                 {/if}
                             {:else}
-                                <span class="empty">No groups specified</span>
+                                <span class="empty">{m.filters_no_groups()}</span>
                             {/if}
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h4>Sources</h4>
+                        <h4>{m.filters_sources()}</h4>
                         <div class="filter-values">
                             {#if filter.sources.length > 0}
                                 {@const sourceNames = getSourceNames(filter.sources)}
@@ -231,17 +232,17 @@
                                 {/each}
                                 {#if sourceNames.length < filter.sources.length}
                                     <span class="warning">
-                                        ({filter.sources.length - sourceNames.length} sources not found)
+                                        {m.filters_not_found_warning({ count: filter.sources.length - sourceNames.length, type: 'sources' })}
                                     </span>
                                 {/if}
                             {:else}
-                                <span class="empty">No sources specified</span>
+                                <span class="empty">{m.filters_no_sources()}</span>
                             {/if}
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h4>Units</h4>
+                        <h4>{m.filters_units()}</h4>
                         <div class="filter-values">
                             {#if filter.units.length > 0}
                                 {@const unitNames = getUnitNames(filter.units)}
@@ -250,17 +251,17 @@
                                 {/each}
                                 {#if unitNames.length < filter.units.length}
                                     <span class="warning">
-                                        ({filter.units.length - unitNames.length} units not found)
+                                        {m.filters_not_found_warning({ count: filter.units.length - unitNames.length, type: 'units' })}
                                     </span>
                                 {/if}
                             {:else}
-                                <span class="empty">No units specified</span>
+                                <span class="empty">{m.filters_no_units()}</span>
                             {/if}
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h4>Materials</h4>
+                        <h4>{m.filters_materials()}</h4>
                         <div class="filter-values">
                             {#if filter.materialIds.length > 0}
                                 {@const materialNames = getMaterialNames(filter.materialIds)}
@@ -269,17 +270,17 @@
                                 {/each}
                                 {#if materialNames.length < filter.materialIds.length}
                                     <span class="warning">
-                                        ({filter.materialIds.length - materialNames.length} materials not found)
+                                        {m.filters_not_found_warning({ count: filter.materialIds.length - materialNames.length, type: 'materials' })}
                                     </span>
                                 {/if}
                             {:else}
-                                <span class="empty">No materials specified</span>
+                                <span class="empty">{m.filters_no_materials()}</span>
                             {/if}
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h4>Properties</h4>
+                        <h4>{m.filters_properties()}</h4>
                         <div class="filter-values">
                             {#if filter.properties.length > 0}
                                 {@const propertyNames = getPropertyNames(filter.properties)}
@@ -288,11 +289,11 @@
                                 {/each}
                                 {#if propertyNames.length < filter.properties.length}
                                     <span class="warning">
-                                        ({filter.properties.length - propertyNames.length} properties not found)
+                                        {m.filters_not_found_warning({ count: filter.properties.length - propertyNames.length, type: 'properties' })}
                                     </span>
                                 {/if}
                             {:else}
-                                <span class="empty">No properties specified</span>
+                                <span class="empty">{m.filters_no_properties()}</span>
                             {/if}
                         </div>
                     </div>
@@ -300,7 +301,7 @@
 
                 <div class="filter-actions">
                     <button class="edit-btn" onclick={() => startEdit(filter)} disabled={updating}>
-                        {updating ? 'Updating...' : 'Edit'}
+                        {updating ? m.filters_updating() : m.filters_edit_button()}
                     </button>
                 </div>
             </div>
@@ -313,16 +314,16 @@
     <div class="modal-overlay" onclick={cancelEdit} role="presentation">
         <div class="modal-content" onclick={(e) => e.stopPropagation()} role="presentation">
             <div class="modal-header">
-                <h3>Edit Filter - {editingFilter.affectedRole}</h3>
+                <h3>{m.filters_edit_modal_title({ role: editingFilter.affectedRole })}</h3>
                 <button class="close-btn" onclick={cancelEdit}>&times;</button>
             </div>
 
             <div class="modal-body">
                 <div class="edit-section">
-                    <h4>Groups</h4>
+                    <h4>{m.filters_groups()}</h4>
                     <div class="selected-items">
                         {#each editingFilter.groups as groupId}
-                            {@const groupName = groupMap.get(groupId) || `Group ${groupId}`}
+                            {@const groupName = groupMap.get(groupId) || m.filters_group_fallback({ id: groupId })}
                             <span class="selected-tag">
                                 {groupName}
                                 <button class="remove-btn" onclick={() => removeFromFilter('groups', groupId)}>×</button>
@@ -335,7 +336,7 @@
                         if (id) addToFilter('groups', id);
                         target.value = '';
                     }}>
-                        <option value="">Add group...</option>
+                        <option value="">{m.filters_add_group()}</option>
                         {#each materialGroups as group}
                             {#if !editingFilter.groups.includes(group.id)}
                                 <option value={group.id}>{group.name}</option>
@@ -345,10 +346,10 @@
                 </div>
 
                 <div class="edit-section">
-                    <h4>Sources</h4>
+                    <h4>{m.filters_sources()}</h4>
                     <div class="selected-items">
                         {#each editingFilter.sources as sourceId}
-                            {@const sourceName = sourceMap.get(sourceId) || `Source ${sourceId}`}
+                            {@const sourceName = sourceMap.get(sourceId) || m.filters_source_fallback({ id: sourceId })}
                             <span class="selected-tag">
                                 {sourceName}
                                 <button class="remove-btn" onclick={() => removeFromFilter('sources', sourceId)}>×</button>
@@ -361,7 +362,7 @@
                         if (id) addToFilter('sources', id);
                         target.value = '';
                     }}>
-                        <option value="">Add source...</option>
+                        <option value="">{m.filters_add_source()}</option>
                         {#each sources as source}
                             {#if !editingFilter.sources.includes(source.id)}
                                 <option value={source.id}>{source.name}</option>
@@ -371,10 +372,10 @@
                 </div>
 
                 <div class="edit-section">
-                    <h4>Units</h4>
+                    <h4>{m.filters_units()}</h4>
                     <div class="selected-items">
                         {#each editingFilter.units as unitId}
-                            {@const unitName = unitMap.get(unitId) || `Unit ${unitId}`}
+                            {@const unitName = unitMap.get(unitId) || m.filters_unit_fallback({ id: unitId })}
                             <span class="selected-tag">
                                 {unitName}
                                 <button class="remove-btn" onclick={() => removeFromFilter('units', unitId)}>×</button>
@@ -387,7 +388,7 @@
                         if (id) addToFilter('units', id);
                         target.value = '';
                     }}>
-                        <option value="">Add unit...</option>
+                        <option value="">{m.filters_add_unit()}</option>
                         {#each units as unit}
                             {#if !editingFilter.units.includes(unit.id)}
                                 <option value={unit.id}>{unit.name}</option>
@@ -397,11 +398,11 @@
                 </div>
 
                 <div class="edit-section">
-                    <h4>Materials</h4>
+                    <h4>{m.filters_materials()}</h4>
                     <div class="selected-items">
                         {#each editingFilter.materialIds as materialId}
                             {@const material = materialMap.get(materialId)}
-                            {@const materialName = material?.materialName || `Material ${materialId}`}
+                            {@const materialName = material?.materialName || m.filters_material_fallback({ id: materialId })}
                             <span class="selected-tag material-tag">
                                 {materialName}
                                 <button class="remove-btn" onclick={() => removeFromFilter('materialIds', materialId)}>×</button>
@@ -414,7 +415,7 @@
                         if (id) addToFilter('materialIds', id);
                         target.value = '';
                     }}>
-                        <option value="">Add material...</option>
+                        <option value="">{m.filters_add_material()}</option>
                         {#each materials as material}
                             {#if !editingFilter.materialIds.includes(material.id)}
                                 <option value={material.id}>{material.materialName}</option>
@@ -424,10 +425,10 @@
                 </div>
 
                 <div class="edit-section">
-                    <h4>Properties</h4>
+                    <h4>{m.filters_properties()}</h4>
                     <div class="selected-items">
                         {#each editingFilter.properties as propertyId}
-                            {@const propertyName = propertyMap.get(propertyId) || `Property ${propertyId}`}
+                            {@const propertyName = propertyMap.get(propertyId) || m.filters_property_fallback({ id: propertyId })}
                             <span class="selected-tag">
                                 {propertyName}
                                 <button class="remove-btn" onclick={() => removeFromFilter('properties', propertyId)}>×</button>
@@ -440,7 +441,7 @@
                         if (id) addToFilter('properties', id);
                         target.value = '';
                     }}>
-                        <option value="">Add property...</option>
+                        <option value="">{m.filters_add_property()}</option>
                         {#each properties as property}
                             {#if !editingFilter.properties.includes(property.id)}
                                 <option value={property.id}>{property.name}</option>
@@ -451,9 +452,9 @@
             </div>
 
             <div class="modal-footer">
-                <button class="cancel-btn" onclick={cancelEdit} disabled={updating}>Cancel</button>
+                <button class="cancel-btn" onclick={cancelEdit} disabled={updating}>{m.filters_cancel_button()}</button>
                 <button class="save-btn" onclick={() => editingFilter && updateFilter(editingFilter)} disabled={updating}>
-                    {updating ? 'Saving...' : 'Save Changes'}
+                    {updating ? m.filters_saving() : m.filters_save_button()}
                 </button>
             </div>
         </div>
