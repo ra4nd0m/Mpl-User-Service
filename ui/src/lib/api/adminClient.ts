@@ -167,7 +167,7 @@ export async function deleteUser(email: string): Promise<boolean> {
 
 export async function getFilters(): Promise<DataFilter[] | null> {
     try {
-        const response = await fetchWithAuth('data/filtered/filter-config/filters');
+        const response = await fetchWithAuth('data/filter-config/filters');
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             console.error('Failed to get filters:', errorData || response.statusText);
@@ -182,7 +182,7 @@ export async function getFilters(): Promise<DataFilter[] | null> {
 
 export async function pushFilter(filter: DataFilter): Promise<void> {
     try {
-        const response = await fetchWithAuth('data/filtered/filter-config/filter', {
+        const response = await fetchWithAuth('data/filter-config/filter', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
