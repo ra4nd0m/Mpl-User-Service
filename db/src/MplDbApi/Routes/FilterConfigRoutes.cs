@@ -12,19 +12,16 @@ namespace MplDbApi.Routes
             var filterRouteGroup = app.MapGroup("/filter-config")
                 .WithTags("Filter Configuration");
 
-            filterRouteGroup.MapPost("/filter", async (RoleEnhancedReqDto<FilterCreateReqDto> input, FilterService filterService) =>
+            filterRouteGroup.MapPost("/filter", async (FilterCreateReqDto data, FilterService filterService) =>
             {
                 try
                 {
-                    if (input.Role == null || input.Data == null)
+                    if (data == null)
                     {
-                        return Results.BadRequest("Role and filter data must be provided.");
+                        return Results.BadRequest("Filter data must be provided.");
                     }
-                    if (input.Role != "Admin")
-                    {
-                        return Results.Forbid();
-                    }
-                    await filterService.ModifyFilter(input.Data);
+
+                    await filterService.ModifyFilter(data);
                     return Results.Ok("Filter modified successfully.");
                 }
                 catch (InvalidOperationException ex)
@@ -32,7 +29,7 @@ namespace MplDbApi.Routes
                     logger.LogError(ex, "Error modifying filter.");
                     return Results.Problem("Failed to modify filter.");
                 }
-            });
+            }).RequireAuthorization("RequireAdmin");
 
             filterRouteGroup.MapGet("/filter/{role}", async (string role, FilterService filterService) =>
             {
@@ -51,7 +48,7 @@ namespace MplDbApi.Routes
                     logger.LogError(ex, "Error retrieving filter for role: {Role}", role);
                     return Results.Problem("Failed to retrieve filter.");
                 }
-            });
+            }).RequireAuthorization("RequireAdmin");
 
             filterRouteGroup.MapGet("/filters", async (FilterService filterService) =>
             {
@@ -65,7 +62,7 @@ namespace MplDbApi.Routes
                     logger.LogError(ex, "Error retrieving all filters.");
                     return Results.Problem("Failed to retrieve filters.");
                 }
-            });
+            }).RequireAuthorization("RequireAdmin");
         }
     }
 }

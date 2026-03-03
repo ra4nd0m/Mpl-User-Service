@@ -1,4 +1,4 @@
-namespace MplUserService.Options
+namespace MplUserService.Config
 {
     public sealed class StorageQuotaOptions
     {

@@ -1,4 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MplDbApi.Interfaces;
 using MplDbApi.Services;
 using MplDbApi.Data;
@@ -39,6 +42,33 @@ builder.Services.AddDbContext<FilterContext>(options =>
         }
     );
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidAudience = configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is missing"))
+            ),
+            ClockSkew = TimeSpan.Zero,
+            RequireExpirationTime = true
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+});
+
 //This service is internal so no need for restrictive cors 
 builder.Services.AddCors(options =>
 {
@@ -65,6 +95,8 @@ builder.Services.AddScoped<CacheManagementService>();
 var app = builder.Build();
 
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapDeliveryTypeRoutes();
 app.MapMaterialSourceRoutes();

@@ -1,13 +1,8 @@
-import { delay, ENABLE_MOCKS, mockFavoriteMaterials } from "$lib/mock";
 import type { WidgetSettings } from "$lib/stores/widgetSettingStore";
 import { fetchWithAuth } from "./authClient";
 
 export async function getFavorites(): Promise<number[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            return mockFavoriteMaterials['123'];
-        }
         const resp = await fetchWithAuth('/favorites');
         if (!resp.ok) {
             console.error('Failed to get favorites:', resp.statusText);
@@ -22,14 +17,6 @@ export async function getFavorites(): Promise<number[] | null> {
 
 export async function addFavorite(id: number): Promise<number[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            const currentFavorites = mockFavoriteMaterials['123'];
-            if (!currentFavorites.includes(id)) {
-                currentFavorites.push(id);
-            }
-            return currentFavorites;
-        }
         const resp = await fetchWithAuth(`/favorites/${id}`, {
             method: 'PUT'
         });
@@ -47,15 +34,6 @@ export async function addFavorite(id: number): Promise<number[] | null> {
 
 export async function removeFavorite(id: number): Promise<number[] | null> {
     try {
-        if (ENABLE_MOCKS) {
-            await delay();
-            const currentFavorites = mockFavoriteMaterials['123'];
-            const index = currentFavorites.indexOf(id);
-            if (index >= 0) {
-                currentFavorites.splice(index, 1);
-            }
-            return currentFavorites;
-        }
         const resp = await fetchWithAuth(`/favorites/${id}`, {
             method: 'DELETE'
         });
@@ -91,7 +69,7 @@ export async function setFavourites(ids: number[]): Promise<number[] | null> {
 
 export async function getMaterials(): Promise<Material[] | null> {
     try {
-        const resp = await fetchWithAuth('data/filtered/materials');
+        const resp = await fetchWithAuth('data/materials');
         if (!resp.ok) {
             console.error('Failed to get materials:', resp.statusText);
             return null;
@@ -106,7 +84,7 @@ export async function getMaterials(): Promise<Material[] | null> {
 
 export async function getMaterialsByGroup(id: number): Promise<Material[] | null> {
     try {
-        const resp = await fetchWithAuth(`data/filtered/materials/bygroup/${id}`);
+        const resp = await fetchWithAuth(`data/materials/bygroup/${id}`);
         if (!resp.ok) {
             console.error('Failed to get materials by group:', resp.statusText);
             return null;
@@ -121,7 +99,7 @@ export async function getMaterialsByGroup(id: number): Promise<Material[] | null
 
 export async function getMaterialGroups(): Promise<{ id: number, name: string }[] | null> {
     try {
-        const resp = await fetchWithAuth('data/filtered/materialgroups');
+        const resp = await fetchWithAuth('data/materialgroups');
         if (!resp.ok) {
             console.error('Failed to get material groups:', resp.statusText);
             return null;
@@ -136,7 +114,7 @@ export async function getMaterialGroups(): Promise<{ id: number, name: string }[
 
 export async function getSources(): Promise<{ id: number, name: string }[] | null> {
     try {
-        const resp = await fetchWithAuth('data/filtered/sources');
+        const resp = await fetchWithAuth('data/sources');
         if (!resp.ok) {
             console.error('Failed to get sources:', resp.statusText);
             return null;
@@ -151,7 +129,7 @@ export async function getSources(): Promise<{ id: number, name: string }[] | nul
 
 export async function getUnits(): Promise<{ id: number, name: string }[] | null> {
     try {
-        const resp = await fetchWithAuth('data/filtered/units');
+        const resp = await fetchWithAuth('data/units');
         if (!resp.ok) {
             console.error('Failed to get units:', resp.statusText);
             return null;
@@ -166,7 +144,7 @@ export async function getUnits(): Promise<{ id: number, name: string }[] | null>
 
 export async function getPropertiesForDropdown(): Promise<{ id: number, name: string }[] | null> {
     try {
-        const resp = await fetchWithAuth('data/filtered/properties/dropdown');
+        const resp = await fetchWithAuth('data/properties/dropdown');
         if (!resp.ok) {
             console.error('Failed to get properties:', resp.statusText);
             return null;
@@ -189,7 +167,7 @@ export async function getOverview(materialIds: number[], propertyIds: number[], 
             endDate
         }));
 
-        const resp = await fetchWithAuth('data/filtered/materialvalues/overview', {
+        const resp = await fetchWithAuth('data/materialvalues/overview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(reqsts)
@@ -211,7 +189,7 @@ export async function getMaterialInfo(materialId: number | { materialId: number 
     try {
         const actualMaterialId = typeof materialId === 'object' && materialId !== null ?
             (materialId as { materialId: number }).materialId : materialId;
-        const resp = await fetchWithAuth(`data/filtered/materials/${actualMaterialId}`);
+        const resp = await fetchWithAuth(`data/materials/${actualMaterialId}`);
         if (!resp.ok) {
             console.error('Failed to get material info:', resp.statusText);
             return null;
@@ -235,7 +213,7 @@ export async function getMaterialDateMetrics(materialId: number | { materialId: 
             endDate,
             aggregates
         }
-        const resp = await fetchWithAuth('data/filtered/materialvalues/daterange', {
+        const resp = await fetchWithAuth('data/materialvalues/daterange', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(req)

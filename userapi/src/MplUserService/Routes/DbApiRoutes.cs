@@ -1,9 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MplUserService.Data;
-using System.Net.Http.Json;
-using System.Security.Claims;
-using System.Text.Json;
 
 namespace MplUserService.Routes
 {
@@ -14,53 +9,31 @@ namespace MplUserService.Routes
         /// </summary>
         /// <param name="app">The WebApplication to which routes will be added</param>
         /// <remarks>
-        /// This method maps four API endpoints:
+        /// This method maps API endpoints for proxying requests to the database service:
         /// 
-        /// 1. GET /data/filtered/{**catchAll} - Allows filtered data access via GET requests.
-        ///    - Requires basic authorization
-        ///    - Extracts role information from user claims
-        ///    - Forwards requests to database service with role parameter added
-        ///    - Validates query parameters to prevent role injection
+        /// - GET/POST /data/filter-config/{**catchAll} - Admin-only filter configuration
+        /// - GET/POST /data/{**catchAll} - General data access with JWT authorization
         /// 
-        /// 2. POST /data/filtered/{**catchAll} - Allows filtered data access via POST requests.
-        ///    - Requires basic authorization
-        ///    - Extracts role information from user claims
-        ///    - Validates request body to prevent role injection
-        ///    - Wraps original request data and adds appropriate role
-        /// 
-        /// 3. GET /data/full/{**catchAll} - Provides full data access via GET requests.
-        ///    - Requires admin authorization
-        ///    - Forwards requests directly to the database service
-        /// 
-        /// 4. POST /data/full/{**catchAll} - Provides full data access via POST requests.
-        ///    - Requires admin authorization
-        ///    - Forwards the complete request body to the database service
-        /// 
-        /// All routes use the "DbClient" HTTP client for making backend requests and include
-        /// appropriate error handling and logging.
+        /// All routes forward the Authorization header to DbApi for JWT verification.
         /// </remarks>
         public static void MapMaterialRoutes(this WebApplication app)
         {
-            app.MapGet("/data/filtered/filter-config/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
+            app.MapGet("/data/filter-config/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
                 try
                 {
                     var client = httpClientFactory.CreateClient("DbClient");
+                    var requestUrl = $"filter-config/{catchAll}{context.Request.QueryString}";
 
-                    var role = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-                    var subscription = context.User.Claims.FirstOrDefault(c => c.Type == "SubscriptionType")?.Value;
-                    string extractedRole = (role == "Admin") ? "Admin" : subscription ?? "Free";
+                    var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-                    var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(context.Request.QueryString.Value);
-                    queryParams.Remove("role");
+                    // Forward Authorization header
+                    if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+                    {
+                        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
+                    }
 
-                    var newQueryString = queryParams.Count > 0
-                        ? "?" + string.Join("&", queryParams.Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value.ToString() ?? string.Empty)}"))
-                        : "";
-
-                    var requestUrl = $"filter-config/{catchAll}{newQueryString}{(newQueryString.Length > 0 ? "&" : "?")}role={extractedRole}";
-
-                    var response = await client.GetAsync(requestUrl);
+                    var response = await client.SendAsync(requestMessage);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -78,59 +51,31 @@ namespace MplUserService.Routes
                 }
             }).RequireAuthorization("RequireAdmin");
 
-            app.MapPost("/data/filtered/filter-config/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, UserContext dbContext, ILogger<Program> logger) =>
+            app.MapPost("/data/filter-config/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
                 try
                 {
                     var client = httpClientFactory.CreateClient("DbClient");
                     var requestUrl = $"filter-config/{catchAll}{context.Request.QueryString}";
 
-                    string extractedRole = "";
-                    var role = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-                    if (role == "Admin")
-                    {
-                        extractedRole = "Admin";
-                    }
-                    else
-                    {
-                        var subscriptionClaim = context.User.FindFirst("SubscriptionType");
-                        if (subscriptionClaim != null)
-                        {
-                            extractedRole = subscriptionClaim.Value;
-                        }
-                        else
-                        {
-                            logger.LogWarning("No subscription type found for user");
-                            return Results.Problem("No subscription type found for user");
-                        }
-                    }
-
-                    var doc = await JsonDocument.ParseAsync(context.Request.Body);
-                    var root = doc.RootElement.Clone();
-
-                    // Remove the role from the request body if it exists
-                    if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("role", out _))
-                    {
-                        logger.LogWarning("Potential role injection attempt detected");
-                        return Results.Problem("Invalid request format", statusCode: StatusCodes.Status400BadRequest);
-                    }
-
-                    var newDoc = new { data = root, role = extractedRole };
-
-                    var jsonContent = JsonSerializer.Serialize(newDoc);
-
                     var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
                     {
-                        Content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json")
+                        Content = new StreamContent(context.Request.Body)
                     };
 
-                    // Copy headers (except content-related ones that we're changing)
+                    // Forward Authorization header
+                    if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+                    {
+                        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
+                    }
+
+                    // Copy content headers
                     foreach (var header in context.Request.Headers)
                     {
-                        if (!header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase) &&
-                            !header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                        if (header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase) ||
+                            header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
                         {
-                            requestMessage.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
+                            requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
                         }
                     }
 
@@ -152,26 +97,22 @@ namespace MplUserService.Routes
                 }
             }).RequireAuthorization("RequireAdmin");
 
-            app.MapGet("/data/filtered/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
+            app.MapGet("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
-                var client = httpClientFactory.CreateClient("DbClient");
-
-                var role = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-                var subscription = context.User.Claims.FirstOrDefault(c => c.Type == "SubscriptionType")?.Value;
-                string extractedRole = (role == "Admin") ? "Admin" : subscription ?? "Free";
-
-                var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(context.Request.QueryString.Value);
-                queryParams.Remove("role");
-
-                var newQueryString = queryParams.Count > 0
-                    ? "?" + string.Join("&", queryParams.Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value.ToString() ?? string.Empty)}"))
-                    : "";
-
-                var requestUrl = $"{catchAll}{newQueryString}{(newQueryString.Length > 0 ? "&" : "?")}role={extractedRole}";
-
+                var requestUrl = $"{catchAll}{context.Request.QueryString}";
                 try
                 {
-                    var response = await client.GetAsync(requestUrl);
+                    var client = httpClientFactory.CreateClient("DbClient");
+
+                    var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+                    // Forward Authorization header
+                    if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+                    {
+                        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
+                    }
+
+                    var response = await client.SendAsync(requestMessage);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -187,62 +128,33 @@ namespace MplUserService.Routes
                     logger.LogError(ex, "Error processing GET request for {RequestUrl}", requestUrl);
                     return Results.Problem("An error occurred while processing the request");
                 }
-
             }).RequireAuthorization();
 
-            app.MapPost("/data/filtered/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, UserContext dbContext, ILogger<Program> logger) =>
+            app.MapPost("/data/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
             {
                 try
                 {
                     var client = httpClientFactory.CreateClient("DbClient");
                     var requestUrl = $"{catchAll}{context.Request.QueryString}";
 
-                    string extractedRole = "";
-                    var role = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-                    if (role == "Admin")
-                    {
-                        extractedRole = "Admin";
-                    }
-                    else
-                    {
-                        var subscriptionClaim = context.User.FindFirst("SubscriptionType");
-                        if (subscriptionClaim != null)
-                        {
-                            extractedRole = subscriptionClaim.Value;
-                        }
-                        else
-                        {
-                            logger.LogWarning("No subscription type found for user");
-                            return Results.Problem("No subscription type found for user");
-                        }
-                    }
-
-                    var doc = await JsonDocument.ParseAsync(context.Request.Body);
-                    var root = doc.RootElement.Clone();
-
-                    // Remove the role from the request body if it exists
-                    if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("role", out _))
-                    {
-                        logger.LogWarning("Potential role injection attempt detected");
-                        return Results.Problem("Invalid request format", statusCode: StatusCodes.Status400BadRequest);
-                    }
-
-                    var newDoc = new { data = root, role = extractedRole };
-
-                    var jsonContent = JsonSerializer.Serialize(newDoc);
-
                     var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
                     {
-                        Content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json")
+                        Content = new StreamContent(context.Request.Body)
                     };
 
-                    // Copy headers (except content-related ones that we're changing)
+                    // Forward Authorization header
+                    if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+                    {
+                        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
+                    }
+
+                    // Copy content headers
                     foreach (var header in context.Request.Headers)
                     {
-                        if (!header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase) &&
-                            !header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                        if (header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase) ||
+                            header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
                         {
-                            requestMessage.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
+                            requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
                         }
                     }
 
@@ -263,66 +175,6 @@ namespace MplUserService.Routes
                     return Results.Problem("An error occurred while processing the request");
                 }
             }).RequireAuthorization();
-
-            app.MapGet("/data/full/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
-            {
-                try
-                {
-                    var client = httpClientFactory.CreateClient("DbClient");
-                    var requestUrl = $"{catchAll}{context.Request.QueryString}";
-
-                    var response = await client.GetAsync(requestUrl);
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        logger.LogWarning("GET request failed for {RequestUrl}", requestUrl);
-                        return Results.Problem($"GET request failed for {requestUrl}");
-                    }
-
-                    var content = await response.Content.ReadAsStringAsync();
-                    return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error processing GET request for /data/full/{CatchAll}", catchAll);
-                    return Results.Problem("An error occurred while processing the request");
-                }
-            }).RequireAuthorization("admin");
-
-            app.MapPost("/data/full/{**catchAll}", async ([FromServices] IHttpClientFactory httpClientFactory, HttpContext context, string catchAll, ILogger<Program> logger) =>
-            {
-                try
-                {
-                    var client = httpClientFactory.CreateClient("DbClient");
-                    var requestUrl = $"{catchAll}{context.Request.QueryString}";
-
-                    var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
-                    {
-                        Content = new StreamContent(context.Request.Body)
-                    };
-
-                    foreach (var header in context.Request.Headers)
-                    {
-                        requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
-                    }
-
-                    var response = await client.SendAsync(requestMessage);
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        logger.LogWarning("POST request failed for {RequestUrl}", requestUrl);
-                        return Results.Problem($"POST request failed for {requestUrl}");
-                    }
-
-                    var content = await response.Content.ReadAsStringAsync();
-                    return Results.Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error processing POST request for /data/full/{CatchAll}", catchAll);
-                    return Results.Problem("An error occurred while processing the request");
-                }
-            }).RequireAuthorization("admin");
         }
     }
 }

@@ -8,7 +8,7 @@ using MplUserService.Interfaces;
 using MplUserService.Models;
 using MplUserService.Models.Dtos;
 using MplUserService.Models.Enums;
-using MplUserService.Options;
+using MplUserService.Config;
 
 namespace MplUserService.Services
 {

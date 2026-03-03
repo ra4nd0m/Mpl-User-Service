@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MplDbApi.Interfaces;
 using MplDbApi.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +12,15 @@ namespace MplDbApi.Routes
         {
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-            app.MapGet("/materials", async (string role, IMaterialSourceService materialService) =>
+            app.MapGet("/materials", async (HttpContext context, IMaterialSourceService materialService) =>
             {
                 try
                 {
-                    var materials = await materialService.GetAllMaterials(role);
+                    var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
+                    var subscription = context.User.FindFirst("SubscriptionType")?.Value;
+                    var extractedRole = (role == "Admin") ? "Admin" : subscription ?? "Free";
+
+                    var materials = await materialService.GetAllMaterials(extractedRole);
                     return Results.Ok(materials);
                 }
                 catch (Exception ex)
@@ -23,13 +28,17 @@ namespace MplDbApi.Routes
                     logger.LogError(ex, "Error with receiving materials list.");
                     return Results.Problem("Error with receiving materials.");
                 }
-            });
+            }).RequireAuthorization();
 
-            app.MapGet("/materials/{id:int}", async (int id, string role, IMaterialSourceService materialService) =>
+            app.MapGet("/materials/{id:int}", async (HttpContext context, int id, IMaterialSourceService materialService) =>
             {
                 try
                 {
-                    var material = await materialService.GetMaterialById(id, role);
+                    var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
+                    var subscription = context.User.FindFirst("SubscriptionType")?.Value;
+                    var extractedRole = (role == "Admin") ? "Admin" : subscription ?? "Free";
+
+                    var material = await materialService.GetMaterialById(id, extractedRole);
                     return Results.Ok(material);
                 }
                 catch (KeyNotFoundException ex)
@@ -42,13 +51,17 @@ namespace MplDbApi.Routes
                     logger.LogError(ex, "Error with receiving material with ID {Id}.", id);
                     return Results.Problem("Error while receiving the material.");
                 }
-            });
+            }).RequireAuthorization();
 
-            app.MapGet("/materials/bygroup/{groupId:int}", async (int groupId, string role, IMaterialSourceService service) =>
+            app.MapGet("/materials/bygroup/{groupId:int}", async (HttpContext context, int groupId, IMaterialSourceService service) =>
             {
                 try
                 {
-                    var materials = await service.GetMaterialsByGroup(groupId, role);
+                    var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
+                    var subscription = context.User.FindFirst("SubscriptionType")?.Value;
+                    var extractedRole = (role == "Admin") ? "Admin" : subscription ?? "Free";
+
+                    var materials = await service.GetMaterialsByGroup(groupId, extractedRole);
                     return Results.Ok(materials);
                 }
                 catch (KeyNotFoundException ex)
@@ -61,7 +74,7 @@ namespace MplDbApi.Routes
                     logger.LogError(ex, "Error with receiving materials with group ID {Id}.", groupId);
                     return Results.Problem("Error while receiving the material.");
                 }
-            });
+            }).RequireAuthorization();
         }
     }
 }
