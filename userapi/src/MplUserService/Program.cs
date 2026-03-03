@@ -13,7 +13,7 @@ using MplUserService.Routes;
 using MplUserService.Services;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Primitives;
-using MplUserService.Options;
+using MplUserService.Config;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
