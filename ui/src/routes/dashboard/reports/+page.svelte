@@ -5,12 +5,7 @@
 	import { authStore } from '$lib/stores/authStore';
 	import { onMount } from 'svelte';
 	import AddFileModal from './AddFileModal.svelte';
-	import {
-		getFilesList,
-		type UserFile,
-		downloadFile,
-		deleteFile
-	} from '$lib/api/fileClient';
+	import { getFilesList, type UserFile, downloadFile, deleteFile } from '$lib/api/fileClient';
 	import { SubscriptionType } from '$lib/api/adminClient';
 	import { m } from '$lib/i18n';
 
@@ -29,9 +24,9 @@
 	let fileToDelete = $state<string | null>(null);
 
 	let fileMap = $state<UserFile[]>([]);
-	const existingGroups = $derived<string[]>(
-		[...new Set(fileMap.map((f) => f.group).filter(Boolean))]
-	);
+	const existingGroups = $derived<string[]>([
+		...new Set(fileMap.map((f) => f.group).filter(Boolean))
+	]);
 	const groupOptions = $derived(existingGroups.map((g) => ({ value: g, label: g })));
 	let selectedGroup = $state<string>('');
 	let sortDir = $state<'asc' | 'desc'>('desc');
@@ -125,7 +120,12 @@
 	</div>
 
 	{#if existingGroups.length > 0}
-		<GroupSelector bind:selected={selectedGroup} groups={groupOptions} label={m.reports_filter_by_group()} allLabel={m.reports_all_groups()} />
+		<GroupSelector
+			bind:selected={selectedGroup}
+			groups={groupOptions}
+			label={m.reports_filter_by_group()}
+			allLabel={m.reports_all_groups()}
+		/>
 	{/if}
 
 	{#if fileMap.length === 0}
@@ -235,10 +235,7 @@
 								<span class="access-denied">{m.reports_requires_higher_subscription()}</span>
 							{/if}
 						{:else if file.status === 'downloading'}
-							<button
-								class="btn btn-sm btn-secondary"
-								onclick={() => handleCancelDownload(file)}
-							>
+							<button class="btn btn-sm btn-secondary" onclick={() => handleCancelDownload(file)}>
 								{m.reports_cancel_button()}
 							</button>
 						{/if}
