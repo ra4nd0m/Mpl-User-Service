@@ -83,55 +83,71 @@ namespace MplAuthService.Routes
 
             app.MapGet("/users", async (IUserService userService) =>
             {
-                var users = await userService.GetUsers();
-                UserResponseDto result;
-                return Results.Ok(users.Select(u =>
+                try
                 {
-                    if (u.Organization != null)
+                    var users = await userService.GetUsers();
+                    UserResponseDto result;
+                    return Results.Ok(users.Select(u =>
                     {
-                        var organizationDto = new OrganizationDto(u.Organization.Name, u.Organization.Inn,
-                            u.Organization.SubscriptionType, u.Organization.SubscriptionStartDate,
-                            u.Organization.SubscriptionEndDate, u.Organization.Id);
-                        result = new UserResponseDto(u.Id, u.Email!, organizationDto, null, u.CanExportData);
-                    }
-                    else
-                    {
-                        if (u.IndividualSubscription != null)
+                        if (u.Organization != null)
                         {
-                            var subscriptionDto = new SubscriptionDataDto(
-                                u.IndividualSubscription.SubscriptionType,
-                                u.IndividualSubscription.SubscriptionStartDate,
-                                u.IndividualSubscription.SubscriptionEndDate
-                            );
-                            result = new UserResponseDto(u.Id, u.Email!, null, subscriptionDto, u.CanExportData);
+                            var organizationDto = new OrganizationDto(u.Organization.Name, u.Organization.Inn,
+                                u.Organization.SubscriptionType, u.Organization.SubscriptionStartDate,
+                                u.Organization.SubscriptionEndDate, u.Organization.Id);
+                            result = new UserResponseDto(u.Id, u.Email!, organizationDto, null, u.CanExportData);
                         }
                         else
-                            result = new UserResponseDto(u.Id, u.Email!, null, null, u.CanExportData);
-                    }
-                    return result;
-                }));
+                        {
+                            if (u.IndividualSubscription != null)
+                            {
+                                var subscriptionDto = new SubscriptionDataDto(
+                                    u.IndividualSubscription.SubscriptionType,
+                                    u.IndividualSubscription.SubscriptionStartDate,
+                                    u.IndividualSubscription.SubscriptionEndDate
+                                );
+                                result = new UserResponseDto(u.Id, u.Email!, null, subscriptionDto, u.CanExportData);
+                            }
+                            else
+                                result = new UserResponseDto(u.Id, u.Email!, null, null, u.CanExportData);
+                        }
+                        return result;
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to get users");
+                    return Results.BadRequest();
+                }
             }).RequireAuthorization("AdminOnly");
 
             app.MapGet("/users/{email}", async (IUserService userService, string email) =>
             {
-                var user = await userService.GetUserByEmail(email);
-                if (user == null)
+                try
                 {
-                    return Results.NotFound();
+                    var user = await userService.GetUserByEmail(email);
+                    if (user == null)
+                    {
+                        return Results.NotFound();
+                    }
+                    UserResponseDto result;
+                    if (user.Organization != null)
+                    {
+                        var organizationDto = new OrganizationDto(user.Organization.Name, user.Organization.Inn,
+                            user.Organization.SubscriptionType, user.Organization.SubscriptionStartDate,
+                            user.Organization.SubscriptionEndDate, user.Organization.Id);
+                        result = new UserResponseDto(user.Id, user.Email!, organizationDto, null, user.CanExportData);
+                    }
+                    else
+                    {
+                        result = new UserResponseDto(user.Id, user.Email!, null, null, user.CanExportData);
+                    }
+                    return Results.Ok(result);
                 }
-                UserResponseDto result;
-                if (user.Organization != null)
+                catch (Exception ex)
                 {
-                    var organizationDto = new OrganizationDto(user.Organization.Name, user.Organization.Inn,
-                        user.Organization.SubscriptionType, user.Organization.SubscriptionStartDate,
-                        user.Organization.SubscriptionEndDate, user.Organization.Id);
-                    result = new UserResponseDto(user.Id, user.Email!, organizationDto, null, user.CanExportData);
+                    logger.LogError(ex, "Failed to get user with email {Email}", email);
+                    return Results.BadRequest();
                 }
-                else
-                {
-                    result = new UserResponseDto(user.Id, user.Email!, null, null, user.CanExportData);
-                }
-                return Results.Ok(result);
             }).RequireAuthorization("AdminOnly");
 
             app.MapDelete("/users/{email}", async (IUserService service, UserManager<User> manager,
