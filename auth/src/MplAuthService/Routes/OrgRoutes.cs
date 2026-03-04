@@ -12,32 +12,48 @@ namespace MplAuthService.Routes
 
             app.MapGet("/organizations", async (IOrgService orgService) =>
             {
-                var orgs = await orgService.GetOrganizations();
-                return Results.Ok(orgs.Select(o => new OrganizationDto(
-                    o.Name,
-                    o.Inn,
-                    o.SubscriptionType,
-                    o.SubscriptionStartDate,
-                    o.SubscriptionEndDate,
-                    o.Id
-                )));
+                try
+                {
+                    var orgs = await orgService.GetOrganizations();
+                    return Results.Ok(orgs.Select(o => new OrganizationDto(
+                        o.Name,
+                        o.Inn,
+                        o.SubscriptionType,
+                        o.SubscriptionStartDate,
+                        o.SubscriptionEndDate,
+                        o.Id
+                    )));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to get organizations");
+                    return Results.BadRequest();
+                }
             }).RequireAuthorization("AdminOnly");
 
             app.MapGet("/organizations/{inn}", async (IOrgService orgService, string inn) =>
             {
-                var org = await orgService.GetOrganization(inn);
-                if (org == null)
+                try
                 {
-                    return Results.NotFound();
+                    var org = await orgService.GetOrganization(inn);
+                    if (org == null)
+                    {
+                        return Results.NotFound();
+                    }
+                    return Results.Ok(new OrganizationDto(
+                        org.Name,
+                        org.Inn,
+                        org.SubscriptionType,
+                        org.SubscriptionStartDate,
+                        org.SubscriptionEndDate,
+                        org.Id
+                    ));
                 }
-                return Results.Ok(new OrganizationDto(
-                    org.Name,
-                    org.Inn,
-                    org.SubscriptionType,
-                    org.SubscriptionStartDate,
-                    org.SubscriptionEndDate,
-                    org.Id
-                ));
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to get organization with inn {Inn}", inn);
+                    return Results.BadRequest();
+                }
             }).RequireAuthorization("AdminOnly");
 
             app.MapGet("/organizations/{orgId}/users", async (IOrgService orgService, int orgId) =>
