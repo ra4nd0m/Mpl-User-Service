@@ -43,3 +43,6 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# Ignore test output
+data/
