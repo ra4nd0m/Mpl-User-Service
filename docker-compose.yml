@@ -1,0 +1,126 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    networks:
+      - mpl-net
+
+  dbapi:
+    build:
+      context: ./db
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5201
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${DBAPI_DB_NAME};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__FilterConnection: Data Source=/data/Filters.db
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-MplAuth}
+      Jwt__Audience: ${JWT_AUDIENCE:-MplService}
+    ports:
+      - "${DBAPI_PORT:-5201}:5201"
+    volumes:
+      - dbapi-filter-data:/data
+    networks:
+      - mpl-net
+
+  auth:
+    build:
+      context: ./auth
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dbapi:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5203
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${AUTH_DB_NAME};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-MplAuth}
+      Jwt__Audience: ${JWT_AUDIENCE:-MplService}
+      ExternalUserApi__BaseUrl: http://dbapi:5201
+      Cert__Path: /certs/auth-cert.pfx
+      Cert__Password: ${AUTH_CERT_PASSWORD}
+      Cors__AllowedOrigins__0: ${APP_ORIGIN:-http://localhost:8080}
+    ports:
+      - "${AUTH_PORT:-5203}:5203"
+    volumes:
+      - ${AUTH_CERT_HOST_PATH}:/certs/auth-cert.pfx:ro
+    networks:
+      - mpl-net
+
+  userapi:
+    build:
+      context: ./userapi
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dbapi:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5204
+      Hosting__Urls: http://0.0.0.0:5204
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${USERAPI_DB_NAME};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-MplAuth}
+      Jwt__Audience: ${JWT_AUDIENCE:-MplService}
+      DBApi__BaseUrl: http://dbapi:5201
+      SpreadsheetApi__BaseUrl: ${SPREADSHEET_API_BASE_URL}
+      Storage__RootPath: /data/storage
+      Cors__AllowedOrigins__0: ${APP_ORIGIN:-http://localhost:8080}
+    ports:
+      - "${USERAPI_PORT:-5204}:5204"
+    volumes:
+      - userapi-storage:/data/storage
+    networks:
+      - mpl-net
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile.nginx
+      args:
+        VITE_USE_MOCKS: ${UI_VITE_USE_MOCKS:-false}
+        VITE_API_BASE_URL: ${UI_VITE_API_BASE_URL:-http://localhost:8080/userapi}
+        VITE_API_AUTH_URL: ${UI_VITE_API_AUTH_URL:-http://localhost:8080/authapi}
+        REAL_URL: ${UI_REAL_URL:-http://localhost:8080}
+    restart: unless-stopped
+    depends_on:
+      auth:
+        condition: service_started
+      userapi:
+        condition: service_started
+    ports:
+      - "${UI_PORT:-8080}:80"
+    networks:
+      - mpl-net
+
+networks:
+  mpl-net:
+    driver: bridge
+
+volumes:
+  pg-data:
+  dbapi-filter-data:
+  userapi-storage:
