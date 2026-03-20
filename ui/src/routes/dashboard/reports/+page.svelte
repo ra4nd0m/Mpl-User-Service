@@ -178,7 +178,7 @@
 				<div class="col-subscription">{m.reports_table_required()}</div>
 				<div class="col-actions">{m.reports_table_actions()}</div>
 			</div>
-			{#each reportFilesList as file}
+			{#each reportFilesList as file (file.id)}
 				<div class="table-row">
 					<div class="col-filename">
 						<svg

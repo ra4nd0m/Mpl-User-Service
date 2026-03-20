@@ -41,7 +41,7 @@
 					<th rowspan="2">{m.materials_table_change()}</th>
 					<th colspan="3">{m.materials_table_price_last()}</th>
 					<th rowspan="2">{m.materials_table_last_updated()}</th>
-					{#each extraColumns as column}
+					{#each extraColumns as column (column)}
 						<th rowspan="2">{column.localisedHeader}</th>
 					{/each}
 					<th rowspan="2"></th>
@@ -53,7 +53,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each materials as material}
+				{#each materials as material (material.id)}
 					<tr>
 						<td class="favorite-cell">
 							<button
@@ -125,7 +125,7 @@
 						<td>{material.latestMaxValue !== undefined ? nf.format(material.latestMaxValue) : '—'}</td>
 					{/if}
 					<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
-					{#each extraColumns as column}
+					{#each extraColumns as column (column)}
 						<td>{column.render(material)}</td>
 						{/each}
 						<td>

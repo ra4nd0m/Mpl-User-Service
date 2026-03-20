@@ -193,7 +193,7 @@
     </div>
 {:else}
     <div class="filters-container">
-        {#each filters as filter}
+        {#each filters as filter (filter)}
             <div class="filter-card">
                 <div class="filter-header">
                     <h3>{m.filters_filter_title()}</h3>
@@ -208,7 +208,7 @@
                         <div class="filter-values">
                             {#if filter.groups.length > 0}
                                 {@const groupNames = getGroupNames(filter.groups)}
-                                {#each groupNames as groupName}
+                                {#each groupNames as groupName (groupName)}
                                     <span class="filter-tag">{groupName}</span>
                                 {/each}
                                 {#if groupNames.length < filter.groups.length}
@@ -227,7 +227,7 @@
                         <div class="filter-values">
                             {#if filter.sources.length > 0}
                                 {@const sourceNames = getSourceNames(filter.sources)}
-                                {#each sourceNames as sourceName}
+                                {#each sourceNames as sourceName (sourceName)}
                                     <span class="filter-tag">{sourceName}</span>
                                 {/each}
                                 {#if sourceNames.length < filter.sources.length}
@@ -246,7 +246,7 @@
                         <div class="filter-values">
                             {#if filter.units.length > 0}
                                 {@const unitNames = getUnitNames(filter.units)}
-                                {#each unitNames as unitName}
+                                {#each unitNames as unitName (unitName)}
                                     <span class="filter-tag">{unitName}</span>
                                 {/each}
                                 {#if unitNames.length < filter.units.length}
@@ -265,7 +265,7 @@
                         <div class="filter-values">
                             {#if filter.materialIds.length > 0}
                                 {@const materialNames = getMaterialNames(filter.materialIds)}
-                                {#each materialNames as materialName}
+                                {#each materialNames as materialName (materialName)}
                                     <span class="filter-tag material-tag">{materialName}</span>
                                 {/each}
                                 {#if materialNames.length < filter.materialIds.length}
@@ -284,7 +284,7 @@
                         <div class="filter-values">
                             {#if filter.properties.length > 0}
                                 {@const propertyNames = getPropertyNames(filter.properties)}
-                                {#each propertyNames as propertyName}
+                                {#each propertyNames as propertyName (propertyName)}
                                     <span class="filter-tag">{propertyName}</span>
                                 {/each}
                                 {#if propertyNames.length < filter.properties.length}
@@ -322,7 +322,7 @@
                 <div class="edit-section">
                     <h4>{m.filters_groups()}</h4>
                     <div class="selected-items">
-                        {#each editingFilter.groups as groupId}
+                        {#each editingFilter.groups as groupId (groupId)}
                             {@const groupName = groupMap.get(groupId) || m.filters_group_fallback({ id: groupId })}
                             <span class="selected-tag">
                                 {groupName}
@@ -337,7 +337,7 @@
                         target.value = '';
                     }}>
                         <option value="">{m.filters_add_group()}</option>
-                        {#each materialGroups as group}
+                        {#each materialGroups as group (group.id)}
                             {#if !editingFilter.groups.includes(group.id)}
                                 <option value={group.id}>{group.name}</option>
                             {/if}
@@ -348,7 +348,7 @@
                 <div class="edit-section">
                     <h4>{m.filters_sources()}</h4>
                     <div class="selected-items">
-                        {#each editingFilter.sources as sourceId}
+                        {#each editingFilter.sources as sourceId (sourceId)}
                             {@const sourceName = sourceMap.get(sourceId) || m.filters_source_fallback({ id: sourceId })}
                             <span class="selected-tag">
                                 {sourceName}
@@ -363,7 +363,7 @@
                         target.value = '';
                     }}>
                         <option value="">{m.filters_add_source()}</option>
-                        {#each sources as source}
+                        {#each sources as source (source.id)}
                             {#if !editingFilter.sources.includes(source.id)}
                                 <option value={source.id}>{source.name}</option>
                             {/if}
@@ -374,7 +374,7 @@
                 <div class="edit-section">
                     <h4>{m.filters_units()}</h4>
                     <div class="selected-items">
-                        {#each editingFilter.units as unitId}
+                        {#each editingFilter.units as unitId (unitId)}
                             {@const unitName = unitMap.get(unitId) || m.filters_unit_fallback({ id: unitId })}
                             <span class="selected-tag">
                                 {unitName}
@@ -389,7 +389,7 @@
                         target.value = '';
                     }}>
                         <option value="">{m.filters_add_unit()}</option>
-                        {#each units as unit}
+                        {#each units as unit (unit.id)}
                             {#if !editingFilter.units.includes(unit.id)}
                                 <option value={unit.id}>{unit.name}</option>
                             {/if}
@@ -400,7 +400,7 @@
                 <div class="edit-section">
                     <h4>{m.filters_materials()}</h4>
                     <div class="selected-items">
-                        {#each editingFilter.materialIds as materialId}
+                        {#each editingFilter.materialIds as materialId (materialId)}
                             {@const material = materialMap.get(materialId)}
                             {@const materialName = material?.materialName || m.filters_material_fallback({ id: materialId })}
                             <span class="selected-tag material-tag">
@@ -416,7 +416,7 @@
                         target.value = '';
                     }}>
                         <option value="">{m.filters_add_material()}</option>
-                        {#each materials as material}
+                        {#each materials as material (material.id)}
                             {#if !editingFilter.materialIds.includes(material.id)}
                                 <option value={material.id}>{material.materialName}</option>
                             {/if}
@@ -427,7 +427,7 @@
                 <div class="edit-section">
                     <h4>{m.filters_properties()}</h4>
                     <div class="selected-items">
-                        {#each editingFilter.properties as propertyId}
+                        {#each editingFilter.properties as propertyId (propertyId)}
                             {@const propertyName = propertyMap.get(propertyId) || m.filters_property_fallback({ id: propertyId })}
                             <span class="selected-tag">
                                 {propertyName}
@@ -442,7 +442,7 @@
                         target.value = '';
                     }}>
                         <option value="">{m.filters_add_property()}</option>
-                        {#each properties as property}
+                        {#each properties as property (property.id)}
                             {#if !editingFilter.properties.includes(property.id)}
                                 <option value={property.id}>{property.name}</option>
                             {/if}
