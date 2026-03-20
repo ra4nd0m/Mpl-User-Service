@@ -64,6 +64,8 @@
 			: otherMaterials
 	);
 
+	// Leaving it in for now
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const shfeExtraColumns = [
 		{
 			localisedHeader: m.materials_table_volume(),

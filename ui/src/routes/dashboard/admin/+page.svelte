@@ -213,7 +213,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each userList as user}
+						{#each userList as user (user.email)}
 							<tr>
 								<td class="email-col">{user.email}</td>
 								<td class="org-col">
@@ -227,7 +227,7 @@
 								</td>
 								<td class="inn-col">{user.org?.inn || 'N/A'}</td>
 								<td class="export-col">
-									<span class="{user.canExportData ? 'export-allowed' : 'export-denied'}">
+									<span class={user.canExportData ? 'export-allowed' : 'export-denied'}>
 										{user.canExportData ? m.universal_yes() : m.universal_no()}
 									</span>
 								</td>

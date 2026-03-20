@@ -55,7 +55,7 @@
 	<div class="login-container">
 		<div class="language-toggle">
 			<select value={$locale} onchange={handleLanguageChange}>
-				{#each locales as lang}
+				{#each locales as lang (lang)}
 					<option value={lang}>{lang.toUpperCase()}</option>
 				{/each}
 			</select>

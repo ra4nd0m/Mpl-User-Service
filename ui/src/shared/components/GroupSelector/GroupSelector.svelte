@@ -25,7 +25,7 @@
 	<button class:active={selected === ''} onclick={() => select('')}>
 		{allLabel}
 	</button>
-	{#each groups as group}
+	{#each groups as group (group.value)}
 		<button class:active={selected === group.value} onclick={() => select(group.value)}>
 			{group.label}
 		</button>
@@ -41,7 +41,7 @@
 		onchange={(e) => select((e.target as HTMLSelectElement).value)}
 	>
 		<option value="">{allLabel}</option>
-		{#each groups as group}
+		{#each groups as group (group.value)}
 			<option value={group.value}>{group.label}</option>
 		{/each}
 	</select>

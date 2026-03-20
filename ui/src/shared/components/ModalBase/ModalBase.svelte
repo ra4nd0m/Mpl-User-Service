@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { Component as SvelteComponent } from 'svelte';
+
 	let {
 		title,
 		size = { width: '900px', height: '90vh' },
@@ -49,8 +51,8 @@
 		showModal: boolean;
 		title: string;
 		size?: ModalWindowSizes;
-		Component: any;
-		componentProps?: any;
+		Component: unknown;
+		componentProps?: Record<string, unknown>;
 	};
 
 	type ModalWindowSizes = {
@@ -60,6 +62,7 @@
 </script>
 
 {#if showModal}
+	{@const DynamicComponent = Component as SvelteComponent<Record<string, unknown>>}
 	<div class="modal-backdrop" onmousedown={handleBackdropMouseDown} onmouseup={handleBackdropMouseUp} role="presentation">
 		<div
 			class="modal-container"
@@ -88,7 +91,7 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<Component {...componentProps} />
+				<DynamicComponent {...componentProps} />
 			</div>
 		</div>
 	</div>

@@ -28,17 +28,6 @@
 		requestUsersRefresh?: () => void;
 	} = $props();
 
-	const emptyOrg: OrgResponse = {
-		name: '',
-		inn: '',
-		subscriptionType: SubscriptionType.Free,
-		subscriptionStartDate: new Date().toISOString().split('T')[0],
-		subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-			.toISOString()
-			.split('T')[0],
-		id: 0
-	};
-
 	const emptySub: SubscriptionDataDto = {
 		subscriptionType: SubscriptionType.Free,
 		subscriptionStartDate: new Date().toISOString().split('T')[0],
@@ -106,9 +95,6 @@
 
 	let isCreateOrgModalOpen = $state(false);
 	let orgModalMode: 'create' | 'edit' = $state('create');
-
-	//let previousOrg: OrgResponse | null = null;
-	let previousSub: SubscriptionDataDto | null = null;
 
 	onMount(async () => {
 		await loadOrgs();
@@ -227,7 +213,7 @@
 		const hasLowercase = /[a-z]/.test(password);
 		const hasUppercase = /[A-Z]/.test(password);
 		const hasDigit = /[0-9]/.test(password);
-		const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+		const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(password);
 
 		if (!hasLowercase) {
 			return { valid: false, error: m.admin_create_user_error_password_no_lowercase() };
@@ -607,7 +593,7 @@
 				{:else}
 					<select id="org-select" bind:value={selectedOrgId} onchange={handleOrgSelection} required>
 						<option value="">-- Select an organization --</option>
-						{#each organizations as org}
+						{#each organizations as org (org.id)}
 							<option value={String(org.id)}>
 								{org.name} (INN: {org.inn})
 							</option>

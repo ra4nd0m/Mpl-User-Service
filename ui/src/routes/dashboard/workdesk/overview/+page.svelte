@@ -178,7 +178,7 @@
 				<thead>
 					<tr>
 						<th rowspan="2">{m.overview_date_column()}</th>
-						{#each favoriteMaterials as material}
+						{#each favoriteMaterials as material (material.id)}
 							{@const displayProps = displayPropsMap.get(material.id) ?? []}
 							{#if displayProps.length > 0}
 								<th colspan={displayProps.length}>{material.materialName}</th>
@@ -186,26 +186,26 @@
 						{/each}
 					</tr>
 					<tr>
-						{#each favoriteMaterials as material}
+						{#each favoriteMaterials as material (material.id)}
 							{@const displayProps = displayPropsMap.get(material.id) ?? []}
-							{#each displayProps as prop}
+							{#each displayProps as prop (prop.id)}
 								<th>{prop.name}</th>
 							{/each}
 						{/each}
 					</tr>
 				</thead>
 				<tbody>
-					{#each materialData as entry}
+					{#each materialData as entry (entry.date)}
 						<tr>
 							<td class="date-cell">{formatDate(entry.date)}</td>
-							{#each favoriteMaterials as favMaterial}
+							{#each favoriteMaterials as favMaterial (favMaterial.id)}
 								{@const displayProps = displayPropsMap.get(favMaterial.id) ?? []}
 								{@const matchedData = entry.valuesMap.get(favMaterial.id)}
 
-								{#each displayProps as prop}
+								{#each displayProps as prop (prop.id)}
 									{#if matchedData && matchedData.propsUsed.includes(prop.id)}
 										<td class="value-cell">
-											{(matchedData as any)[prop.valueKey] || 'N/A'}
+											{(matchedData as unknown as Record<string, string | null>)[prop.valueKey] || 'N/A'}
 										</td>
 									{:else}
 										<!-- Show placeholder if no data for this date OR this specific prop wasn't included for this date -->

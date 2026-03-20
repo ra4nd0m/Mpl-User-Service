@@ -9,7 +9,6 @@
 	import { locales, switchLocale, locale, m } from '$lib/i18n';
 
 	let { children } = $props();
-	let checkingAuth = $state(true);
 	let mobileMenuOpen = $state(false);
 
 	async function handleLogout() {
@@ -80,7 +79,6 @@
 			if (!$favoritesStore.loading && $favoritesStore.ids.length === 0) {
 				await favoritesStore.loadFavourites();
 			}
-			checkingAuth = false;
 		} else {
 			// Not authenticated or no token, try refreshing
 			const newToken = await refreshAccessToken();
@@ -88,7 +86,6 @@
 				authStore.setToken(newToken);
 				// Now authenticated, load data
 				await favoritesStore.loadFavourites();
-				checkingAuth = false;
 			} else {
 				// Refresh failed, redirect to login
 				if (browser) {
@@ -239,7 +236,7 @@
 				<div class="desktop-controls">
 					<div class="language-toggle">
 						<select value={$locale} onchange={handleLanguageChange}>
-							{#each locales as lang}
+							{#each locales as lang (lang)}
 								<option value={lang}>{lang.toUpperCase()}</option>
 							{/each}
 						</select>
@@ -451,7 +448,7 @@
 							<div class="mobile-language-toggle">
 								<label for="mobile-language">Language:</label>
 								<select id="mobile-language" value={$locale} onchange={handleLanguageChange}>
-									{#each locales as lang}
+									{#each locales as lang (lang)}
 										<option value={lang}>{lang.toUpperCase()}</option>
 									{/each}
 								</select>

@@ -8,12 +8,10 @@
 		goto('/dashboard/workdesk/pricetracking');
 	}
 
+	// We still have overview on paper so we keep the function for future use, but hide the button for now
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function goToOverview() {
 		goto('/dashboard/workdesk/overview');
-	}
-
-	function goToWorkArea3() {
-		goto('/dashboard/workdesk/area3');
 	}
 </script>
 

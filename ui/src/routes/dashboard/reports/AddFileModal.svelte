@@ -185,7 +185,7 @@
 		<div class="files-section">
 			<h4>{m.add_files_files_to_upload()}</h4>
 			<div class="files-table">
-				{#each files as item}
+				{#each files as item (item.id)}
 					<div class="file-row" class:complete={item.status === 'complete'}>
 						<div class="file-name">
 							<svg
@@ -217,7 +217,7 @@
 							disabled={item.status === 'uploading'}
 							class="subscription-select"
 						>
-							{#each subscriptionOptions as [label, value]}
+							{#each subscriptionOptions as [label, value] (value)}
 								<option {value}>{label}</option>
 							{/each}
 						</select>
@@ -280,7 +280,7 @@
 </div>
 
 <datalist id="groups-datalist">
-	{#each existingGroups as group}
+	{#each existingGroups as group (group)}
 		<option value={group}></option>
 	{/each}
 </datalist>

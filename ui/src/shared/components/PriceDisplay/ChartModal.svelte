@@ -2,14 +2,27 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { m, getLocale } from '$lib/i18n';
+	import type { Material, MaterialDateMetricsResp } from '$lib/api/userClient';
+	import type { Chart as ChartInstance, ChartDataset, ChartTypeRegistry, Plugin } from 'chart.js';
 
-	let Chart: any;
-	let zoomPlugin: any;
+	type ChartDataPoint = number | null;
+	type FilteredDataPoint = {
+		date: string;
+		value: string | null;
+	};
 
-	const { priceData, materialInfo, filteredData, aggregatesChosen } = $props();
+	let Chart: (typeof import('chart.js/auto'))['default'] | null = null;
+	let zoomPlugin: Plugin<'line'> | null = null;
+
+	const { priceData, materialInfo, filteredData, aggregatesChosen } = $props<{
+		priceData: MaterialDateMetricsResp[] | null;
+		materialInfo: Material | null;
+		filteredData: FilteredDataPoint[];
+		aggregatesChosen: string[];
+	}>();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
-	let chart: any | null = null;
+	let chart: ChartInstance<keyof ChartTypeRegistry, ChartDataPoint[], string> | null = null;
 
 	function formatDate(dateString: string): string {
 		const currentLocale = getLocale();
@@ -47,7 +60,7 @@
 		}
 
 		let labels: string[] = [];
-		let datasets: any[] = [];
+		let datasets: ChartDataset<'line', ChartDataPoint[]>[] = [];
 
 		if (aggregatesChosen && aggregatesChosen.length > 0) {
 			//Invert the data, as default is newest entries first

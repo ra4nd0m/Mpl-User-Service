@@ -132,7 +132,7 @@
 			} else {
 				error = 'No data available';
 			}
-		} catch (err) {
+		} catch {
 			error = 'Error fetching data';
 		} finally {
 			isLoading = false;
@@ -1162,14 +1162,14 @@
 					</thead>
 					<tbody>
 						{#if aggregatesChosen.length > 0}
-							{#each filteredDataOrdered as item}
+							{#each filteredDataOrdered as item (item.date)}
 								<tr>
 									<td>{item.date}</td>
 									<td>{item.value}</td>
 								</tr>
 							{/each}
 						{:else}
-							{#each priceData as item}
+							{#each priceData as item (item.date)}
 								<tr>
 									<td>{formatDate(item.date)}</td>
 									{#if item.propsUsed.some((s) => s === 1)}
