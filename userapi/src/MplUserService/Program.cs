@@ -13,6 +13,7 @@ using MplUserService.Routes;
 using MplUserService.Services;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Primitives;
+using Microsoft.Extensions.Options;
 using MplUserService.Config;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
@@ -46,6 +47,16 @@ builder.Services.Configure<StorageQuotaOptions>(
     configuration.GetSection(StorageQuotaOptions.SectionName)
 );
 
+builder.Services.AddOptions<CurrencyApiOptions>()
+    .Bind(configuration.GetSection(CurrencyApiOptions.SectionName))
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.BaseUrl),
+        "CurrencyApi:BaseUrl is missing"
+    )
+    .ValidateOnStart();
+
+builder.Services.AddMemoryCache();
+
 builder.Services.AddHttpClient("DbClient", client =>
 {
     client.BaseAddress = new Uri(configuration["DBApi:BaseUrl"] ?? throw new InvalidOperationException("DBApi:BaseUrl is missing"));
@@ -54,6 +65,17 @@ builder.Services.AddHttpClient("DbClient", client =>
 builder.Services.AddHttpClient("SpreadsheetClient", client =>
 {
     client.BaseAddress = new Uri(configuration["SpreadsheetApi:BaseUrl"] ?? throw new InvalidOperationException("SpreadsheetApi:BaseUrl is missing"));
+});
+
+builder.Services.AddHttpClient("CurrencyApiClient", (serviceProvider, client) =>
+{
+    var currencyApiOptions = serviceProvider.GetRequiredService<IOptions<CurrencyApiOptions>>().Value;
+    if (string.IsNullOrWhiteSpace(currencyApiOptions.BaseUrl))
+    {
+        throw new InvalidOperationException("CurrencyApi:BaseUrl is missing");
+    }
+
+    client.BaseAddress = new Uri(currencyApiOptions.BaseUrl);
 });
 
 builder.Services.AddDbContext<UserContext>(options =>
@@ -109,6 +131,7 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IAuthorizationHandler, SubscriptionHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, CanExportDataHandler>();
+builder.Services.AddScoped<ICurrencyRatesService, CurrencyRatesService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -180,6 +203,7 @@ app.MapMaterialRoutes();
 app.MapGeneratorRoutes();
 app.MapInternalRoutes();
 app.MapReportFileRoutes();
+app.MapCurrencyApiRoutes();
 
 
 using (var scope = app.Services.CreateScope())

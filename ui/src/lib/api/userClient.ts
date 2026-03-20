@@ -287,6 +287,21 @@ export async function updateUserSettings(settings: WidgetSettings): Promise<void
     }
 }
 
+export async function getCurrencyRates(): Promise<CurrencyApiResponse | null> {
+    try {
+        const resp = await fetchWithAuth('currency/latest');
+        if (!resp.ok) {
+            console.error('Failed to get currency rates:', resp.statusText);
+            return null;
+        }
+        const data = await resp.json();
+        return data as CurrencyApiResponse;
+    } catch (err) {
+        console.error('Error during getCurrencyRates:', err);
+        return null;
+    }
+}
+
 export interface Material {
     id: number;
     materialName: string;
@@ -376,4 +391,11 @@ export interface IdNamePair {
 export interface SpreadsheetReqAvgData {
     date: string;
     value: string | null;
+}
+
+export interface CurrencyApiResponse {
+    acutalDate: string;
+    rates: {
+        [key: string]: number;
+    }
 }
