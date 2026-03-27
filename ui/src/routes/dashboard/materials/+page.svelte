@@ -250,6 +250,7 @@
 			<MaterialsTable
 				title="SHFE"
 				materials={filteredShfeMaterials}
+				currencyRates={currencyRatesMap}
 				{isFavorite}
 				{toggleFavorite}
 				{getChangeClass}
@@ -261,6 +262,7 @@
 			<MaterialsTable
 				title="LME"
 				materials={filteredLmeMaterials}
+				currencyRates={currencyRatesMap}
 				{isFavorite}
 				{toggleFavorite}
 				{getChangeClass}
@@ -272,6 +274,7 @@
 			<MaterialsTable
 				title={m.materials_group_other()}
 				materials={filteredOtherMaterials}
+				currencyRates={currencyRatesMap}
 				{isFavorite}
 				{toggleFavorite}
 				{getChangeClass}

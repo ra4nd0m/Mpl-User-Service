@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { m, locale } from '$lib/i18n';
 	import type { Material } from '$lib/api/userClient';
+	import { availableCurrencies, convertCurrencyValue } from '$lib/utils/currencyHelperUtil';
 
 	let {
 		title,
@@ -10,8 +11,11 @@
 		getChangeClass,
 		onShowPrice,
 		hasSearch,
+		currencyRates,
 		extraColumns = []
 	}: MaterialsTableProps = $props();
+
+	let selectedCurrency = $state('');
 
 	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
 	let df = $derived(
@@ -26,11 +30,37 @@
 		getChangeClass: (changePercent: string | null) => string;
 		onShowPrice: (materialId: number) => void;
 		hasSearch: boolean;
+		currencyRates: Record<string, number>;
 		extraColumns?: { localisedHeader: string; render: (material: Material) => string }[];
 	};
+
+	function formatPriceValue(rawValue: number | null | undefined, materialUnit: string): string {
+		if (rawValue === null || rawValue === undefined) return '—';
+
+		const converted = convertCurrencyValue(materialUnit, rawValue, selectedCurrency, currencyRates);
+		return nf.format(converted);
+	}
+
+	function currencyLabel(value: string): string {
+		return value === '' ? m.materials_currency_switcher_default() : value;
+	}
+
+	function displayUnit(unit: string): string {
+		return selectedCurrency ? `${unit} (${selectedCurrency})` : unit;
+	}
 </script>
 
-<h2>{title}</h2>
+<div class="table-header-row">
+	<h2>{title}</h2>
+	<label class="currency-switcher">
+		<span>{m.materials_currency_switcher_label()}</span>
+		<select bind:value={selectedCurrency} aria-label={m.materials_currency_switcher_aria()}>
+			{#each availableCurrencies as code (code)}
+				<option value={code}>{currencyLabel(code)}</option>
+			{/each}
+		</select>
+	</label>
+</div>
 <div class="materials-table-container">
 	<div class="table-wrapper">
 		<table class="materials-table">
@@ -103,7 +133,7 @@
 						<td class="table-material-name">
 							<div class="material-name">
 								{material.materialName}
-								{material.unit}
+								{displayUnit(material.unit)}
 								{material.deliveryType}
 								{material.market}
 							</div>
@@ -111,18 +141,18 @@
 					<td class="{getChangeClass(material.changePercent)}">{material.changePercent}</td>
 					<td>
 						{material.latestAvgValue !== null && material.latestAvgValue !== undefined
-							? nf.format(material.latestAvgValue)
+							? formatPriceValue(material.latestAvgValue, material.unit)
 							: '-'}
 					</td>
 					{#if material.latestMinValue === null}
 						<td>—</td>
 					{:else}
-						<td>{material.latestMinValue !== undefined ? nf.format(material.latestMinValue) : '—'}</td>
+						<td>{formatPriceValue(material.latestMinValue, material.unit)}</td>
 					{/if}
 					{#if material.latestMaxValue === null}
 						<td>—</td>
 					{:else}
-						<td>{material.latestMaxValue !== undefined ? nf.format(material.latestMaxValue) : '—'}</td>
+						<td>{formatPriceValue(material.latestMaxValue, material.unit)}</td>
 					{/if}
 					<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
 					{#each extraColumns as column (column)}
@@ -165,12 +195,39 @@
 </div>
 
 <style>
+	.table-header-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+
 	h2 {
-		margin-bottom: 1.5rem;
+		margin: 0;
 		font-size: 1.5rem;
 		color: #333;
 		border-bottom: 1px solid #e9ecef;
 		padding-bottom: 0.75rem;
+		flex: 1;
+	}
+
+	.currency-switcher {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.9rem;
+		color: #495057;
+		white-space: nowrap;
+	}
+
+	.currency-switcher select {
+		border: 1px solid #ced4da;
+		background: #fff;
+		border-radius: 6px;
+		padding: 0.3rem 0.5rem;
+		font-size: 0.9rem;
+		color: #212529;
 	}
 
 	.materials-table-container {
@@ -334,9 +391,15 @@
 
 	/* Mobile responsive styles */
 	@media (max-width: 768px) {
+		.table-header-row {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
 		h2 {
 			font-size: 1.3rem;
-			margin-bottom: 1rem;
+			width: 100%;
 		}
 
 		.materials-table-container {
