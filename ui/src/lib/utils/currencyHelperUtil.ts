@@ -7,3 +7,9 @@ export const providerCodeToInternal: Record<ProviderCurrency, InternalCurrency> 
     '¥/т': "CNY"
 }
 
+export const availableCurrencies = [
+    "",
+    "RUB",
+    "USD",
+    "CNY"
+]
