@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import { favoritesStore } from '$lib/stores/favouritesStore';
 	import {
+		getCurrencyRates,
 		getMaterialGroups,
 		getMaterials,
 		getMaterialsByGroup,
+		type CurrencyApiResponse,
 		type Material
 	} from '$lib/api/userClient';
 
@@ -13,6 +15,7 @@
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
 	import MaterialsTable from './MaterialsTable.svelte';
+	import CurrencyRatesWidget from './CurrencyRatesWidget.svelte';
 	import GroupSelector from '$components/GroupSelector/GroupSelector.svelte';
 
 	let isModalShown = $state(false);
@@ -25,6 +28,18 @@
 	let searchQuery = $state('');
 
 	let selectedGroupStr = $state('');
+	let currencyLoading = $state(false);
+	let currencyError = $state('');
+	let currencyRatesMap = $state<CurrencyApiResponse['rates']>({});
+	let currencyActualDate = $state<string | null>(null);
+
+	const preferredCurrencyCodes = ['RUB', 'USD', 'EUR', 'INR', 'CNY'];
+	const currenciesForWidget = $derived(
+		preferredCurrencyCodes
+			.filter((code) => typeof currencyRatesMap[code] === 'number')
+			.map((code) => ({ code, rate: currencyRatesMap[code] }))
+	);
+
 	const groupOptions = $derived(
 		materialGroups.map((g) => ({ value: String(g.id), label: g.name }))
 	);
@@ -136,6 +151,28 @@
 		await loadMaterials(groupId);
 	}
 
+	async function loadCurrencies() {
+		try {
+			currencyLoading = true;
+			currencyError = '';
+
+			const currencyResponse = await getCurrencyRates();
+			if (!currencyResponse) {
+				throw new Error('Failed to load currency rates');
+			}
+
+			currencyRatesMap = currencyResponse.rates ?? {};
+			currencyActualDate = currencyResponse.acutalDate ?? null;
+		} catch (err) {
+			console.error(err);
+			currencyError = 'Failed to load currency rates';
+			currencyRatesMap = {};
+			currencyActualDate = null;
+		} finally {
+			currencyLoading = false;
+		}
+	}
+
 	function getChangeClass(changePercent: string | null): string {
 		if (!changePercent) return '';
 
@@ -153,8 +190,7 @@
 	}
 
 	onMount(async () => {
-		await loadGroups();
-		await loadMaterials();
+		await Promise.all([loadCurrencies(), loadGroups(), loadMaterials()]);
 	});
 </script>
 
@@ -167,7 +203,9 @@
 </svelte:head>
 
 <section>
-	<h1>{m.materials_header()}</h1>
+	<div class="materials-header-row">
+		<h1 class="materials-page-title">{m.materials_header()}</h1>
+	</div>
 	<!-- Material Group Selector -->
 	<GroupSelector
 		bind:selected={selectedGroupStr}
@@ -177,16 +215,26 @@
 		onchange={(v) => selectGroup(v === '' ? null : parseInt(v, 10))}
 	/>
 
-	<div class="search-container">
-		<input
-			type="text"
-			placeholder={m.materials_search_placeholder()}
-			bind:value={searchQuery}
-			class="search-input"
-		/>
-		{#if searchQuery}
-			<button class="clear-search" onclick={() => (searchQuery = '')}> x </button>
-		{/if}
+	<div class="top-controls-row">
+		<div class="search-container">
+			<input
+				type="text"
+				placeholder={m.materials_search_placeholder()}
+				bind:value={searchQuery}
+				class="search-input"
+			/>
+			{#if searchQuery}
+				<button class="clear-search" onclick={() => (searchQuery = '')}> x </button>
+			{/if}
+		</div>
+		<div class="currency-line-wrap">
+			<CurrencyRatesWidget
+				currencies={currenciesForWidget}
+				actualDate={currencyActualDate}
+				loading={currencyLoading}
+				error={currencyError}
+			/>
+		</div>
 	</div>
 
 	{#if error}
@@ -202,6 +250,7 @@
 			<MaterialsTable
 				title="SHFE"
 				materials={filteredShfeMaterials}
+				currencyRates={currencyRatesMap}
 				{isFavorite}
 				{toggleFavorite}
 				{getChangeClass}
@@ -213,6 +262,7 @@
 			<MaterialsTable
 				title="LME"
 				materials={filteredLmeMaterials}
+				currencyRates={currencyRatesMap}
 				{isFavorite}
 				{toggleFavorite}
 				{getChangeClass}
@@ -224,6 +274,7 @@
 			<MaterialsTable
 				title={m.materials_group_other()}
 				materials={filteredOtherMaterials}
+				currencyRates={currencyRatesMap}
 				{isFavorite}
 				{toggleFavorite}
 				{getChangeClass}
@@ -245,9 +296,33 @@
 {/if}
 
 <style>
+	.top-controls-row {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: flex-start;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.materials-header-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: flex-start;
+		gap: 1rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.materials-page-title {
+		margin: 0;
+	}
+
+	.currency-line-wrap {
+		width: 100%;
+	}
+
 	.search-container {
 		position: relative;
-		margin-bottom: 1rem;
 		width: 100%;
 		max-width: 500px;
 	}
@@ -323,8 +398,15 @@
 
 	/* Mobile responsive styles */
 	@media (max-width: 768px) {
+		.top-controls-row {
+			gap: 0.75rem;
+		}
+
+		.materials-header-row {
+			align-items: flex-start;
+		}
+
 		.search-container {
-			margin-bottom: 1.25rem;
 			max-width: 100%;
 		}
 
@@ -339,17 +421,13 @@
 			font-size: 1rem;
 		}
 
-		h1 {
+		.materials-page-title {
 			font-size: 1.5rem;
 			margin-bottom: 1.25rem;
 		}
 	}
 
 	@media (max-width: 480px) {
-		.search-container {
-			margin-bottom: 1.5rem;
-		}
-
 		.search-input {
 			padding: 1rem;
 			padding-right: 3rem;
@@ -362,7 +440,7 @@
 			font-size: 1.125rem;
 		}
 
-		h1 {
+		.materials-page-title {
 			font-size: 1.4rem;
 			text-align: center;
 			margin-bottom: 1.5rem;
@@ -388,7 +466,7 @@
 			font-size: 1rem;
 		}
 
-		h1 {
+		.materials-page-title {
 			font-size: 1.3rem;
 		}
 	}
