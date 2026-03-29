@@ -273,11 +273,15 @@ def parse_excel_formulas(material: dict, excel_path: str, wb_formulas=None, wb_v
     }
 
 
-def parse_dataset(config: dict, excel_path: Path, cache: dict) -> dict:
-    sheets = pd.read_excel(str(excel_path), sheet_name=None, header=[0, 1])
+def parse_dataset(config: dict, cache: dict) -> tuple:
+    excel_path = config["excel"]["path"]
+
+    sheets = pd.read_excel(excel_path, sheet_name=None, header=[0, 1])
     wb_formulas = openpyxl.load_workbook(excel_path, data_only=False)
     wb_values = openpyxl.load_workbook(excel_path, data_only=True)
+
     payload = {"data": []}
+    new_entries = {}
 
     for material in config["materials"]:
         ptype = material.get("parserType", "old")
@@ -290,28 +294,39 @@ def parse_dataset(config: dict, excel_path: Path, cache: dict) -> dict:
         else:
             raise ValueError(f"Неизвестный parserType: {ptype}")
 
-        if result:
-            m_id = str(result["materialId"])
-            m_date = result["dateValues"][0]["date"]
+        if not result:
+            continue
 
-            if cache.get(m_id) == m_date:  # debounce
-                print(f"[SKIP] Material {m_id} уже отправлен на {m_date}")
-                continue
+        m_id = str(result["materialId"])
+        m_date = result["dateValues"][0]["date"]
 
-            cache[m_id] = m_date
-            payload["data"].append(result)
+        if cache.get(m_id) == m_date: # debounce
+            print(f"[SKIP] Material {m_id} уже отправлен на {m_date}")
+            continue
 
-    return payload
+        payload["data"].append(result)
+        new_entries[m_id] = m_date
+
+    return payload, new_entries
+
 
 
 
 def send_payload(payload: dict, config: dict):
     server = os.getenv("SERVER_URL") or config["server"]["url"]
     route = os.getenv("SERVER_ROUTE") or config["server"]["route"]
+
     url = server.rstrip("/") + "/" + route.lstrip("/")
     print(f"[INFO] Отправка на {url}")
-    response = requests.post(url, json=payload, timeout=10)
+
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+    except requests.RequestException as exc:
+        print(f"[ERROR] Сетевая ошибка при отправке: {exc}")
+        return None
+
     print(f"[INFO] Ответ сервера: {response.status_code} {response.text}")
+    return response
 
 if __name__ == "__main__":
     CONFIG_PATH = ROOT / "config.json"
@@ -320,11 +335,24 @@ if __name__ == "__main__":
 
     cache = load_cache()
 
-    # Use the freshly exported file (ignore/override config path)
-    payload = parse_dataset(config, excel_path, cache)
+    # Обновляем путь к выгруженному Excel перед парсингом
+    config["excel"]["path"] = str(VAR / f"{BASE_NAME}.xlsx")
+
+    # Получаем payload и список новых записей
+    payload, new_entries = parse_dataset(config, cache)
 
     if payload["data"]:
-        send_payload(payload, config)
-        save_cache(cache)
+        response = send_payload(payload, config)
+
+        # Проверяем — считаем успехом ТОЛЬКО 200 OK
+        if response is not None and response.status_code == 200:
+            cache.update(new_entries)
+            save_cache(cache)
+            print("[INFO] Данные успешно отправлены и кэш обновлён")
+        else:
+            if response is None:
+                print("[ERROR] Отправка не удалась — сетевой уровень. Кэш не изменён.")
+            else:
+                print(f"[ERROR] Сервер вернул ошибочный статус {response.status_code}. Кэш не изменён.")
     else:
         print("[INFO] Нет новых данных для отправки")
