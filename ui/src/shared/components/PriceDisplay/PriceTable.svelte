@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		getCurrencyRates,
 		getMaterialDateMetrics,
 		getMaterialInfo,
 		getMaterialSpreadsheet
@@ -17,6 +18,7 @@
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
+	import { availableCurrencies, convertCurrencyValue } from '$lib/utils/currencyHelperUtil';
 
 	import { m, locale } from '$lib/i18n';
 
@@ -44,6 +46,8 @@
 	let aggregatesChosen = $state<string[]>([]);
 	let filteredData = $state<FilteredData[]>([]);
 	let filteredDataOrdered = $state<FilteredData[]>([]);
+	let currencyRatesMap = $state<Record<string, number>>({});
+	let selectedCurrency = $state('');
 
 	let isChartModalShown = $state(false);
 
@@ -113,7 +117,13 @@
 		isLoading = true;
 		error = null;
 		try {
-			const matInfo = await getMaterialInfo(materialId);
+			const [matInfo, currencyResponse] = await Promise.all([
+				getMaterialInfo(materialId),
+				getCurrencyRates()
+			]);
+
+			currencyRatesMap = currencyResponse?.rates ?? {};
+
 			if (!matInfo) {
 				error = 'Material not found';
 				return;
@@ -197,7 +207,27 @@
 
 	function formatPrice(price: string | null): string {
 		if (!price || price.length === 0) return '—';
-		return nf.format(Number(price));
+		const numericPrice = Number(price);
+		if (!Number.isFinite(numericPrice)) return '—';
+
+		const sourceUnit = materialInfo?.unit ?? '';
+		const convertedPrice = convertCurrencyValue(
+			sourceUnit,
+			numericPrice,
+			selectedCurrency,
+			currencyRatesMap
+		);
+
+		return nf.format(convertedPrice);
+	}
+
+	function currencyLabel(value: string): string {
+		return value === '' ? m.materials_currency_switcher_default() : value;
+	}
+
+	function displayUnit(unit: string | null | undefined): string {
+		if (!unit) return '';
+		return selectedCurrency ? `${unit} (${selectedCurrency})` : unit;
 	}
 
 	// Date range preset functions
@@ -366,7 +396,7 @@
 					{#if materialInfo}
 						{materialInfo.materialName}
 						<span class="material-details">
-							({materialInfo.unit}
+							({displayUnit(materialInfo.unit)}
 							{#if materialInfo.deliveryType}, {materialInfo.deliveryType}{/if}
 							{#if materialInfo.market}, {materialInfo.market}{/if})
 						</span>
@@ -386,7 +416,7 @@
 									>{formatPrice(materialInfo.latestAvgValue?.toString() ?? null)}</span
 								>
 								{#if materialInfo.unit}
-									<span class="value-unit"> {materialInfo.unit}</span>
+									<span class="value-unit"> {displayUnit(materialInfo.unit)}</span>
 								{/if}
 							</span>
 						{/if}
@@ -418,6 +448,14 @@
 
 		{#if !dndEnabled}
 			<div class="header-right">
+				<label class="currency-switcher">
+					<span>{m.materials_currency_switcher_label()}</span>
+					<select bind:value={selectedCurrency} aria-label={m.materials_currency_switcher_aria()}>
+						{#each availableCurrencies as code (code)}
+							<option value={code}>{currencyLabel(code)}</option>
+						{/each}
+					</select>
+				</label>
 				<div class="action-buttons">
 					{#if canExportData}
 						<button class="download-btn" onclick={getSpreadsheet} aria-label="Download spreadsheet">
@@ -1291,6 +1329,27 @@
 
 	.header-right {
 		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.currency-switcher {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+		color: #495057;
+		white-space: nowrap;
+	}
+
+	.currency-switcher select {
+		border: 1px solid #ced4da;
+		background: #fff;
+		border-radius: 6px;
+		padding: 0.3rem 0.5rem;
+		font-size: 0.875rem;
+		color: #212529;
 	}
 
 	.toggle-button {
@@ -1541,6 +1600,13 @@
 	}
 
 	@media (max-width: 768px) {
+		.header-right {
+			margin-left: 0;
+			width: 100%;
+			justify-content: space-between;
+			flex-wrap: wrap;
+		}
+		
 		.table-header {
 			flex-direction: column;
 			align-items: flex-start;
