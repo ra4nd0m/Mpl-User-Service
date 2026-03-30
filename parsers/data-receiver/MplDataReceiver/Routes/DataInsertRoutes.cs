@@ -39,5 +39,19 @@ public static class DataInsertRoutes
                 return Results.Problem("Error adding new material");
             }
         });
+
+        app.MapPost("/addMaterialDescription", async (AddMaterialDescriptionReq descriptionReq, DataInsertService dataInsertService) =>
+        {
+            try
+            {
+                await dataInsertService.AddMaterialDescription(descriptionReq);
+                return Results.Ok();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding material description");
+                return Results.Problem("Error adding material description");
+            }
+        });
     }
 }
