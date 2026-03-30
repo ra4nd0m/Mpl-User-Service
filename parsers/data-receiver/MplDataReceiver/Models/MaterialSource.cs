@@ -1,4 +1,5 @@
 namespace MplDataReceiver.Models;
+
 public partial class MaterialSource
 {
     public int Id { get; set; }
@@ -16,6 +17,10 @@ public partial class MaterialSource
     public int DeliveryTypeId { get; set; }
 
     public int MaterialGroupId { get; set; }
+
+    public string? Description { get; set; }
+
+    public int? RoundTo { get; set; }
 
     public virtual DeliveryType DeliveryType { get; set; } = null!;
 
