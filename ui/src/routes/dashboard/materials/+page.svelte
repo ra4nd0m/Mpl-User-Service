@@ -314,7 +314,7 @@
 {#if isDescriptionModalShown && selectedMaterialForDescription}
 	<DescriptionModal
 		bind:showModal={isDescriptionModalShown}
-		title={`Description: ${selectedMaterialForDescription.materialName}`}
+		title={m.materials_description_modal_title({ material: selectedMaterialForDescription.materialName })}
 		description={selectedMaterialForDescription.description ?? ''}
 		onEditFinish={handleDescriptionEditFinish}
 	/>

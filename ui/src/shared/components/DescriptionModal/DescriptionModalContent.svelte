@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authStore } from '$lib/stores/authStore';
+	import { m } from '$lib/i18n';
 
 	let { description, onEditFinish }: DescriptionModalContentProps = $props();
 
@@ -31,7 +32,7 @@
 			await onEditFinish(editableDescription);
 			isEditing = false;
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Failed to update description';
+			errorMessage = error instanceof Error ? error.message : m.materials_description_update_failed();
 		} finally {
 			isSaving = false;
 		}
@@ -55,8 +56,8 @@
 			bind:value={editableDescription}
 			class="description-editor"
 			rows="10"
-			placeholder="Enter description"
-			aria-label="Description"
+			placeholder={m.materials_description_editor_placeholder()}
+			aria-label={m.materials_description_aria()}
 		></textarea>
 
 		{#if errorMessage}
@@ -64,14 +65,16 @@
 		{/if}
 
 		<div class="actions">
-			<button type="button" class="btn btn-secondary" onclick={cancelEdit} disabled={isSaving}>Cancel</button>
+			<button type="button" class="btn btn-secondary" onclick={cancelEdit} disabled={isSaving}>
+				{m.universal_cancel_btn()}
+			</button>
 			<button
 				type="button"
 				class="btn btn-primary"
 				onclick={saveDescription}
 				disabled={!hasChanges || isSaving}
 			>
-				{isSaving ? 'Saving...' : 'Save'}
+				{isSaving ? m.materials_description_saving() : m.materials_description_save()}
 			</button>
 		</div>
 	{:else}
@@ -79,13 +82,15 @@
 			{#if hasDescription}
 				<p class="description-text">{description}</p>
 			{:else}
-				<p class="description-empty">No description provided.</p>
+				<p class="description-empty">{m.materials_description_empty()}</p>
 			{/if}
 		</div>
 
 		{#if isAdmin}
 			<div class="actions">
-				<button type="button" class="btn btn-primary" onclick={() => (isEditing = true)}>Edit</button>
+				<button type="button" class="btn btn-primary" onclick={() => (isEditing = true)}>
+					{m.materials_description_edit()}
+				</button>
 			</div>
 		{/if}
 	{/if}

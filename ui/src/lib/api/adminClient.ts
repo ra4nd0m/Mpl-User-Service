@@ -218,6 +218,25 @@ export async function setDescriptionForMaterial(req: AddMaterialDescriptionReq):
     }
 }
 
+export async function setRoundingForMaterial(req: AddRoundingToMaterialReq): Promise<void> {
+    try {
+        const resp = await fetchWithAuth('data-insert/addMaterialRounding', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(req)
+        });
+
+        if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            console.error('Failed to set rounding for material:', errorData || resp.statusText);
+        }
+    } catch (error) {
+        console.error('Error during setRoundingForMaterial:', error);
+    }
+}
+
 export enum SubscriptionType {
     Free = 0,
     Basic = 1,

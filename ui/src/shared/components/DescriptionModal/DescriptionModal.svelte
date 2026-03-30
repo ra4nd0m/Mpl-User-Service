@@ -1,10 +1,11 @@
 <script lang="ts">
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import DescriptionModalContent from '$components/DescriptionModal/DescriptionModalContent.svelte';
+	import { m } from '$lib/i18n';
 
 	let {
 		showModal = $bindable(),
-		title = 'Description',
+		title = m.materials_description_header(),
 		description,
 		onEditFinish
 	}: DescriptionModalProps = $props();

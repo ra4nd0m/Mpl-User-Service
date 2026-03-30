@@ -165,8 +165,8 @@
 							<button
 								class="info-button"
 								onclick={() => onShowDescription(material)}
-								aria-label="Show description"
-								title="Show description"
+								aria-label={m.materials_description_button_show()}
+								title={m.materials_description_button_show()}
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
