@@ -5,6 +5,8 @@ namespace MplDbApi.Models.Dtos
         string MaterialName,
         string DeliveryType,
         string Market,
-        string Unit
+        string Unit,
+        string? Description,
+        int? RoundTo
     );
 }

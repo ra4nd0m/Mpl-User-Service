@@ -14,5 +14,7 @@ public record MaterialSourceResponseDto(
     decimal? LatestMinValue,
     decimal? LatestMaxValue,
     decimal? LatestSupplyValue,
+    string? Description,
+    int? RoundTo,
     List<int> AvalibleProps
 );

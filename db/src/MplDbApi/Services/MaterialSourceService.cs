@@ -118,6 +118,8 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                    finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 2).ValueDecimal,
                    finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 3).ValueDecimal,
                    finalResult.LatestValues.FirstOrDefault(mv => mv.PropertyId == 6).ValueDecimal,
+                   finalResult.MaterialSource.Description,
+                   finalResult.MaterialSource.RoundTo,
                    finalResult.AvailableProps
                );
         }).ToList(); // Create the final list of DTOs
@@ -129,7 +131,7 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
 
     public async Task<List<MaterialSourceResponseDto>> GetMaterialsByGroup(int groupId, string role)
     {
-                string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
+        string cacheKey = "MaterialsByGroupCacheKey_" + groupId;
         if (memoryCache.TryGetValue(cacheKey, out List<MaterialSourceResponseDto>? cachedMaterials) && cachedMaterials != null)
         {
             return cachedMaterials;
@@ -223,6 +225,8 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
                 finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 2).ValueDecimal,
                 finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 3).ValueDecimal,
                 finalResult.LatestValues.FirstOrDefault(v => v.PropertyId == 6).ValueDecimal,
+                finalResult.MaterialSource.Description,
+                finalResult.MaterialSource.RoundTo,
                 finalResult.AvailableProps
             );
         }).ToList();
@@ -327,6 +331,8 @@ public class MaterialSourceService(BMplbaseContext _context, FilterService filte
             intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 2).ValueDecimal,
             intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 3).ValueDecimal,
             intermediate.LatestValues.FirstOrDefault(v => v.PropertyId == 6).ValueDecimal,
+            intermediate.MaterialSource.Description,
+            intermediate.MaterialSource.RoundTo,
             intermediate.AvailableProps
         );
 
