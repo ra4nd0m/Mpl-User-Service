@@ -158,12 +158,12 @@ begin
         create function stamp_updated()
         returns trigger
         language plpgsql
-        as $$
+        as $func$
         begin
             new.last_updated = now();
             return new;
         end;
-        $$;
+        $func$;
     end if;
 
     if not exists (
