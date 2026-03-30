@@ -94,6 +94,8 @@
 	"materials_description_save": "Сохранить",
 	"materials_description_saving": "Сохранение...",
 	"materials_description_edit": "Редактировать",
+	"materials_rounding_label": "Округление:",
+	"materials_rounding_aria": "Округление материала",
 	"materials_description_empty": "Описание не предоставлено.",
 	"materials_description_update_failed": "Не удалось обновить описание",
 	"admin_dashboard_header": "Административная панель",

@@ -252,6 +252,18 @@
 		return value === '' ? m.materials_currency_switcher_default() : value;
 	}
 
+	function roundingEditLabel(): string {
+		return m.materials_description_edit();
+	}
+
+	function roundingSaveLabel(): string {
+		return m.materials_description_save();
+	}
+
+	function roundingSavingLabel(): string {
+		return m.materials_description_saving();
+	}
+
 	function displayUnit(unit: string | null | undefined): string {
 		if (!unit) return '';
 		return selectedCurrency ? `${unit} (${selectedCurrency})` : unit;
@@ -407,7 +419,8 @@
 	async function saveRounding() {
 		if (!materialInfo || isRoundingSaving) return;
 
-		const trimmed = roundingInputValue.trim();
+		const normalizedInput = String(roundingInputValue ?? '');
+		const trimmed = normalizedInput.trim();
 		if (trimmed.length === 0) {
 			roundingError = 'Rounding is required';
 			return;
@@ -531,26 +544,32 @@
 
 						{#if isAdmin}
 							<span class="rounding-control">
-								<span class="value-label">Rounding:</span>
+								<span class="value-label">{m.materials_rounding_label()}</span>
 								<input
 									type="number"
 									min="0"
 									step="1"
 									bind:value={roundingInputValue}
 									disabled={!isRoundingEditing || isRoundingSaving}
-									aria-label="Material rounding"
+									aria-label={m.materials_rounding_aria()}
 								/>
 								<button
 									class="rounding-btn"
-									onclick={isRoundingEditing ? saveRounding : startRoundingEdit}
+									onclick={() => {
+										if (isRoundingEditing) {
+											saveRounding();
+										} else {
+											startRoundingEdit();
+										}
+									}}
 									disabled={isRoundingSaving}
 								>
 									{#if isRoundingSaving}
-										Saving...
+										{roundingSavingLabel()}
 									{:else if isRoundingEditing}
-										Save
+										{roundingSaveLabel()}
 									{:else}
-										Edit
+										{roundingEditLabel()}
 									{/if}
 								</button>
 							</span>

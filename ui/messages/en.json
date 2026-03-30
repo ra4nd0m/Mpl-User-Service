@@ -94,6 +94,8 @@
 	"materials_description_save": "Save",
 	"materials_description_saving": "Saving...",
 	"materials_description_edit": "Edit",
+	"materials_rounding_label": "Rounding:",
+	"materials_rounding_aria": "Material rounding",
 	"materials_description_empty": "No description provided.",
 	"materials_description_update_failed": "Failed to update description",
 	"admin_dashboard_header": "Admin Dashboard",
