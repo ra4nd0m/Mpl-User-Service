@@ -17,8 +17,14 @@
 	}: MaterialsTableProps = $props();
 
 	let selectedCurrency = $state('');
+	const DEFAULT_FRACTION_DIGITS = 2;
 
-	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
+	let nf = $derived(
+		Intl.NumberFormat($locale, {
+			style: 'decimal',
+			maximumFractionDigits: DEFAULT_FRACTION_DIGITS
+		})
+	);
 	let df = $derived(
 		Intl.DateTimeFormat($locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
 	);
@@ -36,11 +42,23 @@
 		extraColumns?: { localisedHeader: string; render: (material: Material) => string }[];
 	};
 
-	function formatPriceValue(rawValue: number | null | undefined, materialUnit: string): string {
+	function formatPriceValue(
+		rawValue: number | null | undefined,
+		materialUnit: string,
+		roundTo: number | null
+	): string {
 		if (rawValue === null || rawValue === undefined) return '—';
 
 		const converted = convertCurrencyValue(materialUnit, rawValue, selectedCurrency, currencyRates);
-		return nf.format(converted);
+		if (roundTo === null) {
+			return nf.format(converted);
+		}
+
+		const fractionDigits = Math.max(0, Math.trunc(roundTo));
+		return Intl.NumberFormat($locale, {
+			style: 'decimal',
+			maximumFractionDigits: fractionDigits
+		}).format(converted);
 	}
 
 	function currencyLabel(value: string): string {
@@ -143,18 +161,18 @@
 					<td class="{getChangeClass(material.changePercent)}">{material.changePercent}</td>
 					<td>
 						{material.latestAvgValue !== null && material.latestAvgValue !== undefined
-							? formatPriceValue(material.latestAvgValue, material.unit)
+							? formatPriceValue(material.latestAvgValue, material.unit, material.roundTo)
 							: '-'}
 					</td>
 					{#if material.latestMinValue === null}
 						<td>—</td>
 					{:else}
-						<td>{formatPriceValue(material.latestMinValue, material.unit)}</td>
+						<td>{formatPriceValue(material.latestMinValue, material.unit, material.roundTo)}</td>
 					{/if}
 					{#if material.latestMaxValue === null}
 						<td>—</td>
 					{:else}
-						<td>{formatPriceValue(material.latestMaxValue, material.unit)}</td>
+						<td>{formatPriceValue(material.latestMaxValue, material.unit, material.roundTo)}</td>
 					{/if}
 					<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
 					{#each extraColumns as column (column)}
