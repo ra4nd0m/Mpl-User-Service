@@ -63,7 +63,7 @@ class BaseHistoricData:
 
 class AluminiumHistoricData(BaseHistoricData):
     def __init__(self, start_date=None, end_date=None):
-        super().__init__(material_code="al", params="87599")
+        super().__init__(material_code="al", params="17748")
 
 
 class CopperHistoricData(BaseHistoricData):
@@ -92,17 +92,15 @@ class LeadHistoricData(BaseHistoricData):
 
 
 class MaterialDataProcessor:
-    def __init__(self, config: dict = None):
+    def __init__(self, config: dict):
         self.config = config
         self.begin_date = date.today().strftime("%Y-%m-%d")
-        self.materials = {
-            103: AluminiumHistoricData,
-            104: CopperHistoricData,
-            105: NickelHistoricData,
-            106: ZincHistoricData,
-            107: TinHistoricData,
-            108: LeadHistoricData
-        }
+        
+        self.materials = {}
+        for material in config.get("materials", []):
+            material_id = material["materialId"]
+            class_name = material["class"]
+            self.materials[material_id] = globals()[class_name]
 
     def process_all_materials(self):
         results = []
@@ -182,3 +180,4 @@ if __name__ == "__main__":
         processor.send_payload(payload, config)
     else:
         print("[INFO] Нет данных для отправки")
+
