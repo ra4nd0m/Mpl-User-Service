@@ -324,7 +324,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
     public async Task AddMaterialDescription(AddMaterialDescriptionReq req)
     {
         var materialSource = await context.MaterialSources
-            .FirstOrDefaultAsync(ms => ms.MaterialId == req.MaterialId);
+            .FirstOrDefaultAsync(ms => ms.Uid == req.MaterialId);
 
         if (materialSource == null)
         {
@@ -336,5 +336,22 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         await context.SaveChangesAsync();
 
         logger.LogInformation("Updated description for MaterialSource with Uid={Uid}", materialSource.Uid);
+    }
+
+    public async Task AddRoundingToMaterial(AddRoundingToMaterialReq req)
+    {
+        var materialSource = await context.MaterialSources
+            .FirstOrDefaultAsync(ms => ms.Uid == req.MaterialId);
+
+        if (materialSource == null)
+        {
+            logger.LogWarning("MaterialSource not found for MaterialId={MaterialId}", req.MaterialId);
+            throw new InvalidOperationException("MaterialSource not found for the given MaterialId.");
+        }
+
+        materialSource.RoundTo = req.RoundTo;
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Updated rounding for MaterialSource with Uid={Uid}", materialSource.Uid);
     }
 }

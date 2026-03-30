@@ -53,5 +53,19 @@ public static class DataInsertRoutes
                 return Results.Problem("Error adding material description");
             }
         });
+
+        app.MapPost("/addMaterialRounding", async (AddRoundingToMaterialReq roundingReq, DataInsertService dataInsertService) =>
+        {
+            try
+            {
+                await dataInsertService.AddRoundingToMaterial(roundingReq);
+                return Results.Ok();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding material rounding");
+                return Results.Problem("Error adding material rounding");
+            }
+        });
     }
 }
