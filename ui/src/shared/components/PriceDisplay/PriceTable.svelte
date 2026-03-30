@@ -5,6 +5,7 @@
 		getMaterialInfo,
 		getMaterialSpreadsheet
 	} from '$lib/api/userClient';
+	import { setDescriptionForMaterial, setRoundingForMaterial } from '$lib/api/adminClient';
 	import { getWeekRange, getMonthRange, getQuarterRange, getYearRange } from '$lib/utils/dateUtil';
 	import { authStore } from '$lib/stores/authStore';
 	import type {
@@ -18,6 +19,7 @@
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
+	import DescriptionModal from '$components/DescriptionModal/DescriptionModal.svelte';
 	import { availableCurrencies, convertCurrencyValue } from '$lib/utils/currencyHelperUtil';
 
 	import { m, locale } from '$lib/i18n';
@@ -32,7 +34,14 @@
 		isFoldable: boolean;
 	}>();
 
-	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
+	const DEFAULT_FRACTION_DIGITS = 2;
+
+	let nf = $derived(
+		Intl.NumberFormat($locale, {
+			style: 'decimal',
+			maximumFractionDigits: DEFAULT_FRACTION_DIGITS
+		})
+	);
 	let df = $derived(
 		Intl.DateTimeFormat($locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
 	);
@@ -50,8 +59,14 @@
 	let selectedCurrency = $state('');
 
 	let isChartModalShown = $state(false);
+	let isDescriptionModalShown = $state(false);
+	let isRoundingEditing = $state(false);
+	let isRoundingSaving = $state(false);
+	let roundingInputValue = $state('');
+	let roundingError = $state<string | null>(null);
 
 	const canExportData = $derived($authStore.user?.canExportData ?? false);
+	const isAdmin = $derived($authStore.roles?.includes('Admin'));
 
 	type FilteredData = {
 		date: string;
@@ -129,6 +144,10 @@
 				return;
 			}
 			materialInfo = matInfo;
+			roundingInputValue =
+				matInfo.roundTo === null || matInfo.roundTo === undefined ? '' : matInfo.roundTo.toString();
+			isRoundingEditing = false;
+			roundingError = null;
 			const data = await getMaterialDateMetrics(
 				materialId,
 				propertyIds,
@@ -205,7 +224,7 @@
 		return df.format(new Date(dateString));
 	}
 
-	function formatPrice(price: string | null): string {
+	function formatPrice(price: string | null, roundTo: number | null | undefined = materialInfo?.roundTo): string {
 		if (!price || price.length === 0) return '—';
 		const numericPrice = Number(price);
 		if (!Number.isFinite(numericPrice)) return '—';
@@ -218,11 +237,31 @@
 			currencyRatesMap
 		);
 
-		return nf.format(convertedPrice);
+		if (roundTo === null || roundTo === undefined) {
+			return nf.format(convertedPrice);
+		}
+
+		const fractionDigits = Math.max(0, Math.trunc(roundTo));
+		return Intl.NumberFormat($locale, {
+			style: 'decimal',
+			maximumFractionDigits: fractionDigits
+		}).format(convertedPrice);
 	}
 
 	function currencyLabel(value: string): string {
 		return value === '' ? m.materials_currency_switcher_default() : value;
+	}
+
+	function roundingEditLabel(): string {
+		return m.materials_description_edit();
+	}
+
+	function roundingSaveLabel(): string {
+		return m.materials_description_save();
+	}
+
+	function roundingSavingLabel(): string {
+		return m.materials_description_saving();
 	}
 
 	function displayUnit(unit: string | null | undefined): string {
@@ -363,6 +402,67 @@
 		isChartModalShown = true;
 	}
 
+	function showDescriptionModal() {
+		isDescriptionModalShown = true;
+	}
+
+	function startRoundingEdit() {
+		if (!materialInfo) return;
+		roundingInputValue =
+			materialInfo.roundTo === null || materialInfo.roundTo === undefined
+				? ''
+				: materialInfo.roundTo.toString();
+		roundingError = null;
+		isRoundingEditing = true;
+	}
+
+	async function saveRounding() {
+		if (!materialInfo || isRoundingSaving) return;
+
+		const normalizedInput = String(roundingInputValue ?? '');
+		const trimmed = normalizedInput.trim();
+		if (trimmed.length === 0) {
+			roundingError = 'Rounding is required';
+			return;
+		}
+
+		const parsed = Number(trimmed);
+		if (!Number.isFinite(parsed)) {
+			roundingError = 'Rounding must be a valid number';
+			return;
+		}
+
+		const roundTo = Math.max(0, Math.trunc(parsed));
+
+		try {
+			isRoundingSaving = true;
+			roundingError = null;
+			const saved = await setRoundingForMaterial({ materialId: materialInfo.id, roundTo });
+			if (!saved) {
+				roundingError = 'Failed to save rounding';
+				return;
+			}
+			materialInfo = { ...materialInfo, roundTo };
+			roundingInputValue = roundTo.toString();
+			isRoundingEditing = false;
+		} catch {
+			roundingError = 'Failed to save rounding';
+		} finally {
+			isRoundingSaving = false;
+		}
+	}
+
+	async function handleDescriptionEditFinish(description: string) {
+		if (!materialInfo) {
+			return;
+		}
+
+		const materialId = materialInfo.id;
+		await setDescriptionForMaterial({ materialId, description });
+
+		materialInfo = { ...materialInfo, description };
+	}
+
 	onMount(async () => {
 		if (typeof materialId !== 'number') return;
 		await loadSettings();
@@ -441,7 +541,43 @@
 								>
 							</span>
 						{/if}
+
+						{#if isAdmin}
+							<span class="rounding-control">
+								<span class="value-label">{m.materials_rounding_label()}</span>
+								<input
+									type="number"
+									min="0"
+									step="1"
+									bind:value={roundingInputValue}
+									disabled={!isRoundingEditing || isRoundingSaving}
+									aria-label={m.materials_rounding_aria()}
+								/>
+								<button
+									class="rounding-btn"
+									onclick={() => {
+										if (isRoundingEditing) {
+											saveRounding();
+										} else {
+											startRoundingEdit();
+										}
+									}}
+									disabled={isRoundingSaving}
+								>
+									{#if isRoundingSaving}
+										{roundingSavingLabel()}
+									{:else if isRoundingEditing}
+										{roundingSaveLabel()}
+									{:else}
+										{roundingEditLabel()}
+									{/if}
+								</button>
+							</span>
+						{/if}
 					</div>
+					{#if isAdmin && roundingError}
+						<div class="rounding-error">{roundingError}</div>
+					{/if}
 				{/if}
 			</div>
 		</div>
@@ -475,6 +611,25 @@
 								<line x1="12" y1="15" x2="12" y2="3"></line>
 							</svg>
 							<span>{m.workdesk_price_tracking_table_export()}</span>
+						</button>
+					{/if}
+					{#if materialInfo}
+						<button class="info-btn" onclick={showDescriptionModal} aria-label={m.materials_description_button_show()} title={m.materials_description_button_show()}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<circle cx="12" cy="12" r="10"></circle>
+								<line x1="12" y1="16" x2="12" y2="12"></line>
+								<line x1="12" y1="8" x2="12.01" y2="8"></line>
+							</svg>
 						</button>
 					{/if}
 					<button class="chart-btn" onclick={openChartModal} aria-label="View chart">
@@ -1203,7 +1358,7 @@
 							{#each filteredDataOrdered as item (item.date)}
 								<tr>
 									<td>{item.date}</td>
-									<td>{item.value}</td>
+									<td>{formatPrice(item.value)}</td>
 								</tr>
 							{/each}
 						{:else}
@@ -1254,6 +1409,15 @@
 	{/if}
 </div>
 
+{#if isDescriptionModalShown && materialInfo}
+	<DescriptionModal
+		bind:showModal={isDescriptionModalShown}
+		title={m.materials_description_modal_title({ material: materialInfo.materialName })}
+		description={materialInfo.description ?? ''}
+		onEditFinish={handleDescriptionEditFinish}
+	/>
+{/if}
+
 <ModalBase
 	title={materialInfo
 		? `${m.workdesk_price_tracking_chart_price_history()}: ${materialInfo.materialName}`
@@ -1291,6 +1455,27 @@
 
 	.price-table-container:hover {
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.info-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #0d6efd;
+		padding: 0.375rem;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+	}
+
+	.info-btn:hover {
+		background-color: rgba(13, 110, 253, 0.12);
+		color: #0a58ca;
+		transform: scale(1.1);
 	}
 
 	.chart-btn {
@@ -1760,6 +1945,50 @@
 	.value-unit {
 		color: #6c757d;
 		font-size: 0.8em;
+	}
+
+	.rounding-control {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.rounding-control input {
+		width: 68px;
+		padding: 0.2rem 0.35rem;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		font-size: 0.8rem;
+	}
+
+	.rounding-control input:disabled {
+		background-color: #f1f3f5;
+		color: #6c757d;
+	}
+
+	.rounding-btn {
+		border: 1px solid #ced4da;
+		background-color: #f8f9fa;
+		color: #212529;
+		border-radius: 4px;
+		padding: 0.2rem 0.5rem;
+		font-size: 0.78rem;
+		cursor: pointer;
+	}
+
+	.rounding-btn:hover:enabled {
+		background-color: #e9ecef;
+	}
+
+	.rounding-btn:disabled {
+		opacity: 0.65;
+		cursor: not-allowed;
+	}
+
+	.rounding-error {
+		margin-top: 0.25rem;
+		font-size: 0.8rem;
+		color: #dc3545;
 	}
 
 	.change-percent {

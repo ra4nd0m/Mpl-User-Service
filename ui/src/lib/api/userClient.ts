@@ -316,6 +316,8 @@ export interface Material {
     latestMinValue?: number | null;
     latestMaxValue?: number | null;
     latestSupplyValue?: number | null;
+    description: string | null;
+    roundTo: number | null;
     avalibleProps: number[];
     volume?: number | null;
     openInterest?: number | null;
@@ -335,6 +337,8 @@ export interface CompactMaterialInfo {
     deliveryType: string;
     market: string;
     unit: string;
+    description: string | null;
+    roundTo: number | null;
 }
 
 export interface MaterialDateMetricsResp {

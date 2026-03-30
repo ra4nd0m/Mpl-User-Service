@@ -163,7 +163,9 @@ public class MaterialValueService(BMplbaseContext _context, FilterService filter
                     ms.Material.Name,
                     ms.DeliveryType.Name,
                     ms.TargetMarket,
-                    ms.Unit.Name
+                    ms.Unit.Name,
+                    ms.Description,
+                    ms.RoundTo
                 )).AsNoTracking().FirstOrDefaultAsync();
             return materialInf;
         }

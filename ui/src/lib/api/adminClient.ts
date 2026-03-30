@@ -199,6 +199,51 @@ export async function pushFilter(filter: DataFilter): Promise<void> {
     }
 }
 
+export async function setDescriptionForMaterial(req: AddMaterialDescriptionReq): Promise<boolean> {
+    try {
+        const resp = await fetchWithAuth('data-insert/addMaterialDescription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(req)
+        });
+
+        if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            console.error('Failed to set description for material:', errorData || resp.statusText);
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Error during setDescriptionForMaterial:', error);
+        return false;
+    }
+}
+
+export async function setRoundingForMaterial(req: AddRoundingToMaterialReq): Promise<boolean> {
+    try {
+        const resp = await fetchWithAuth('data-insert/addMaterialRounding', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(req)
+        });
+
+        if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            console.error('Failed to set rounding for material:', errorData || resp.statusText);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error during setRoundingForMaterial:', error);
+        return false;
+    }
+}
+
 export enum SubscriptionType {
     Free = 0,
     Basic = 1,
@@ -259,4 +304,14 @@ export interface SubscriptionDataDto {
     subscriptionType: SubscriptionType;
     subscriptionStartDate: string;
     subscriptionEndDate: string;
+}
+
+export interface AddMaterialDescriptionReq {
+    materialId: number;
+    description: string;
+}
+
+export interface AddRoundingToMaterialReq {
+    materialId: number;
+    roundTo: number;
 }

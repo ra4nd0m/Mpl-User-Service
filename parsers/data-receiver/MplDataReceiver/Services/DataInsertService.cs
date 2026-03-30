@@ -2,11 +2,46 @@ using Microsoft.EntityFrameworkCore;
 using MplDataReceiver.Data;
 using MplDataReceiver.Models;
 using MplDataReceiver.Models.DTOs;
+using System.Text;
 
 namespace MplDataReceiver.Services;
 
 public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpClientFactory, ILogger<DataInsertService> logger)
 {
+    private static string? NormalizeDescription(string? description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+            return null;
+
+        var normalized = description
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n');
+
+        var sb = new StringBuilder(normalized.Length);
+        foreach (var ch in normalized)
+        {
+            if (ch == '\n')
+            {
+                sb.Append(ch);
+                continue;
+            }
+
+            if (char.IsControl(ch))
+                continue;
+
+            sb.Append(ch);
+        }
+
+        // Trim each line; keep intentional newlines.
+        var lines = sb
+            .ToString()
+            .Split('\n', StringSplitOptions.None)
+            .Select(l => l.Trim());
+
+        var cleaned = string.Join("\n", lines).Trim();
+        return cleaned.Length == 0 ? null : cleaned;
+    }
+
     public async Task InsertValuesRange(List<MaterialUpdate> updates)
     {
         var materialIds = updates.Select(u => u.MaterialId).Distinct().ToList();
@@ -284,5 +319,67 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
             materialSource.Uid, newMaterial.MaterialName);
 
         return materialSource.Id;
+    }
+
+    public async Task AddMaterialDescription(AddMaterialDescriptionReq req)
+    {
+        var materialSource = await context.MaterialSources
+            .FirstOrDefaultAsync(ms => ms.Uid == req.MaterialId);
+
+        if (materialSource == null)
+        {
+            logger.LogWarning("MaterialSource not found for MaterialId={MaterialId}", req.MaterialId);
+            throw new InvalidOperationException("MaterialSource not found for the given MaterialId.");
+        }
+
+        materialSource.Description = NormalizeDescription(req.Description);
+        await context.SaveChangesAsync();
+
+        try
+        {
+            var httpClient = httpClientFactory.CreateClient("DbApi");
+            var response = await httpClient.PostAsync("cache/clear", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to notify DB API to clear cache");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
+        }
+
+        logger.LogInformation("Updated description for MaterialSource with Uid={Uid}", materialSource.Uid);
+    }
+
+    public async Task AddRoundingToMaterial(AddRoundingToMaterialReq req)
+    {
+        var materialSource = await context.MaterialSources
+            .FirstOrDefaultAsync(ms => ms.Uid == req.MaterialId);
+
+        if (materialSource == null)
+        {
+            logger.LogWarning("MaterialSource not found for MaterialId={MaterialId}", req.MaterialId);
+            throw new InvalidOperationException("MaterialSource not found for the given MaterialId.");
+        }
+
+        materialSource.RoundTo = req.RoundTo;
+        await context.SaveChangesAsync();
+
+        try
+        {
+            var httpClient = httpClientFactory.CreateClient("DbApi");
+            var response = await httpClient.PostAsync("cache/clear", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to notify DB API to clear cache");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
+        }
+
+        logger.LogInformation("Updated rounding for MaterialSource with Uid={Uid}", materialSource.Uid);
     }
 }

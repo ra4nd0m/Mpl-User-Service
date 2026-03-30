@@ -55,6 +55,14 @@ builder.Services.AddOptions<CurrencyApiOptions>()
     )
     .ValidateOnStart();
 
+builder.Services.AddOptions<InsertApiOptions>()
+    .Bind(configuration.GetSection(InsertApiOptions.SectionName))
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.BaseUrl),
+        "InsertApi:BaseUrl is missing"
+    )
+    .ValidateOnStart();
+
 builder.Services.AddMemoryCache();
 
 builder.Services.AddHttpClient("DbClient", client =>
@@ -76,6 +84,17 @@ builder.Services.AddHttpClient("CurrencyApiClient", (serviceProvider, client) =>
     }
 
     client.BaseAddress = new Uri(currencyApiOptions.BaseUrl);
+});
+
+builder.Services.AddHttpClient("DataInsertApiClient", (serviceProvider, client) =>
+{
+    var insertApiOptions = serviceProvider.GetRequiredService<IOptions<InsertApiOptions>>().Value;
+    if (string.IsNullOrWhiteSpace(insertApiOptions.BaseUrl))
+    {
+        throw new InvalidOperationException("InsertApi:BaseUrl is missing");
+    }
+
+    client.BaseAddress = new Uri(insertApiOptions.BaseUrl);
 });
 
 builder.Services.AddDbContext<UserContext>(options =>
@@ -204,6 +223,7 @@ app.MapGeneratorRoutes();
 app.MapInternalRoutes();
 app.MapReportFileRoutes();
 app.MapCurrencyApiRoutes();
+app.MapDataInsertApiRoutes();
 
 
 using (var scope = app.Services.CreateScope())

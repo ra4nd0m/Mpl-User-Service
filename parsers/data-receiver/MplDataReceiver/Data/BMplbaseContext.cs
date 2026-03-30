@@ -115,8 +115,12 @@ public partial class BMplbaseContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.DeliveryTypeId).HasColumnName("delivery_type_id");
+            entity.Property(e => e.Description)
+                .HasColumnType("character varying")
+                .HasColumnName("description");
             entity.Property(e => e.MaterialGroupId).HasColumnName("material_group_id");
             entity.Property(e => e.MaterialId).HasColumnName("material_id");
+            entity.Property(e => e.RoundTo).HasColumnName("round_to");
             entity.Property(e => e.SourceId).HasColumnName("source_id");
             entity.Property(e => e.TargetMarket)
                 .HasColumnType("character varying")
