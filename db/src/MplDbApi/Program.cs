@@ -114,6 +114,7 @@ using (var scope = app.Services.CreateScope())
 
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     await DatabaseInitializer.InitializeFilterDatabase(scope.ServiceProvider, logger);
+    await DatabaseInitializer.InitializeMaterialDatabase(scope.ServiceProvider, logger);
 }
 
 app.Run();
