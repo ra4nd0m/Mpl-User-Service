@@ -5,6 +5,7 @@
 		getMaterialInfo,
 		getMaterialSpreadsheet
 	} from '$lib/api/userClient';
+	import { setDescriptionForMaterial } from '$lib/api/adminClient';
 	import { getWeekRange, getMonthRange, getQuarterRange, getYearRange } from '$lib/utils/dateUtil';
 	import { authStore } from '$lib/stores/authStore';
 	import type {
@@ -18,6 +19,7 @@
 	import { widgetSettingsStore } from '$lib/stores/widgetSettingStore';
 	import ChartModal from './ChartModal.svelte';
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
+	import DescriptionModal from '$components/DescriptionModal/DescriptionModal.svelte';
 	import { availableCurrencies, convertCurrencyValue } from '$lib/utils/currencyHelperUtil';
 
 	import { m, locale } from '$lib/i18n';
@@ -50,6 +52,7 @@
 	let selectedCurrency = $state('');
 
 	let isChartModalShown = $state(false);
+	let isDescriptionModalShown = $state(false);
 
 	const canExportData = $derived($authStore.user?.canExportData ?? false);
 
@@ -363,6 +366,21 @@
 		isChartModalShown = true;
 	}
 
+	function showDescriptionModal() {
+		isDescriptionModalShown = true;
+	}
+
+	async function handleDescriptionEditFinish(description: string) {
+		if (!materialInfo) {
+			return;
+		}
+
+		const materialId = materialInfo.id;
+		await setDescriptionForMaterial({ materialId, description });
+
+		materialInfo = { ...materialInfo, description };
+	}
+
 	onMount(async () => {
 		if (typeof materialId !== 'number') return;
 		await loadSettings();
@@ -475,6 +493,25 @@
 								<line x1="12" y1="15" x2="12" y2="3"></line>
 							</svg>
 							<span>{m.workdesk_price_tracking_table_export()}</span>
+						</button>
+					{/if}
+					{#if materialInfo}
+						<button class="info-btn" onclick={showDescriptionModal} aria-label={m.materials_description_button_show()} title={m.materials_description_button_show()}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<circle cx="12" cy="12" r="10"></circle>
+								<line x1="12" y1="16" x2="12" y2="12"></line>
+								<line x1="12" y1="8" x2="12.01" y2="8"></line>
+							</svg>
 						</button>
 					{/if}
 					<button class="chart-btn" onclick={openChartModal} aria-label="View chart">
@@ -1254,6 +1291,15 @@
 	{/if}
 </div>
 
+{#if isDescriptionModalShown && materialInfo}
+	<DescriptionModal
+		bind:showModal={isDescriptionModalShown}
+		title={m.materials_description_modal_title({ material: materialInfo.materialName })}
+		description={materialInfo.description ?? ''}
+		onEditFinish={handleDescriptionEditFinish}
+	/>
+{/if}
+
 <ModalBase
 	title={materialInfo
 		? `${m.workdesk_price_tracking_chart_price_history()}: ${materialInfo.materialName}`
@@ -1291,6 +1337,27 @@
 
 	.price-table-container:hover {
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.info-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #0d6efd;
+		padding: 0.375rem;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+	}
+
+	.info-btn:hover {
+		background-color: rgba(13, 110, 253, 0.12);
+		color: #0a58ca;
+		transform: scale(1.1);
 	}
 
 	.chart-btn {
