@@ -10,6 +10,7 @@
 		toggleFavorite,
 		getChangeClass,
 		onShowPrice,
+		onShowDescription,
 		hasSearch,
 		currencyRates,
 		extraColumns = []
@@ -29,6 +30,7 @@
 		toggleFavorite: (materialId: number) => void;
 		getChangeClass: (changePercent: string | null) => string;
 		onShowPrice: (materialId: number) => void;
+		onShowDescription: (material: Material) => void;
 		hasSearch: boolean;
 		currencyRates: Record<string, number>;
 		extraColumns?: { localisedHeader: string; render: (material: Material) => string }[];
@@ -157,8 +159,31 @@
 					<td>{material.lastCreatedDate ? df.format(new Date(material.lastCreatedDate)) : '—'}</td>
 					{#each extraColumns as column (column)}
 						<td>{column.render(material)}</td>
-						{/each}
-						<td>
+					{/each}
+					<td>
+						<div class="action-buttons">
+							<button
+								class="info-button"
+								onclick={() => onShowDescription(material)}
+								aria-label="Show description"
+								title="Show description"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<circle cx="12" cy="12" r="10"></circle>
+									<line x1="12" y1="16" x2="12" y2="12"></line>
+									<line x1="12" y1="8" x2="12.01" y2="8"></line>
+								</svg>
+							</button>
 							<button
 								class="show-modal"
 								onclick={() => onShowPrice(material.id)}
@@ -180,7 +205,8 @@
 									<line x1="5" y1="12" x2="19" y2="12"></line>
 								</svg>
 							</button>
-						</td>
+						</div>
+					</td>
 					</tr>
 				{:else}
 					<tr>
@@ -366,6 +392,34 @@
 
 	.favorite-button:not(.is-favorite) svg {
 		color: #dc3545;
+	}
+
+	.action-buttons {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.35rem;
+	}
+
+	.info-button {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: #0d6efd;
+		padding: 0.375rem;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+	}
+
+	.info-button:hover {
+		background-color: rgba(13, 110, 253, 0.12);
+		color: #0a58ca;
+		transform: scale(1.1);
 	}
 
 	.show-modal {

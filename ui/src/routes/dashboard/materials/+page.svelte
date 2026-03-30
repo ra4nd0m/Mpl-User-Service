@@ -9,17 +9,21 @@
 		type CurrencyApiResponse,
 		type Material
 	} from '$lib/api/userClient';
+	import { setDescriptionForMaterial } from '$lib/api/adminClient';
 
 	import { m } from '$lib/i18n';
 
 	import ModalBase from '$components/ModalBase/ModalBase.svelte';
 	import PriceTable from '$components/PriceDisplay/PriceTable.svelte';
+	import DescriptionModal from '$components/DescriptionModal/DescriptionModal.svelte';
 	import MaterialsTable from './MaterialsTable.svelte';
 	import CurrencyRatesWidget from './CurrencyRatesWidget.svelte';
 	import GroupSelector from '$components/GroupSelector/GroupSelector.svelte';
 
 	let isModalShown = $state(false);
 	let selectedMaterialId = $state<number | null>(null);
+	let isDescriptionModalShown = $state(false);
+	let selectedMaterialForDescription = $state<Material | null>(null);
 
 	let materialGroups: { id: number; name: string }[] = $state([]);
 	let materialList: Material[] = $state([]);
@@ -189,6 +193,25 @@
 		isModalShown = true;
 	}
 
+	function showDescriptionModal(material: Material) {
+		selectedMaterialForDescription = material;
+		isDescriptionModalShown = true;
+	}
+
+	async function handleDescriptionEditFinish(description: string) {
+		if (!selectedMaterialForDescription) {
+			return;
+		}
+
+		const materialId = selectedMaterialForDescription.id;
+		await setDescriptionForMaterial({ materialId, description });
+
+		materialList = materialList.map((material) =>
+			material.id === materialId ? { ...material, description } : material
+		);
+		selectedMaterialForDescription = { ...selectedMaterialForDescription, description };
+	}
+
 	onMount(async () => {
 		await Promise.all([loadCurrencies(), loadGroups(), loadMaterials()]);
 	});
@@ -255,6 +278,7 @@
 				{toggleFavorite}
 				{getChangeClass}
 				onShowPrice={showPriceModal}
+				onShowDescription={showDescriptionModal}
 				hasSearch={!!searchQuery}
 			/>
 		{/if}
@@ -267,6 +291,7 @@
 				{toggleFavorite}
 				{getChangeClass}
 				onShowPrice={showPriceModal}
+				onShowDescription={showDescriptionModal}
 				hasSearch={!!searchQuery}
 			/>
 		{/if}
@@ -279,11 +304,21 @@
 				{toggleFavorite}
 				{getChangeClass}
 				onShowPrice={showPriceModal}
+				onShowDescription={showDescriptionModal}
 				hasSearch={!!searchQuery}
 			/>
 		{/if}
 	{/if}
 </section>
+
+{#if isDescriptionModalShown && selectedMaterialForDescription}
+	<DescriptionModal
+		bind:showModal={isDescriptionModalShown}
+		title={`Description: ${selectedMaterialForDescription.materialName}`}
+		description={selectedMaterialForDescription.description ?? ''}
+		onEditFinish={handleDescriptionEditFinish}
+	/>
+{/if}
 
 {#if isModalShown && selectedMaterialId !== null}
 	<ModalBase

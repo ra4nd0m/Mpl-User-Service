@@ -199,6 +199,25 @@ export async function pushFilter(filter: DataFilter): Promise<void> {
     }
 }
 
+export async function setDescriptionForMaterial(req: AddMaterialDescriptionReq): Promise<void> {
+    try {
+        const resp = await fetchWithAuth('data-insert/addMaterialDescription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(req)
+        });
+
+        if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            console.error('Failed to set description for material:', errorData || resp.statusText);
+        }
+    } catch (error) {
+        console.error('Error during setDescriptionForMaterial:', error);
+    }
+}
+
 export enum SubscriptionType {
     Free = 0,
     Basic = 1,
@@ -259,4 +278,14 @@ export interface SubscriptionDataDto {
     subscriptionType: SubscriptionType;
     subscriptionStartDate: string;
     subscriptionEndDate: string;
+}
+
+export interface AddMaterialDescriptionReq {
+    materialId: number;
+    description: string;
+}
+
+export interface AddRoundingToMaterialReq {
+    materialId: number;
+    roundTo: number;
 }
