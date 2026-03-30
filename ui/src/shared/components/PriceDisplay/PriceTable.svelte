@@ -5,7 +5,7 @@
 		getMaterialInfo,
 		getMaterialSpreadsheet
 	} from '$lib/api/userClient';
-	import { setDescriptionForMaterial } from '$lib/api/adminClient';
+	import { setDescriptionForMaterial, setRoundingForMaterial } from '$lib/api/adminClient';
 	import { getWeekRange, getMonthRange, getQuarterRange, getYearRange } from '$lib/utils/dateUtil';
 	import { authStore } from '$lib/stores/authStore';
 	import type {
@@ -34,7 +34,14 @@
 		isFoldable: boolean;
 	}>();
 
-	let nf = $derived(Intl.NumberFormat($locale, { style: 'decimal', maximumFractionDigits: 2 }));
+	const DEFAULT_FRACTION_DIGITS = 2;
+
+	let nf = $derived(
+		Intl.NumberFormat($locale, {
+			style: 'decimal',
+			maximumFractionDigits: DEFAULT_FRACTION_DIGITS
+		})
+	);
 	let df = $derived(
 		Intl.DateTimeFormat($locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
 	);
@@ -53,8 +60,13 @@
 
 	let isChartModalShown = $state(false);
 	let isDescriptionModalShown = $state(false);
+	let isRoundingEditing = $state(false);
+	let isRoundingSaving = $state(false);
+	let roundingInputValue = $state('');
+	let roundingError = $state<string | null>(null);
 
 	const canExportData = $derived($authStore.user?.canExportData ?? false);
+	const isAdmin = $derived($authStore.roles?.includes('Admin'));
 
 	type FilteredData = {
 		date: string;
@@ -132,6 +144,10 @@
 				return;
 			}
 			materialInfo = matInfo;
+			roundingInputValue =
+				matInfo.roundTo === null || matInfo.roundTo === undefined ? '' : matInfo.roundTo.toString();
+			isRoundingEditing = false;
+			roundingError = null;
 			const data = await getMaterialDateMetrics(
 				materialId,
 				propertyIds,
@@ -208,7 +224,7 @@
 		return df.format(new Date(dateString));
 	}
 
-	function formatPrice(price: string | null): string {
+	function formatPrice(price: string | null, roundTo: number | null | undefined = materialInfo?.roundTo): string {
 		if (!price || price.length === 0) return '—';
 		const numericPrice = Number(price);
 		if (!Number.isFinite(numericPrice)) return '—';
@@ -221,7 +237,15 @@
 			currencyRatesMap
 		);
 
-		return nf.format(convertedPrice);
+		if (roundTo === null || roundTo === undefined) {
+			return nf.format(convertedPrice);
+		}
+
+		const fractionDigits = Math.max(0, Math.trunc(roundTo));
+		return Intl.NumberFormat($locale, {
+			style: 'decimal',
+			maximumFractionDigits: fractionDigits
+		}).format(convertedPrice);
 	}
 
 	function currencyLabel(value: string): string {
@@ -370,6 +394,51 @@
 		isDescriptionModalShown = true;
 	}
 
+	function startRoundingEdit() {
+		if (!materialInfo) return;
+		roundingInputValue =
+			materialInfo.roundTo === null || materialInfo.roundTo === undefined
+				? ''
+				: materialInfo.roundTo.toString();
+		roundingError = null;
+		isRoundingEditing = true;
+	}
+
+	async function saveRounding() {
+		if (!materialInfo || isRoundingSaving) return;
+
+		const trimmed = roundingInputValue.trim();
+		if (trimmed.length === 0) {
+			roundingError = 'Rounding is required';
+			return;
+		}
+
+		const parsed = Number(trimmed);
+		if (!Number.isFinite(parsed)) {
+			roundingError = 'Rounding must be a valid number';
+			return;
+		}
+
+		const roundTo = Math.max(0, Math.trunc(parsed));
+
+		try {
+			isRoundingSaving = true;
+			roundingError = null;
+			const saved = await setRoundingForMaterial({ materialId: materialInfo.id, roundTo });
+			if (!saved) {
+				roundingError = 'Failed to save rounding';
+				return;
+			}
+			materialInfo = { ...materialInfo, roundTo };
+			roundingInputValue = roundTo.toString();
+			isRoundingEditing = false;
+		} catch {
+			roundingError = 'Failed to save rounding';
+		} finally {
+			isRoundingSaving = false;
+		}
+	}
+
 	async function handleDescriptionEditFinish(description: string) {
 		if (!materialInfo) {
 			return;
@@ -459,7 +528,37 @@
 								>
 							</span>
 						{/if}
+
+						{#if isAdmin}
+							<span class="rounding-control">
+								<span class="value-label">Rounding:</span>
+								<input
+									type="number"
+									min="0"
+									step="1"
+									bind:value={roundingInputValue}
+									disabled={!isRoundingEditing || isRoundingSaving}
+									aria-label="Material rounding"
+								/>
+								<button
+									class="rounding-btn"
+									onclick={isRoundingEditing ? saveRounding : startRoundingEdit}
+									disabled={isRoundingSaving}
+								>
+									{#if isRoundingSaving}
+										Saving...
+									{:else if isRoundingEditing}
+										Save
+									{:else}
+										Edit
+									{/if}
+								</button>
+							</span>
+						{/if}
 					</div>
+					{#if isAdmin && roundingError}
+						<div class="rounding-error">{roundingError}</div>
+					{/if}
 				{/if}
 			</div>
 		</div>
@@ -1240,7 +1339,7 @@
 							{#each filteredDataOrdered as item (item.date)}
 								<tr>
 									<td>{item.date}</td>
-									<td>{item.value}</td>
+									<td>{formatPrice(item.value)}</td>
 								</tr>
 							{/each}
 						{:else}
@@ -1827,6 +1926,50 @@
 	.value-unit {
 		color: #6c757d;
 		font-size: 0.8em;
+	}
+
+	.rounding-control {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.rounding-control input {
+		width: 68px;
+		padding: 0.2rem 0.35rem;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		font-size: 0.8rem;
+	}
+
+	.rounding-control input:disabled {
+		background-color: #f1f3f5;
+		color: #6c757d;
+	}
+
+	.rounding-btn {
+		border: 1px solid #ced4da;
+		background-color: #f8f9fa;
+		color: #212529;
+		border-radius: 4px;
+		padding: 0.2rem 0.5rem;
+		font-size: 0.78rem;
+		cursor: pointer;
+	}
+
+	.rounding-btn:hover:enabled {
+		background-color: #e9ecef;
+	}
+
+	.rounding-btn:disabled {
+		opacity: 0.65;
+		cursor: not-allowed;
+	}
+
+	.rounding-error {
+		margin-top: 0.25rem;
+		font-size: 0.8rem;
+		color: #dc3545;
 	}
 
 	.change-percent {
