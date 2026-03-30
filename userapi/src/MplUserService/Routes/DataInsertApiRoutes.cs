@@ -28,7 +28,7 @@ namespace MplUserService.Routes
            string catchAll,
            ILogger<Program> logger)
         {
-            var client = httpClientFactory.CreateClient("SpreadsheetClient");
+            var client = httpClientFactory.CreateClient("DataInsertApiClient");
 
             var requestUrl = $"{catchAll}{context.Request.QueryString}";
 
@@ -90,7 +90,7 @@ namespace MplUserService.Routes
 
             if (!responseMessage.IsSuccessStatusCode)
             {
-                logger.LogWarning("Spreadsheet proxy failed for {RequestUrl} with {StatusCode}", requestUrl, responseMessage.StatusCode);
+                logger.LogWarning("DataInsert proxy failed for {RequestUrl} with {StatusCode}", requestUrl, responseMessage.StatusCode);
 
                 // IMPORTANT: don't try to write a Problem() AFTER copying headers for a file response.
                 // Just pass-through the upstream body (it may contain useful JSON error).

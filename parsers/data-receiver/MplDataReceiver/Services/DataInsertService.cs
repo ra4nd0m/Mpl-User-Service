@@ -335,6 +335,20 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         materialSource.Description = NormalizeDescription(req.Description);
         await context.SaveChangesAsync();
 
+        try
+        {
+            var httpClient = httpClientFactory.CreateClient("DbApi");
+            var response = await httpClient.PostAsync("cache/clear", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to notify DB API to clear cache");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
+        }
+
         logger.LogInformation("Updated description for MaterialSource with Uid={Uid}", materialSource.Uid);
     }
 
@@ -351,6 +365,20 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
 
         materialSource.RoundTo = req.RoundTo;
         await context.SaveChangesAsync();
+
+        try
+        {
+            var httpClient = httpClientFactory.CreateClient("DbApi");
+            var response = await httpClient.PostAsync("cache/clear", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to notify DB API to clear cache");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
+        }
 
         logger.LogInformation("Updated rounding for MaterialSource with Uid={Uid}", materialSource.Uid);
     }
