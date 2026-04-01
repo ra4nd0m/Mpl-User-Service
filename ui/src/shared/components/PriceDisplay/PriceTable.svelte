@@ -71,6 +71,7 @@
 	type FilteredData = {
 		date: string;
 		value: string | null;
+		sortDate: number;
 	};
 
 	const defaultDateRange = (() => {
@@ -178,8 +179,8 @@
 			// Handle sorting for aggregated data
 			filteredDataOrdered = [...filteredData].sort((a, b) => {
 				if (column === 'date') {
-					// Sort by date ranges (using string comparison)
-					return direction === 'asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+					// Sort by raw aggregation period start date, not localized date-range text.
+					return direction === 'asc' ? a.sortDate - b.sortDate : b.sortDate - a.sortDate;
 				} else {
 					// Sort by value
 					const valA = a.value ? parseFloat(a.value) : -Infinity;
@@ -309,7 +310,7 @@
 		aggregatesChosen.push(aggregate);
 		await fetchData();
 		filteredData = formatData(aggregate);
-		filteredDataOrdered = filteredData;
+		sortData(sortColumn, sortDirection);
 	}
 
 	function formatData(aggregate: string) {
@@ -320,28 +321,32 @@
 					.filter((item) => item.weeklyAvg !== '')
 					.map((item) => ({
 						date: getWeekRange(item.date),
-						value: item.weeklyAvg
+						value: item.weeklyAvg,
+						sortDate: new Date(item.date).getTime()
 					}));
 			case 'monthly':
 				return priceData
 					.filter((item) => item.monthlyAvg !== '')
 					.map((item) => ({
 						date: getMonthRange(item.date),
-						value: item.monthlyAvg
+						value: item.monthlyAvg,
+						sortDate: new Date(item.date).getTime()
 					}));
 			case 'quarterly':
 				return priceData
 					.filter((item) => item.quarterlyAvg !== '')
 					.map((item) => ({
 						date: getQuarterRange(item.date),
-						value: item.quarterlyAvg
+						value: item.quarterlyAvg,
+						sortDate: new Date(item.date).getTime()
 					}));
 			case 'yearly':
 				return priceData
 					.filter((item) => item.yearlyAvg !== '')
 					.map((item) => ({
 						date: getYearRange(item.date),
-						value: item.yearlyAvg
+						value: item.yearlyAvg,
+						sortDate: new Date(item.date).getTime()
 					}));
 			default:
 				return [];
@@ -375,7 +380,7 @@
 
 	function fillSpreadsheetReqData(): SpreadsheetReqAvgData[] | SpreadsheetReqData[] {
 		if (aggregatesChosen.length > 0) {
-			return filteredData as SpreadsheetReqAvgData[];
+			return filteredDataOrdered as SpreadsheetReqAvgData[];
 		} else {
 			const spreadsheetReqDataArr: SpreadsheetReqData[] =
 				priceData?.map((item) => {
