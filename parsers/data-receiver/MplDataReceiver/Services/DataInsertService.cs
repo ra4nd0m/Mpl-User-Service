@@ -98,7 +98,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
 
             foreach (var dateValue in update.DateValues)
             {
-                if (!DateOnly.TryParseExact(dateValue.Date, "dd.MM.yyyy", out var parsedDate))
+                if (!DateOnly.TryParseExact(dateValue.Date, ["dd.MM.yyyy", "yyyy.MM.dd"], out var parsedDate))
                     continue;
 
                 foreach (var propertyValue in dateValue.PropertyValues)
