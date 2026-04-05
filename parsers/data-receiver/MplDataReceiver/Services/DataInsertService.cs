@@ -42,6 +42,27 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         return cleaned.Length == 0 ? null : cleaned;
     }
 
+    private async Task NotifyDbApiCacheClearAsync(string operationName)
+    {
+        try
+        {
+            logger.LogInformation("{Operation}: notifying DB API to clear cache", operationName);
+
+            var httpClient = httpClientFactory.CreateClient("DbApi");
+            var response = await httpClient.PostAsync("cache/clear", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to notify DB API to clear cache. Status code: {(int)response.StatusCode}");
+            }
+
+            logger.LogInformation("{Operation}: DB API cache clear succeeded", operationName);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "{Operation}: error occurred while notifying DB API to clear cache", operationName);
+        }
+    }
+
     public async Task InsertValuesRange(List<MaterialUpdate> updates)
     {
         var materialIds = updates.Select(u => u.MaterialId).Distinct().ToList();
@@ -99,7 +120,10 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         }
 
         if (materialValuesToProcess.Count == 0)
+        {
+            logger.LogInformation("InsertValuesRange skipped cache clear because no valid material values remained after filtering");
             return;
+        }
 
         // Resolve to internal IDs before DB interactions
         var resolvedItems = new List<(int Id, int PropertyId, DateOnly CreatedOn, string Value)>();
@@ -117,7 +141,10 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         }
 
         if (resolvedItems.Count == 0)
+        {
+            logger.LogInformation("InsertValuesRange skipped cache clear because no material UIDs resolved to internal IDs");
             return;
+        }
 
         // Extract unique combinations for querying (using internal IDs)
         var ids = resolvedItems.Select(i => i.Id).Distinct().ToList();
@@ -182,19 +209,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
 
         await context.SaveChangesAsync();
 
-        try
-        {
-            var httpClient = httpClientFactory.CreateClient("DbApi");
-            var response = await httpClient.PostAsync("cache/clear", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Failed to notify DB API to clear cache");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
-        }
+        await NotifyDbApiCacheClearAsync(nameof(InsertValuesRange));
     }
 
     public async Task<int> AddNewMaterial(NewMaterialRequest newMaterial)
@@ -335,19 +350,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         materialSource.Description = NormalizeDescription(req.Description);
         await context.SaveChangesAsync();
 
-        try
-        {
-            var httpClient = httpClientFactory.CreateClient("DbApi");
-            var response = await httpClient.PostAsync("cache/clear", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Failed to notify DB API to clear cache");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
-        }
+        await NotifyDbApiCacheClearAsync(nameof(AddMaterialDescription));
 
         logger.LogInformation("Updated description for MaterialSource with Uid={Uid}", materialSource.Uid);
     }
@@ -366,19 +369,7 @@ public class DataInsertService(BMplbaseContext context, IHttpClientFactory httpC
         materialSource.RoundTo = req.RoundTo;
         await context.SaveChangesAsync();
 
-        try
-        {
-            var httpClient = httpClientFactory.CreateClient("DbApi");
-            var response = await httpClient.PostAsync("cache/clear", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Failed to notify DB API to clear cache");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while notifying DB API to clear cache");
-        }
+        await NotifyDbApiCacheClearAsync(nameof(AddRoundingToMaterial));
 
         logger.LogInformation("Updated rounding for MaterialSource with Uid={Uid}", materialSource.Uid);
     }
