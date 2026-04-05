@@ -59,7 +59,7 @@
 	}
 
 	const isLme = (material: Material) => material.source === 'lme.com';
-	const isShfe = (material: Material) => material.source === 'shfe.com';
+	const isShfe = (material: Material) => material.source === 'shfe.com.cn';
 
 	const lmeMaterials = $derived(materialList.filter(isLme));
 	const shfeMaterials = $derived(materialList.filter(isShfe));
