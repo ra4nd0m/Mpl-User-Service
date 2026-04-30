@@ -364,7 +364,7 @@
 		text-align: left;
 		border-bottom: 1px solid #e9ecef;
 		vertical-align: middle;
-		white-space: nowrap;
+		overflow-wrap: anywhere;
 	}
 
 	.users-table th {
@@ -389,18 +389,20 @@
 	}
 
 	/* Column sizing */
-	.email-col {
+	.users-table th.email-col,
+	.users-table td.email-col {
 		min-width: 200px;
 		max-width: 250px;
 		white-space: normal;
-		word-break: break-all;
+		overflow-wrap: anywhere;
 	}
 
-	.org-col {
+	.users-table th.org-col,
+	.users-table td.org-col {
 		min-width: 150px;
 		max-width: 200px;
 		white-space: normal;
-		word-wrap: break-word;
+		overflow-wrap: anywhere;
 	}
 
 	.inn-col {
@@ -663,12 +665,14 @@
 			padding: 0.625rem 0.5rem;
 		}
 
-		.email-col {
+		.users-table th.email-col,
+		.users-table td.email-col {
 			min-width: 180px;
 			max-width: 200px;
 		}
 
-		.org-col {
+		.users-table th.org-col,
+		.users-table td.org-col {
 			min-width: 120px;
 			max-width: 150px;
 		}
@@ -702,12 +706,14 @@
 			padding: 0.5rem 0.375rem;
 		}
 
-		.email-col {
+		.users-table th.email-col,
+		.users-table td.email-col {
 			min-width: 160px;
 			max-width: 180px;
 		}
 
-		.org-col {
+		.users-table th.org-col,
+		.users-table td.org-col {
 			min-width: 100px;
 			max-width: 120px;
 		}
